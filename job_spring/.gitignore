@@ -34,6 +34,7 @@ build/
 
 ### Local database credentials ###
 /config/application-local.yaml
+/docs/http/http-client.private.env.json
 
 ### Frontend ###
 /frontend/node_modules/

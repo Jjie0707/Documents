@@ -1,0 +1,46 @@
+@baseUrl = http://localhost:8082
+
+### 1. 获取 CSRF Token；IDEA HTTP Client 会保留响应中的会话 Cookie。
+GET {{baseUrl}}/api/auth/csrf
+Accept: application/json
+
+> {%
+    client.test("CSRF Token 获取成功", function () {
+        client.assert(response.status === 200, "应返回 HTTP 200");
+    });
+    if (response.status === 200) {
+        client.global.set("registrationCsrfToken", response.body.token);
+    }
+%}
+
+### 2. 注册（先在本地私密环境文件中填写测试用户名和测试密码，选择 local 环境）。
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+X-CSRF-TOKEN: {{registrationCsrfToken}}
+
+{
+  "username": "{{registrationUsername}}",
+  "password": "{{registrationPassword}}"
+}
+
+### 3. 注册不会自动登录，因此此请求仍应返回 HTTP 401。
+GET {{baseUrl}}/api/jobs
+
+### 4. 不带 CSRF Token，注册请求应返回 HTTP 403。
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "{{registrationUsername}}",
+  "password": "{{registrationPassword}}"
+}
+
+### 5. 空白用户名应返回 HTTP 400，且不会回显密码。
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+X-CSRF-TOKEN: {{registrationCsrfToken}}
+
+{
+  "username": "   ",
+  "password": "{{registrationPassword}}"
+}
