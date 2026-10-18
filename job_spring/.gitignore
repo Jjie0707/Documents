@@ -34,3 +34,10 @@ build/
 
 ### Local database credentials ###
 /config/application-local.yaml
+
+### Frontend ###
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.env
+/frontend/.env.*
+!/frontend/.env.example

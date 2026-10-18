@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="718" height="526" viewBox="0 0 718 526" role="img" aria-labelledby="title desc">
+  <title id="title">岗位详情草图结构转录</title>
+  <desc id="desc">左侧为具体岗位信息，右上为面试详情入口，右下为岗位状态下拉菜单。</desc>
+  <rect width="718" height="526" fill="white"/>
+  <g fill="none" stroke="black" stroke-width="12" stroke-linejoin="round">
+    <rect x="42" y="42" width="634" height="441"/>
+    <rect x="72" y="76" width="276" height="348"/>
+    <rect x="396" y="94" width="247" height="93"/>
+    <rect x="390" y="259" width="253" height="106"/>
+  </g>
+  <g font-family="sans-serif" fill="black" font-size="24">
+    <text x="101" y="141">具体岗位信息</text>
+    <text x="418" y="145">点击可以跳转到面试</text>
+    <text x="418" y="174">详情界面</text>
+    <text x="415" y="319">下拉菜单，可以调整</text>
+    <text x="415" y="348">岗位状态</text>
+    <text x="42" y="513" fill="#777" font-size="12">依据对话附件转录 · 2026-10-18</text>
+  </g>
+</svg>
