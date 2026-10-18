@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: job_spring
+  config:
+    # IDEA 运行配置的 Working directory 应为本项目根目录。
+    # 本地密码文件放在 resources 之外，不随应用打包。
+    import: optional:file:./config/application-local.yaml
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/job_tracker?characterEncoding=UTF-8&connectionTimeZone=Asia/Shanghai
+    username: root
+    # 本机由上述本地文件覆盖；其他环境可通过 DB_PASSWORD 提供。
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      # 表已手动建立，启动时不执行建表或数据初始化脚本。
+      mode: never
