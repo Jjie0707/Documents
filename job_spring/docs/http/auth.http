@@ -1,0 +1,44 @@
+@baseUrl = http://localhost:8082
+
+### 1. 获取本次会话的 CSRF Token。
+GET {{baseUrl}}/api/auth/csrf
+
+> {%
+    if (response.status === 200) client.global.set("authCsrfToken", response.body.token);
+%}
+
+### 2. 登录：选择 local 环境，使用与 register.http 相同的账号参数。
+< {%
+    const username = request.environment.get("registrationUsername");
+    const password = request.environment.get("registrationPassword");
+    if (typeof username !== "string" || typeof password !== "string") {
+        throw new Error("请在运行配置的 Environment 中选择 local，并检查私密环境文件中的账号参数。");
+    }
+    request.variables.set("loginUsernameEncoded", encodeURIComponent(username));
+    request.variables.set("loginPasswordEncoded", encodeURIComponent(password));
+%}
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/x-www-form-urlencoded
+X-CSRF-TOKEN: {{authCsrfToken}}
+
+username={{loginUsernameEncoded}}&password={{loginPasswordEncoded}}
+
+### 3. 已登录时返回用户 ID、用户名；未登录时返回 401。
+GET {{baseUrl}}/api/auth/me
+
+### 4. 只返回当前登录用户的岗位。
+GET {{baseUrl}}/api/jobs
+
+### 5. 登录成功后 Token 已更新，退出前必须重新获取。
+GET {{baseUrl}}/api/auth/csrf
+
+> {%
+    if (response.status === 200) client.global.set("authCsrfToken", response.body.token);
+%}
+
+### 6. 退出，返回 204；会话失效。
+POST {{baseUrl}}/api/auth/logout
+X-CSRF-TOKEN: {{authCsrfToken}}
+
+### 7. 退出后返回 401。
+GET {{baseUrl}}/api/auth/me

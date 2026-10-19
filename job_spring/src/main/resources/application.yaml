@@ -1,5 +1,10 @@
 server:
   port: 8082
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
 
 spring:
   application:

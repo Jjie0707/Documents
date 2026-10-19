@@ -5,12 +5,14 @@ import java.sql.SQLException;
 import javax.sql.DataSource;
 
 import jjie.job_spring.config.SecurityConfig;
+import jjie.job_spring.health.controller.HealthController;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
@@ -31,6 +33,9 @@ class HealthControllerTests {
 
     @MockitoBean
     private DataSource dataSource;
+
+    @MockitoBean
+    private UserDetailsService userDetailsService;
 
     @Test
     void anonymousHealthCheckValidatesAndClosesConnection() throws Exception {

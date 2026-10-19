@@ -1,4 +1,4 @@
-package jjie.job_spring.health;
+package jjie.job_spring.health.controller;
 
 import java.sql.Connection;
 import java.sql.SQLException;

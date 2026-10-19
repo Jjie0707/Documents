@@ -1,4 +1,4 @@
-package jjie.job_spring.user;
+package jjie.job_spring.user.common;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;

@@ -1,8 +1,8 @@
 package jjie.job_spring.auth;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import jjie.job_spring.user.UserAccount;
-import jjie.job_spring.user.UserMapper;
+import jjie.job_spring.user.common.UserAccount;
+import jjie.job_spring.user.mapper.UserMapper;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
