@@ -176,12 +176,14 @@ class AuthenticationIntegrationTests {
     }
 
     @Test
-    void writeEndpointsRemainUnavailable() throws Exception {
+    void createEndpointRequiresValidJobFields() throws Exception {
         MockHttpSession session = loginAs("alice");
         Token token = token(session);
         mvc.perform(post("/api/jobs").session(session).header(token.header(), token.value())
                         .contentType(MediaType.APPLICATION_JSON).content("{}"))
-                .andExpect(status().isMethodNotAllowed());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fields.companyName").exists())
+                .andExpect(jsonPath("$.fields.jobTitle").exists());
     }
 
     private MockHttpSession loginAs(String username) throws Exception {

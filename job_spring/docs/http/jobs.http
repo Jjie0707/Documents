@@ -1,0 +1,54 @@
+@baseUrl = http://localhost:8082
+
+### 准备：先在 auth.http 中使用本地私密环境的测试账号登录，保持同一主机会话。
+### 1. 登录后重新获取 CSRF Token；不要复用登录前的 Token。
+GET {{baseUrl}}/api/auth/csrf
+
+> {%
+    if (response.status === 200) client.global.set("jobsCsrfToken", response.body.token);
+%}
+
+### 2. 新增虚构岗位，应返回 201；重复执行会新增另一条记录。
+POST {{baseUrl}}/api/jobs
+Content-Type: application/json
+X-CSRF-TOKEN: {{jobsCsrfToken}}
+
+{
+  "companyName": "阶段3虚构示例公司",
+  "jobTitle": "Java 后端实习（测试）",
+  "city": "测试城市",
+  "salary": "面议"
+}
+
+> {%
+    client.test("新增岗位成功", function () {
+        client.assert(response.status === 201, "应返回 HTTP 201");
+        client.assert(response.body.status === "TO_APPLY", "初始状态应为待投递");
+    });
+    if (response.status === 201) client.global.set("createdJobId", response.body.id);
+%}
+
+### 3. 当前用户列表应包含刚才创建的岗位。
+GET {{baseUrl}}/api/jobs
+
+### 4. 通过新岗位 ID 读取详情，应返回 200。
+GET {{baseUrl}}/api/jobs/{{createdJobId}}
+
+### 5. 空白公司名应返回 400，fields 包含 companyName；不写入数据。
+POST {{baseUrl}}/api/jobs
+Content-Type: application/json
+X-CSRF-TOKEN: {{jobsCsrfToken}}
+
+{
+  "companyName": "   ",
+  "jobTitle": "虚构测试岗位"
+}
+
+### 6. 已登录但没有 CSRF Token，应返回 403；不写入数据。
+POST {{baseUrl}}/api/jobs
+Content-Type: application/json
+
+{
+  "companyName": "阶段3虚构示例公司",
+  "jobTitle": "虚构测试岗位"
+}
