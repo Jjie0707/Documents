@@ -1,0 +1,44 @@
+@baseUrl = http://localhost:8082
+
+### 准备：先在 auth.http 登录临时账号 A，用已有网页新增几条虚构岗位。
+### 分别在公司名、岗位名、城市放入 Java；再建一条三个字段都不含 Java 的岗位作对照。
+### HTTP Client 与浏览器不共享 Cookie，需分别登录，所有请求使用同一主机名。
+### 以下都是只读 GET，不需要 CSRF Token。
+
+### 1. 不传关键词：返回当前用户全部岗位，仍为数组，ID 倒序。
+GET {{baseUrl}}/api/jobs
+
+> {%
+    client.global.set("overlongSearchKeyword", "x".repeat(101));
+%}
+
+### 2. 包含搜索：只返回自己的公司名、岗位名或城市含 Java 的岗位。
+GET {{baseUrl}}/api/jobs?keyword=Java
+
+### 3. 英文大小写不敏感。
+GET {{baseUrl}}/api/jobs?keyword=java
+
+### 4. 去掉首尾空白，与请求 2 一致。
+GET {{baseUrl}}/api/jobs?keyword=%20%20Java%20%20
+
+### 5. 空关键词：与请求 1 一致。
+GET {{baseUrl}}/api/jobs?keyword=
+
+### 6. 无匹配：返回 200 和 []。
+GET {{baseUrl}}/api/jobs?keyword=NO_MATCH_TEST_ONLY
+
+### 7. 搜索字面百分号，不是匹配全部；仅返回三个搜索字段实际含 % 的岗位。
+GET {{baseUrl}}/api/jobs?keyword=%25
+
+### 8. 搜索字面下划线，不把 _ 当成任意字符。
+GET {{baseUrl}}/api/jobs?keyword=_
+
+### 9. + 和 & 必须编码为 %2B、%26；如有 Java+& 测试岗位，应能匹配。
+GET {{baseUrl}}/api/jobs?keyword=Java%2B%26
+
+### 10. 超过 100 个字符：400，fields.keyword 有提示，不回显关键词。
+GET {{baseUrl}}/api/jobs?keyword={{overlongSearchKeyword}}
+
+### 越权检查：B 的三个字段中也放入相同关键词。A 搜索只能看到 A 的结果。
+### 可给请求 2 添加 userId=B 的 ID，结果仍只属于 A；退出 A、登录 B 后应只见 B 的结果。
+### 退出后执行请求 2，应为 401；无需为 GET 先获取匿名 Token。

@@ -17,7 +17,7 @@ export async function request(path, options = {}) {
       signal: controller.signal,
       headers: { Accept: 'application/json', ...options.headers },
     })
-    const body = response.headers.get('content-type')?.includes('application/json')
+    const body = response.status !== 204 && response.headers.get('content-type')?.includes('application/json')
       ? await response.json() : null
     if (!response.ok) throw new ApiError(response.status, body?.message || `请求失败（${response.status}）`, body?.fields)
     return body
@@ -52,4 +52,8 @@ export function patch(path, values) {
 
 export function put(path, values) {
   return sendWithCsrf('PUT', path, values)
+}
+
+export function remove(path) {
+  return sendWithCsrf('DELETE', path)
 }

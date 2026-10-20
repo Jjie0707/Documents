@@ -111,8 +111,32 @@ select { width: 100%; min-height: 44px; border-radius: 6px; border: 1px solid #d
 .status-form .form-message { margin-top: 14px; }
 .status-form .secondary-button { margin-top: 18px; }
 .status-form .text-button { margin-top: 8px; }
+.danger-button { border: 1px solid #a13f35; border-radius: 7px; padding: 12px 20px; min-height: 44px; background: #a13f35; color: white; font-size: .87rem; font-weight: 500; }
+.danger-outline { background: #fffaf8; color: #963f35; }
+.delete-panel > .danger-button { width: 100%; margin-top: 22px; }
+.delete-confirmation { margin-top: 18px; padding: 16px; border: 1px solid #ead2cc; border-radius: 7px; background: #fffaf8; }
+.delete-confirmation h3 { font-size: .9rem; line-height: 1.7; }
+.delete-confirmation .delete-target { margin-top: 8px; color: #25372f; overflow-wrap: anywhere; }
+.delete-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.delete-actions > button { flex: 1 1 110px; }
+.delete-actions .secondary-button { width: auto; margin-top: 0; }
+.delete-notice { margin-top: 14px; }
+.job-search { margin-bottom: 28px; }
+.job-search label { display: block; margin-bottom: 10px; font-size: .85rem; }
+.job-search-controls { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
+.job-search-field { flex: 1 1 220px; min-width: 0; }
+.job-status-filter { flex: 0 1 180px; min-width: 0; }
+.job-search input { min-width: 0; width: 100%; min-height: 46px; border: 1px solid #d9dfd3; border-radius: 6px; padding: 10px 12px; background: #fcfdfb; color: #25372f; font-size: 16px; }
+.job-status-filter select { min-height: 46px; font-size: 16px; }
+.job-search input[aria-invalid='true'] { border-color: #b56054; }
+.job-status-filter select[aria-invalid='true'] { border-color: #b56054; }
+.job-search-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.search-result-label { margin-bottom: 18px; overflow-wrap: anywhere; }
 
 @media (max-width: 700px) {
+  .job-search-controls { flex-direction: column; align-items: stretch; }
+  .job-search-field, .job-status-filter { flex: none; width: 100%; }
+  .job-search-actions > button { flex: 1; }
   .job-form-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .auth-layout { grid-template-columns: minmax(0, 1fr); gap: 28px; padding: 0 0 16px; }
   .auth-intro h1 { font-size: 1.6rem; }

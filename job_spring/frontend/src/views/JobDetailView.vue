@@ -1,7 +1,7 @@
 <script setup>
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { patch, request } from '../api.js'
+import { patch, remove, request } from '../api.js'
 import { clearUser } from '../auth.js'
 import { jobStatus, jobStatuses } from '../job-status.js'
 
@@ -15,6 +15,16 @@ const savingStatus = ref(false)
 const statusError = ref('')
 const statusSuccess = ref('')
 const statusUncertain = ref(false)
+const confirmingDelete = ref(false)
+const deleting = ref(false)
+const checkingDelete = ref(false)
+const deleteError = ref('')
+const deleteNotice = ref('')
+const deleteUncertain = ref(false)
+const deleteButton = ref(null)
+const cancelDeleteButton = ref(null)
+const actionsLocked = computed(() => savingStatus.value || confirmingDelete.value || deleting.value
+  || statusUncertain.value || deleteUncertain.value || checkingDelete.value)
 let requestNumber = 0
 let active = true
 onBeforeUnmount(() => { active = false; requestNumber++ })
@@ -24,6 +34,8 @@ async function loadJob() {
   loading.value = true; error.value = ''; job.value = null
   selectedStatus.value = ''; savingStatus.value = false
   statusError.value = ''; statusSuccess.value = ''; statusUncertain.value = false
+  confirmingDelete.value = false; deleting.value = false; checkingDelete.value = false
+  deleteError.value = ''; deleteNotice.value = ''; deleteUncertain.value = false
   try {
     const result = await request(`/api/jobs/${route.params.id}`)
     if (number === requestNumber) {
@@ -42,7 +54,7 @@ function clearStatusMessages() {
 }
 
 async function saveStatus() {
-  if (!job.value || savingStatus.value || statusUncertain.value || selectedStatus.value === job.value.status) return
+  if (!job.value || actionsLocked.value || selectedStatus.value === job.value.status) return
   const number = requestNumber
   const id = job.value.id
   const status = selectedStatus.value
@@ -74,6 +86,85 @@ async function saveStatus() {
   }
 }
 
+async function askToDelete() {
+  if (!job.value || actionsLocked.value) return
+  deleteError.value = ''; deleteNotice.value = ''
+  clearStatusMessages()
+  confirmingDelete.value = true
+  await nextTick()
+  cancelDeleteButton.value?.focus()
+}
+
+async function cancelDelete() {
+  if (deleting.value) return
+  confirmingDelete.value = false
+  deleteError.value = ''
+  await nextTick()
+  deleteButton.value?.focus()
+}
+
+async function deleteJob() {
+  if (!job.value || !confirmingDelete.value || deleting.value || deleteUncertain.value
+      || savingStatus.value || statusUncertain.value) return
+  const number = requestNumber
+  const id = job.value.id
+  deleting.value = true
+  deleteError.value = ''; deleteNotice.value = ''
+  try {
+    // 成功响应是 204，没有岗位 JSON；确认完成后再返回列表，由列表重新查询。
+    await remove(`/api/jobs/${id}`)
+    if (!active || number !== requestNumber) return
+    await router.replace({ name: 'jobs' })
+  } catch (failure) {
+    if (!active || number !== requestNumber) return
+    if (failure.status === 401) {
+      clearUser()
+      await router.replace('/login')
+    } else if (failure.status === 404) {
+      job.value = null
+      error.value = '岗位不存在或无法访问，请返回列表核对。'
+    } else {
+      deleteUncertain.value = failure.status === 0
+      if (deleteUncertain.value) confirmingDelete.value = false
+      deleteError.value = deleteUncertain.value
+        ? `${failure.message} 删除结果暂时无法确认，请先核对结果。`
+        : failure.message
+    }
+  } finally {
+    if (active && number === requestNumber) deleting.value = false
+  }
+}
+
+async function checkDeleteResult() {
+  if (!job.value || !deleteUncertain.value || checkingDelete.value) return
+  const number = requestNumber
+  const id = job.value.id
+  checkingDelete.value = true
+  deleteError.value = ''; deleteNotice.value = ''
+  try {
+    const result = await request(`/api/jobs/${id}`)
+    if (!active || number !== requestNumber) return
+    job.value = result
+    selectedStatus.value = result.status
+    deleteUncertain.value = false
+    deleteNotice.value = '岗位仍然存在，信息已重新加载。如需删除，请重新确认。'
+  } catch (failure) {
+    if (!active || number !== requestNumber) return
+    if (failure.status === 401) {
+      clearUser()
+      await router.replace('/login')
+    } else if (failure.status === 404) {
+      // 404 也可能代表无权访问，不能据此声称一定是本次删除成功。
+      job.value = null
+      error.value = '岗位不存在或无法访问，请返回列表核对。'
+    } else {
+      deleteError.value = `${failure.message} 暂时无法核对删除结果，请重试核对。`
+    }
+  } finally {
+    if (active && number === requestNumber) checkingDelete.value = false
+  }
+}
+
 watch(() => route.params.id, loadJob, { immediate: true })
 </script>
 
@@ -88,7 +179,7 @@ watch(() => route.params.id, loadJob, { immediate: true })
         <h1 id="detail-heading">{{ job.jobTitle }}</h1><p class="page-description">岗位信息与面试记录入口</p></div></div>
       <div class="detail-layout">
         <article class="info-panel"><div class="panel-topline"><h2>岗位信息</h2>
-          <button v-if="savingStatus" type="button" class="secondary-button" disabled>编辑基本信息</button>
+          <button v-if="actionsLocked" type="button" class="secondary-button" disabled>编辑基本信息</button>
           <RouterLink v-else :to="{ name: 'job-edit', params: { id: String(job.id) } }"
                       class="secondary-button">编辑基本信息</RouterLink>
         </div>
@@ -113,7 +204,7 @@ watch(() => route.params.id, loadJob, { immediate: true })
             <p class="status-current">当前状态：<strong>{{ jobStatus(job.status).label }}</strong></p>
             <form class="status-form" :aria-busy="savingStatus" @submit.prevent="saveStatus">
               <label for="job-status" class="field-label">选择新状态</label>
-              <select id="job-status" v-model="selectedStatus" :disabled="savingStatus || statusUncertain"
+              <select id="job-status" v-model="selectedStatus" :disabled="actionsLocked"
                       aria-describedby="status-help" @change="clearStatusMessages">
                 <option v-for="(value, key) in jobStatuses" :key="key" :value="key">{{ value.label }}</option>
               </select>
@@ -121,11 +212,35 @@ watch(() => route.params.id, loadJob, { immediate: true })
               <p v-if="statusError" class="form-message error" role="alert">{{ statusError }}</p>
               <p v-if="statusSuccess" class="form-message success" role="status">{{ statusSuccess }}</p>
               <button type="submit" class="secondary-button"
-                      :disabled="savingStatus || statusUncertain || selectedStatus === job.status">
+                      :disabled="actionsLocked || selectedStatus === job.status">
                 {{ savingStatus ? '正在保存…' : '保存状态' }}
               </button>
               <button v-if="statusUncertain" type="button" class="text-button" @click="loadJob">重新加载岗位</button>
             </form>
+          </section>
+          <section class="action-panel delete-panel" aria-labelledby="delete-heading" :aria-busy="deleting || checkingDelete">
+            <span class="section-number">03 / 管理</span>
+            <h2 id="delete-heading">删除岗位</h2>
+            <p>删除后无法恢复。有关联面试记录的岗位无法直接删除。</p>
+            <div v-if="confirmingDelete" class="delete-confirmation" role="group"
+                 aria-labelledby="delete-confirm-heading" @keydown.esc.prevent="cancelDelete">
+              <h3 id="delete-confirm-heading">确认删除这个岗位？</h3>
+              <p class="delete-target">{{ job.companyName }} · {{ job.jobTitle }}</p>
+              <div class="delete-actions">
+                <button ref="cancelDeleteButton" type="button" class="secondary-button" :disabled="deleting" @click="cancelDelete">取消</button>
+                <button type="button" class="danger-button" :disabled="deleting" @click="deleteJob">
+                  {{ deleting ? '正在删除…' : '确认删除' }}
+                </button>
+              </div>
+              <p v-if="deleting" class="muted input-help" role="status">正在删除，请稍候。</p>
+            </div>
+            <button v-else ref="deleteButton" type="button" class="danger-button danger-outline"
+                    :disabled="actionsLocked" @click="askToDelete">删除岗位</button>
+            <p v-if="deleteError" class="form-message error" role="alert">{{ deleteError }}</p>
+            <p v-if="deleteNotice" class="muted delete-notice" role="status">{{ deleteNotice }}</p>
+            <button v-if="deleteUncertain" type="button" class="text-button" :disabled="checkingDelete" @click="checkDeleteResult">
+              {{ checkingDelete ? '正在核对…' : '核对删除结果' }}
+            </button>
           </section>
         </aside>
       </div>

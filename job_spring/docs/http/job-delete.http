@@ -1,0 +1,52 @@
+@baseUrl = http://localhost:8082
+@jobId = {{createdJobId}}
+
+### 准备：在 auth.http 登录临时账号 A，在 jobs.http 新增一条仅供本次删除的虚构岗位。
+### 本接口采用物理删除，不提供恢复。jobId 必须指向这条测试岗位，不要使用真实记录。
+### jobId 默认复用 jobs.http 的 createdJobId；网页创建时请手工填入测试 ID。
+### HTTP Client 与浏览器不共享 Cookie，需分别登录，所有请求使用同一主机名。
+
+### 1. 获取登录后的 CSRF Token；重新登录或退出后重新获取。
+GET {{baseUrl}}/api/auth/csrf
+
+> {%
+    if (response.status === 200) client.global.set("deleteCsrfToken", response.body.token);
+%}
+
+### 2. 缺少 CSRF，返回 403，岗位仍存在。
+DELETE {{baseUrl}}/api/jobs/{{jobId}}
+
+### 3. 非整数 ID 返回 400，岗位不受影响。
+DELETE {{baseUrl}}/api/jobs/not-a-number
+X-CSRF-TOKEN: {{deleteCsrfToken}}
+
+### 4. 不存在的 ID 返回 404。
+DELETE {{baseUrl}}/api/jobs/9223372036854775807
+X-CSRF-TOKEN: {{deleteCsrfToken}}
+
+### 可在执行请求 5 前做越权检查：保留 A 的测试 jobId，退出 A、登录临时账号 B，再执行请求 1。
+### B 执行请求 5 应为 404；即使加上 A 的 userId 查询参数或 JSON，也不能绕过归属限制。
+### A 再登录并执行请求 1，先 GET 详情确认 B 未删除记录，再继续下面的正常删除。
+
+### 5. 删除自己的测试岗位：204，响应体为空；不需要 JSON 请求体。
+DELETE {{baseUrl}}/api/jobs/{{jobId}}
+X-CSRF-TOKEN: {{deleteCsrfToken}}
+
+> {%
+    client.test("测试岗位已删除", function () {
+        client.assert(response.status === 204, "删除成功应返回 HTTP 204；越权或重复删除应为 404");
+    });
+%}
+
+### 6. 回读已删除的岗位应为 404。
+GET {{baseUrl}}/api/jobs/{{jobId}}
+
+### 7. 列表不再包含该 ID，自己的其他岗位和另一账号的岗位不受影响。
+GET {{baseUrl}}/api/jobs
+
+### 8. 重复删除返回 404，不会再删除其他岗位；普通 DELETE 不消耗 CSRF Token。
+DELETE {{baseUrl}}/api/jobs/{{jobId}}
+X-CSRF-TOKEN: {{deleteCsrfToken}}
+
+### 未登录但持有有效匿名 Token 时 DELETE 应为 401；缺少 Token 时可能先为 403。
+### 有关联记录或约束冲突时返回 409，不删除岗位和关联内容；本次已在独立 H2 中验证实际外键限制。
