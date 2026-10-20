@@ -1,5 +1,8 @@
 package jjie.job_spring.auth;
 
+import jjie.job_spring.auth.common.RegisterRequest;
+import jjie.job_spring.auth.exception.UsernameAlreadyExistsException;
+import jjie.job_spring.auth.service.RegistrationService;
 import jjie.job_spring.user.common.UserAccount;
 import jjie.job_spring.user.mapper.UserMapper;
 import org.junit.jupiter.api.Test;

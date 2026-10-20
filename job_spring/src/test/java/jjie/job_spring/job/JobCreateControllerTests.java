@@ -1,8 +1,10 @@
 package jjie.job_spring.job;
 
 import java.util.UUID;
-import jjie.job_spring.auth.AppUserDetails;
+import jjie.job_spring.auth.common.AppUserDetails;
 import jjie.job_spring.config.SecurityConfig;
+import jjie.job_spring.job.controller.JobCreateController;
+import jjie.job_spring.job.service.JobCreateService;
 import jjie.job_spring.user.common.UserAccount;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

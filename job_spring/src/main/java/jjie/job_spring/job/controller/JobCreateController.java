@@ -1,8 +1,11 @@
-package jjie.job_spring.job;
+package jjie.job_spring.job.controller;
 
 import jakarta.validation.Valid;
 import java.net.URI;
-import jjie.job_spring.auth.AppUserDetails;
+import jjie.job_spring.auth.common.AppUserDetails;
+import jjie.job_spring.job.service.JobCreateService;
+import jjie.job_spring.job.common.JobResponse;
+import jjie.job_spring.job.common.CreateJobRequest;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

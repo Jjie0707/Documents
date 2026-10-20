@@ -1,7 +1,9 @@
-package jjie.job_spring.job;
+package jjie.job_spring.job.controller;
 
 import java.util.List;
-import jjie.job_spring.auth.AppUserDetails;
+import jjie.job_spring.auth.common.AppUserDetails;
+import jjie.job_spring.job.service.JobReadService;
+import jjie.job_spring.job.common.JobResponse;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

@@ -67,15 +67,15 @@ onMounted(loadJobs)
       <div v-if="jobs.length === 0" class="empty-placeholder">
         <span class="empty-icon" aria-hidden="true">＋</span>
         <h3>还没有岗位记录</h3>
-        <p>你的记录会显示在这里。新增岗位将在下一阶段接入。</p>
+        <p>点击下方“添加岗位”，记下第一条求职记录。</p>
       </div>
       </template>
 
       <div class="panel-bottomline">
-        <p class="muted">当前可查看已有记录，新增及编辑功能尚未开放。</p>
-        <button class="primary-button" disabled title="阶段 3 实现新增岗位">
+        <p class="muted">记下感兴趣的岗位，逐步整理求职进度。</p>
+        <RouterLink class="primary-button" :to="{ name: 'job-create' }">
           <span aria-hidden="true">＋</span> 添加岗位
-        </button>
+        </RouterLink>
       </div>
     </div>
   </section>

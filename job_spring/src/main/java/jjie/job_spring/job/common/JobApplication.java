@@ -1,4 +1,4 @@
-package jjie.job_spring.job;
+package jjie.job_spring.job.common;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;

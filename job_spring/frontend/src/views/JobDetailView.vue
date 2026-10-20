@@ -1,7 +1,7 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { request } from '../api.js'
+import { patch, request } from '../api.js'
 import { clearUser } from '../auth.js'
 import { jobStatus, jobStatuses } from '../job-status.js'
 
@@ -10,19 +10,70 @@ const router = useRouter()
 const job = ref(null)
 const loading = ref(false)
 const error = ref('')
+const selectedStatus = ref('')
+const savingStatus = ref(false)
+const statusError = ref('')
+const statusSuccess = ref('')
+const statusUncertain = ref(false)
 let requestNumber = 0
+let active = true
+onBeforeUnmount(() => { active = false; requestNumber++ })
+
 async function loadJob() {
   const number = ++requestNumber
   loading.value = true; error.value = ''; job.value = null
+  selectedStatus.value = ''; savingStatus.value = false
+  statusError.value = ''; statusSuccess.value = ''; statusUncertain.value = false
   try {
     const result = await request(`/api/jobs/${route.params.id}`)
-    if (number === requestNumber) job.value = result
+    if (number === requestNumber) {
+      job.value = result
+      selectedStatus.value = result.status
+    }
   } catch (failure) {
     if (number !== requestNumber) return
     if (failure.status === 401) { clearUser(); await router.replace('/login') }
     else error.value = failure.status === 404 ? '岗位不存在或无法访问。' : failure.message
   } finally { if (number === requestNumber) loading.value = false }
 }
+
+function clearStatusMessages() {
+  statusError.value = ''; statusSuccess.value = ''
+}
+
+async function saveStatus() {
+  if (!job.value || savingStatus.value || statusUncertain.value || selectedStatus.value === job.value.status) return
+  const number = requestNumber
+  const id = job.value.id
+  const status = selectedStatus.value
+  savingStatus.value = true
+  clearStatusMessages()
+  try {
+    const updated = await patch(`/api/jobs/${id}/status`, { status })
+    if (!active || number !== requestNumber) return
+    // 选择值只是待提交内容；只有后端成功返回才更新当前状态。
+    job.value = updated
+    selectedStatus.value = updated.status
+    statusSuccess.value = `状态已保存为“${jobStatus(updated.status).label}”。`
+  } catch (failure) {
+    if (!active || number !== requestNumber) return
+    if (failure.status === 401) {
+      clearUser()
+      await router.replace('/login')
+    } else if (failure.status === 404) {
+      job.value = null
+      error.value = '岗位不存在或无法访问。'
+    } else {
+      statusUncertain.value = failure.status === 0
+      statusError.value = statusUncertain.value
+        ? `${failure.message} 保存结果暂时无法确认，请重新加载岗位核对当前状态。`
+        : failure.fields?.status || failure.message
+    }
+  } finally {
+    if (active && number === requestNumber) savingStatus.value = false
+  }
+}
+
 watch(() => route.params.id, loadJob, { immediate: true })
 </script>
 
@@ -36,7 +87,11 @@ watch(() => route.params.id, loadJob, { immediate: true })
       <div class="page-heading"><div><p class="eyebrow">{{ job.companyName }}</p>
         <h1 id="detail-heading">{{ job.jobTitle }}</h1><p class="page-description">岗位信息与面试记录入口</p></div></div>
       <div class="detail-layout">
-        <article class="info-panel"><div class="panel-topline"><h2>岗位信息</h2></div>
+        <article class="info-panel"><div class="panel-topline"><h2>岗位信息</h2>
+          <button v-if="savingStatus" type="button" class="secondary-button" disabled>编辑基本信息</button>
+          <RouterLink v-else :to="{ name: 'job-edit', params: { id: String(job.id) } }"
+                      class="secondary-button">编辑基本信息</RouterLink>
+        </div>
           <dl class="job-facts">
             <div><dt>公司</dt><dd>{{ job.companyName }}</dd></div>
             <div><dt>城市</dt><dd>{{ job.city || '未填写' }}</dd></div>
@@ -54,10 +109,24 @@ watch(() => route.params.id, loadJob, { immediate: true })
             <h2 id="interview-heading">面试记录</h2><p>按轮次整理问题、回答要点和复盘。</p>
             <button class="secondary-button" disabled>查看面试记录 ↗</button><small class="muted">阶段 4 开放</small></section>
           <section class="action-panel" aria-labelledby="status-heading"><span class="section-number">02 / 进度</span>
-            <h2 id="status-heading">投递状态</h2><label for="job-status" class="field-label">当前状态：{{ jobStatus(job.status).label }}</label>
-            <select id="job-status" :value="job.status" disabled aria-describedby="status-help">
-              <option v-for="(value, key) in jobStatuses" :key="key" :value="key">{{ value.label }}</option>
-            </select><small id="status-help" class="muted">阶段 3 接入状态修改</small></section>
+            <h2 id="status-heading">投递状态</h2>
+            <p class="status-current">当前状态：<strong>{{ jobStatus(job.status).label }}</strong></p>
+            <form class="status-form" :aria-busy="savingStatus" @submit.prevent="saveStatus">
+              <label for="job-status" class="field-label">选择新状态</label>
+              <select id="job-status" v-model="selectedStatus" :disabled="savingStatus || statusUncertain"
+                      aria-describedby="status-help" @change="clearStatusMessages">
+                <option v-for="(value, key) in jobStatuses" :key="key" :value="key">{{ value.label }}</option>
+              </select>
+              <small id="status-help" class="muted">选择后点击保存，当前状态会在保存成功后更新。</small>
+              <p v-if="statusError" class="form-message error" role="alert">{{ statusError }}</p>
+              <p v-if="statusSuccess" class="form-message success" role="status">{{ statusSuccess }}</p>
+              <button type="submit" class="secondary-button"
+                      :disabled="savingStatus || statusUncertain || selectedStatus === job.status">
+                {{ savingStatus ? '正在保存…' : '保存状态' }}
+              </button>
+              <button v-if="statusUncertain" type="button" class="text-button" @click="loadJob">重新加载岗位</button>
+            </form>
+          </section>
         </aside>
       </div>
     </template>

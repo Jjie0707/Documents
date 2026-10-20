@@ -1,0 +1,94 @@
+@baseUrl = http://localhost:8082
+@jobId = {{createdJobId}}
+
+### 准备：在 auth.http 登录临时账号 A，再在 jobs.http 新增虚构岗位。
+### jobId 复用 jobs.http 保存的 createdJobId；网页创建的岗位请自行填入测试 ID。
+### HTTP Client 与浏览器不共享 Cookie，需分别登录，并保持同一主机名。
+### 1. 获取登录后的 CSRF Token；登录或退出后重新获取。
+GET {{baseUrl}}/api/auth/csrf
+
+> {%
+    if (response.status === 200) client.global.set("updateCsrfToken", response.body.token);
+%}
+
+### 2. 更新四个基本字段，返回 200、同一 ID；状态和其他业务字段不变。
+PUT {{baseUrl}}/api/jobs/{{jobId}}
+Content-Type: application/json
+X-CSRF-TOKEN: {{updateCsrfToken}}
+
+{
+  "companyName": " 虚构修改公司 ",
+  "jobTitle": " Java 后端测试岗位 ",
+  "city": " ",
+  "salary": " 面议 "
+}
+
+> {%
+    client.test("基本信息修改成功", function () {
+        client.assert(response.status === 200, "应返回 HTTP 200");
+        client.assert(response.body.companyName === "虚构修改公司", "应保存去除首尾空白的公司名");
+    });
+%}
+
+### 重复执行请求 2 仍应为 200，不新增岗位；普通 PUT 不消耗 CSRF Token。
+### 3. 详情回读，核对四个字段及原有状态。
+GET {{baseUrl}}/api/jobs/{{jobId}}
+
+### 4. 列表回读，核对公司名与岗位名。
+GET {{baseUrl}}/api/jobs
+
+### 5. 清空选填项：city 空白、salary null 均写成 SQL NULL。
+PUT {{baseUrl}}/api/jobs/{{jobId}}
+Content-Type: application/json
+X-CSRF-TOKEN: {{updateCsrfToken}}
+
+{
+  "companyName": "虚构修改公司",
+  "jobTitle": "Java 后端测试岗位",
+  "city": "city",
+  "salary": null
+}
+
+### 6. 完整提交这四个基本字段的约定：省略 city/salary 同样会清空原值。
+PUT {{baseUrl}}/api/jobs/{{jobId}}
+Content-Type: application/json
+X-CSRF-TOKEN: {{updateCsrfToken}}
+
+{
+  "companyName": "虚构修改公司",
+  "jobTitle": "测试岗位"
+}
+
+### 7. 公司为空：返回 400，fields.companyName 有提示，不修改记录。
+PUT {{baseUrl}}/api/jobs/{{jobId}}
+Content-Type: application/json
+X-CSRF-TOKEN: {{updateCsrfToken}}
+
+{
+  "companyName": "  ",
+  "jobTitle": "测试岗位"
+}
+
+### 8. 缺少 CSRF 返回 403，不修改记录。
+PUT {{baseUrl}}/api/jobs/{{jobId}}
+Content-Type: application/json
+
+{
+  "companyName": "不应写入的虚构公司",
+  "jobTitle": "测试岗位"
+}
+
+### 9. 不存在的岗位返回 404，不自动新增。
+PUT {{baseUrl}}/api/jobs/9223372036854775807
+Content-Type: application/json
+X-CSRF-TOKEN: {{updateCsrfToken}}
+
+{
+  "companyName": "虚构公司",
+  "jobTitle": "测试岗位"
+}
+
+### 越权检查：保留 A 的 jobId，在 auth.http 退出 A、登录 B，重新执行请求 1。
+### 随后请求 2 应返回 404；伪造 userId 查询参数或 JSON 也不能改变归属。
+### A 再登录回读，确认 B 的请求没有修改岗位。
+### 未登录但持有有效匿名 CSRF Token 时 PUT 返回 401；无 Token 可能先返回 403。

@@ -1,7 +1,9 @@
-package jjie.job_spring.job;
+package jjie.job_spring.job.advice;
 
 import java.util.Map;
 import java.util.TreeMap;
+
+import jjie.job_spring.job.controller.JobCreateController;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;

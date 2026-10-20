@@ -29,15 +29,27 @@ export async function request(path, options = {}) {
   }
 }
 
-export async function post(path, values, form = false) {
+async function sendWithCsrf(method, path, values, form = false) {
   // 登录和退出会更新 CSRF 状态，每次提交前获取当前会话的 Token。
   const csrf = await request('/api/auth/csrf')
   return request(path, {
-    method: 'POST',
+    method,
     headers: {
       [csrf.headerName]: csrf.token,
       ...(values ? { 'Content-Type': form ? 'application/x-www-form-urlencoded' : 'application/json' } : {}),
     },
     body: values ? (form ? new URLSearchParams(values).toString() : JSON.stringify(values)) : undefined,
   })
+}
+
+export function post(path, values, form = false) {
+  return sendWithCsrf('POST', path, values, form)
+}
+
+export function patch(path, values) {
+  return sendWithCsrf('PATCH', path, values)
+}
+
+export function put(path, values) {
+  return sendWithCsrf('PUT', path, values)
 }

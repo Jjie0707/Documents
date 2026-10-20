@@ -1,6 +1,8 @@
-package jjie.job_spring.job;
+package jjie.job_spring.job.advice;
 
 import java.util.Map;
+
+import jjie.job_spring.job.controller.JobReadController;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

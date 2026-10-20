@@ -1,4 +1,4 @@
-package jjie.job_spring.auth;
+package jjie.job_spring.auth.common;
 
 import jakarta.validation.constraints.NotBlank;
 import jjie.job_spring.auth.validation.ValidPassword;

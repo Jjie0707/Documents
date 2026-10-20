@@ -1,7 +1,11 @@
-package jjie.job_spring.job;
+package jjie.job_spring.job.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import java.util.List;
+
+import jjie.job_spring.job.common.JobResponse;
+import jjie.job_spring.job.common.JobApplication;
+import jjie.job_spring.job.mapper.JobMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;

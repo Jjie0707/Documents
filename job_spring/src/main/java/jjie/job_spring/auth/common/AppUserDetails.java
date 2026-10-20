@@ -1,4 +1,4 @@
-package jjie.job_spring.auth;
+package jjie.job_spring.auth.common;
 
 import jjie.job_spring.user.common.UserAccount;
 import org.springframework.security.core.authority.AuthorityUtils;

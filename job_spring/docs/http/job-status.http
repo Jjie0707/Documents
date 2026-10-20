@@ -1,0 +1,78 @@
+@baseUrl = http://localhost:8082
+@jobId = {{createdJobId}}
+
+### 准备：先在 auth.http 登录临时账号 A，再在 jobs.http 新增一条虚构岗位。
+### jobs.http 会把新 ID 保存为 createdJobId；也可将上方 jobId 改为自己的测试岗位 ID。
+### 1. 获取当前登录会话的 CSRF Token。每次重新登录后先执行此请求。
+GET {{baseUrl}}/api/auth/csrf
+
+> {%
+    if (response.status === 200) client.global.set("statusCsrfToken", response.body.token);
+%}
+
+### 2. 改为“已投递”，应返回 200、同一岗位 ID 和 APPLIED。
+PATCH {{baseUrl}}/api/jobs/{{jobId}}/status
+Content-Type: application/json
+X-CSRF-TOKEN: {{statusCsrfToken}}
+
+{
+  "status": "APPLIED"
+}
+
+> {%
+    client.test("投递状态修改成功", function () {
+        client.assert(response.status === 200, "应返回 HTTP 200");
+        client.assert(response.body.status === "APPLIED", "状态应为已投递");
+    });
+%}
+
+### 3. 重复设置相同状态仍应为 200；普通 PATCH 不会消耗 Token，可以复用。
+PATCH {{baseUrl}}/api/jobs/{{jobId}}/status
+Content-Type: application/json
+X-CSRF-TOKEN: {{statusCsrfToken}}
+
+{
+  "status": "APPLIED"
+}
+
+### 4. 详情回读应为 APPLIED；公司、岗位等其他字段不变。
+GET {{baseUrl}}/api/jobs/{{jobId}}
+
+### 5. 列表回读也应显示新状态。
+GET {{baseUrl}}/api/jobs
+
+### 6. 非法状态应返回 400，不回显输入，不修改数据。
+PATCH {{baseUrl}}/api/jobs/{{jobId}}/status
+Content-Type: application/json
+X-CSRF-TOKEN: {{statusCsrfToken}}
+
+{
+  "status": "NOT_A_STATUS"
+}
+
+### 7. 缺少状态应返回 400，fields.status 有提示。
+PATCH {{baseUrl}}/api/jobs/{{jobId}}/status
+Content-Type: application/json
+X-CSRF-TOKEN: {{statusCsrfToken}}
+
+{}
+
+### 8. 缺少 CSRF Token 应返回 403，不修改数据。
+PATCH {{baseUrl}}/api/jobs/{{jobId}}/status
+Content-Type: application/json
+
+{
+  "status": "OFFER"
+}
+
+### 9. 不存在的岗位返回 404。
+PATCH {{baseUrl}}/api/jobs/9223372036854775807/status
+Content-Type: application/json
+X-CSRF-TOKEN: {{statusCsrfToken}}
+
+{
+  "status": "APPLIED"
+}
+
+### 越权检查：保留 A 的 jobId，在 auth.http 退出 A、登录 B，再执行请求 1。
+### 随后用请求 2 修改 A 的岗位，应返回 404；A 再登录回读，状态不受 B 的请求影响。

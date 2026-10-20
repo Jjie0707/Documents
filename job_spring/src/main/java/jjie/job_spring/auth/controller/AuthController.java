@@ -1,6 +1,11 @@
-package jjie.job_spring.auth;
+package jjie.job_spring.auth.controller;
 
 import jakarta.validation.Valid;
+import jjie.job_spring.auth.common.AppUserDetails;
+import jjie.job_spring.auth.common.CurrentUserResponse;
+import jjie.job_spring.auth.common.RegisterRequest;
+import jjie.job_spring.auth.common.RegistrationResponse;
+import jjie.job_spring.auth.service.RegistrationService;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

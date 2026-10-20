@@ -1,4 +1,4 @@
-package jjie.job_spring.auth;
+package jjie.job_spring.auth.exception;
 
 public class UsernameAlreadyExistsException extends RuntimeException {
     public UsernameAlreadyExistsException() {

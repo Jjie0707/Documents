@@ -1,7 +1,10 @@
-package jjie.job_spring.auth;
+package jjie.job_spring.auth.advice;
 
 import java.util.Map;
 import java.util.TreeMap;
+
+import jjie.job_spring.auth.exception.UsernameAlreadyExistsException;
+import jjie.job_spring.auth.controller.AuthController;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

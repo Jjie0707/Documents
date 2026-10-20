@@ -1,6 +1,7 @@
-package jjie.job_spring.auth;
+package jjie.job_spring.auth.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import jjie.job_spring.auth.common.AppUserDetails;
 import jjie.job_spring.user.common.UserAccount;
 import jjie.job_spring.user.mapper.UserMapper;
 import org.springframework.security.core.userdetails.UserDetails;

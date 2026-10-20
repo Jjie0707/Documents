@@ -1,4 +1,4 @@
-package jjie.job_spring.job;
+package jjie.job_spring.job.common;
 
 import java.time.LocalDate;
 

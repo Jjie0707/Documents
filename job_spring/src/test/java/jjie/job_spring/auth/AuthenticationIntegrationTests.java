@@ -1,6 +1,7 @@
 package jjie.job_spring.auth;
 
 import com.jayway.jsonpath.JsonPath;
+import jjie.job_spring.auth.common.AppUserDetails;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

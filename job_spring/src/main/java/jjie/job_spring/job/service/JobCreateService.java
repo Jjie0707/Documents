@@ -1,5 +1,10 @@
-package jjie.job_spring.job;
+package jjie.job_spring.job.service;
 
+import jjie.job_spring.job.mapper.JobMapper;
+import jjie.job_spring.job.common.JobResponse;
+import jjie.job_spring.job.common.CreateJobRequest;
+import jjie.job_spring.job.common.JobApplication;
+import jjie.job_spring.job.common.JobStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +24,7 @@ public class JobCreateService {
         job.setJobTitle(request.jobTitle());
         job.setCity(request.city());
         job.setSalary(request.salary());
-        job.setStatus("TO_APPLY");
+        job.setStatus(JobStatus.TO_APPLY.name());
         // AUTO 主键由数据库生成，MyBatis-Plus 将生成的 ID 回填到 job。
         mapper.insert(job);
         return JobResponse.from(job);
