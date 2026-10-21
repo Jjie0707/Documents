@@ -69,11 +69,11 @@ class JobSearchIntegrationTests {
     }
 
     @Test
-    void absentKeywordPreservesOriginalArrayOrderAndFields() throws Exception {
+    void absentKeywordPreservesOrderAndFieldsInPage() throws Exception {
         String response = mvc.perform(get("/api/jobs").with(user(alice)))
                 .andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
-                .andExpect(jsonPath("$[0].userId").doesNotExist())
-                .andExpect(jsonPath("$[0].status").value("INTERVIEWING"))
+                .andExpect(jsonPath("$.items[0].userId").doesNotExist())
+                .andExpect(jsonPath("$.items[0].status").value("INTERVIEWING"))
                 .andReturn().getResponse().getContentAsString();
         assertThat(ids(response)).containsExactly(plainJob, cityJob, titleJob, companyJob);
     }
@@ -159,24 +159,24 @@ class JobSearchIntegrationTests {
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         assertThat(ids(response)).containsExactly(cityJob, titleJob, companyJob);
         mvc.perform(get("/api/jobs").with(user(bob)).param("keyword", "Java"))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(3))
-                .andExpect(jsonPath("$[0].companyName").value("其他用户公司丙"));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(3))
+                .andExpect(jsonPath("$.items[0].companyName").value("其他用户公司丙"));
     }
 
     @Test
-    void noMatchOrForeignOnlyMatchReturnsEmptyArray() throws Exception {
+    void noMatchOrForeignOnlyMatchReturnsEmptyPage() throws Exception {
         seedJob(bob.getId(), "FOREIGN_ONLY_MARKER", "其他用户专用岗位", null);
         for (String keyword : new String[] {"没有匹配的虚构关键词", "FOREIGN_ONLY_MARKER", "' OR 1=1 --"}) {
-            search(keyword).andExpect(status().isOk()).andExpect(content().json("[]"));
+            search(keyword).andExpect(status().isOk()).andExpect(jsonPath("$.items").isEmpty());
         }
     }
 
     @Test
     void accountWithoutJobsGetsEmptyArrayWithAndWithoutKeyword() throws Exception {
         AppUserDetails emptyUser = seedUser("search_demo_empty");
-        mvc.perform(get("/api/jobs").with(user(emptyUser))).andExpect(status().isOk()).andExpect(content().json("[]"));
+        mvc.perform(get("/api/jobs").with(user(emptyUser))).andExpect(status().isOk()).andExpect(jsonPath("$.items").isEmpty());
         mvc.perform(get("/api/jobs").with(user(emptyUser)).param("keyword", "Java"))
-                .andExpect(status().isOk()).andExpect(content().json("[]"));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items").isEmpty());
     }
 
     @Test
@@ -192,7 +192,7 @@ class JobSearchIntegrationTests {
     }
 
     private static List<Long> ids(String response) {
-        List<Number> values = JsonPath.read(response, "$[*].id");
+        List<Number> values = JsonPath.read(response, "$.items[*].id");
         return values.stream().map(Number::longValue).toList();
     }
 

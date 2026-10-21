@@ -1,11 +1,11 @@
 package jjie.job_spring.job.controller;
 
 import jakarta.validation.Valid;
-import java.util.List;
 import jjie.job_spring.auth.common.AppUserDetails;
 import jjie.job_spring.job.service.JobReadService;
 import jjie.job_spring.job.common.JobResponse;
 import jjie.job_spring.job.common.JobListQuery;
+import jjie.job_spring.job.common.JobPageResponse;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,7 +25,7 @@ public class JobReadController {
     }
 
     @GetMapping
-    public ResponseEntity<List<JobResponse>> list(@Valid @ModelAttribute JobListQuery query,
+    public ResponseEntity<JobPageResponse> list(@Valid @ModelAttribute JobListQuery query,
                                                 @AuthenticationPrincipal AppUserDetails user) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
                 .body(service.listForUser(user.getId(), query));

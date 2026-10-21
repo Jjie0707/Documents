@@ -88,7 +88,7 @@ class JobUpdateIntegrationTests {
         mvc.perform(get("/api/jobs/" + aliceJob).with(user(alice)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.companyName").value("修改公司"));
         mvc.perform(get("/api/jobs").with(user(alice)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$[0].companyName").value("修改公司"));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].companyName").value("修改公司"));
     }
 
     @ParameterizedTest

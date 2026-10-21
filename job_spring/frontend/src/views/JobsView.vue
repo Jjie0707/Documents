@@ -18,8 +18,14 @@ const keywordError = ref('')
 const statusError = ref('')
 const searchInput = ref(null)
 const statusInput = ref(null)
+const pageSize = ref(10)
+const submittedPage = ref(1)
+const page = ref(1)
+const total = ref(0)
+const totalPages = ref(0)
+const resultSize = ref(10)
 const sameSearchPending = computed(() => loading.value && keyword.value.trim() === submittedKeyword.value
-  && status.value === submittedStatus.value)
+  && status.value === submittedStatus.value && submittedPage.value === 1)
 const hasAppliedFilters = computed(() => Boolean(appliedKeyword.value || appliedStatus.value))
 const router = useRouter()
 let requestNumber = 0
@@ -30,16 +36,23 @@ async function loadJobs() {
   const number = ++requestNumber
   const queryKeyword = submittedKeyword.value
   const queryStatus = submittedStatus.value
+  const queryPage = submittedPage.value
+  const querySize = pageSize.value
   loading.value = true
   error.value = ''
   jobs.value = []
   try {
-    const query = new URLSearchParams()
+    const query = new URLSearchParams({ page: String(queryPage), size: String(querySize) })
     if (queryKeyword) query.set('keyword', queryKeyword)
     if (queryStatus) query.set('status', queryStatus)
     const result = await request(`/api/jobs${query.size ? `?${query}` : ''}`)
     if (!active || number !== requestNumber) return
-    jobs.value = result
+    jobs.value = result.items
+    page.value = result.page
+    submittedPage.value = result.page
+    resultSize.value = result.size
+    total.value = result.total
+    totalPages.value = result.totalPages
     appliedKeyword.value = queryKeyword
     appliedStatus.value = queryStatus
     if (keyword.value.trim() === queryKeyword) keywordError.value = ''
@@ -50,7 +63,7 @@ async function loadJobs() {
       clearUser()
       await router.replace('/login')
     } else {
-      error.value = failure.fields?.keyword || failure.fields?.status || failure.message
+      error.value = failure.fields?.keyword || failure.fields?.status || failure.fields?.page || failure.fields?.size || failure.message
       if (failure.fields?.keyword && keyword.value.trim() === queryKeyword) {
         keywordError.value = failure.fields.keyword
         await nextTick()
@@ -76,19 +89,32 @@ async function searchJobs() {
     searchInput.value?.focus()
     return
   }
-  if (loading.value && value === submittedKeyword.value && status.value === submittedStatus.value) return
+  if (loading.value && value === submittedKeyword.value && status.value === submittedStatus.value && submittedPage.value === 1) return
   keyword.value = value
   submittedKeyword.value = value
   submittedStatus.value = status.value
+  submittedPage.value = 1
   await loadJobs()
 }
 
 function clearSearch() {
   keyword.value = ''; keywordError.value = ''; status.value = ''; statusError.value = ''
   // 全部列表已在请求中时，清空草稿即可，不重复发送同一次查询。
-  if (loading.value && !submittedKeyword.value && !submittedStatus.value) return
+  if (loading.value && !submittedKeyword.value && !submittedStatus.value && submittedPage.value === 1) return
   submittedKeyword.value = ''
   submittedStatus.value = ''
+  submittedPage.value = 1
+  loadJobs()
+}
+
+function changePage(target) {
+  if (loading.value || target < 1 || target > totalPages.value) return
+  submittedPage.value = target
+  loadJobs()
+}
+
+function changePageSize() {
+  submittedPage.value = 1
   loadJobs()
 }
 
@@ -112,7 +138,7 @@ onMounted(loadJobs)
     <div class="workspace-panel">
       <div class="panel-topline">
         <h2>岗位记录</h2>
-        <span v-if="!loading && !error" class="muted" role="status">{{ hasAppliedFilters ? '找到 ' : '' }}{{ jobs.length }} 条记录</span>
+        <span v-if="!loading && !error" class="muted" role="status">共 {{ total }} 条 · 本页 {{ jobs.length }} 条</span>
       </div>
 
       <form class="job-search" role="search" aria-label="搜索岗位" novalidate @submit.prevent="searchJobs">
@@ -138,7 +164,7 @@ onMounted(loadJobs)
           <div class="job-search-actions">
             <button type="submit" class="primary-button" :disabled="sameSearchPending">搜索</button>
             <button type="button" class="secondary-button"
-                    :disabled="!keyword && !submittedKeyword && !status && !submittedStatus && !keywordError && !statusError"
+                    :disabled="!keyword && !submittedKeyword && !status && !submittedStatus && !keywordError && !statusError && submittedPage === 1"
                     @click="clearSearch">重置条件</button>
           </div>
         </div>
@@ -147,10 +173,21 @@ onMounted(loadJobs)
         <p v-if="statusError" id="job-filter-status-error" class="field-error" role="alert">{{ statusError }}</p>
       </form>
 
+      <div class="job-page-size">
+        <label for="job-page-size">每页条数</label>
+        <select id="job-page-size" v-model.number="pageSize" :disabled="loading" @change="changePageSize">
+          <option :value="10">10 条</option>
+          <option :value="20">20 条</option>
+          <option :value="50">50 条</option>
+        </select>
+        <span class="muted">切换条数后回到第 1 页</span>
+      </div>
+
       <p v-if="loading" class="loading-state" role="status">{{ submittedKeyword || submittedStatus ? '正在查询岗位…' : '正在加载岗位…' }}</p>
       <div v-else-if="error" class="empty-placeholder" role="alert">
         <h3>岗位暂时无法加载</h3><p>{{ error }}</p>
         <p v-if="submittedKeyword || submittedStatus" class="search-result-label">当前查询：{{ describeQuery(submittedKeyword, submittedStatus) }}</p>
+        <p class="muted">请求第 {{ submittedPage }} 页，每页 {{ pageSize }} 条</p>
         <button class="text-button" @click="loadJobs()">重新加载</button>
       </div>
       <template v-else>
@@ -179,6 +216,14 @@ onMounted(loadJobs)
         <p>点击下方“添加岗位”，记下第一条求职记录。</p>
       </div>
       </template>
+
+      <nav v-if="!loading && !error && total > 0" class="job-pagination" aria-label="岗位列表分页">
+        <p class="muted" role="status">第 {{ page }} / {{ totalPages }} 页 · 第 {{ (page - 1) * resultSize + 1 }}–{{ (page - 1) * resultSize + jobs.length }} 条</p>
+        <div class="job-pagination-actions">
+          <button type="button" class="secondary-button" :disabled="page <= 1" @click="changePage(page - 1)">上一页</button>
+          <button type="button" class="secondary-button" :disabled="page >= totalPages" @click="changePage(page + 1)">下一页</button>
+        </div>
+      </nav>
 
       <div class="panel-bottomline">
         <p class="muted">记下感兴趣的岗位，逐步整理求职进度。</p>

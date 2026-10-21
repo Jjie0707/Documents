@@ -81,10 +81,10 @@ class JobCreationIntegrationTests {
         mvc.perform(get("/api/jobs/" + id).with(user(alice)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.jobTitle").value("Java 后端实习"));
         mvc.perform(get("/api/jobs").with(user(alice)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(id));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].id").value(id));
         mvc.perform(get("/api/jobs").with(user(bob)))
-                .andExpect(status().isOk()).andExpect(content().json("[]"));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items").isEmpty());
         mvc.perform(get("/api/jobs/" + id).with(user(bob))).andExpect(status().isNotFound());
     }
 

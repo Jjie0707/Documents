@@ -131,6 +131,11 @@ select { width: 100%; min-height: 44px; border-radius: 6px; border: 1px solid #d
 .job-search input[aria-invalid='true'] { border-color: #b56054; }
 .job-status-filter select[aria-invalid='true'] { border-color: #b56054; }
 .job-search-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.job-page-size { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 24px; font-size: .85rem; }
+.job-page-size select { width: auto; min-height: 44px; font-size: 16px; }
+.job-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; }
+.job-pagination p { margin: 0; }
+.job-pagination-actions { display: flex; gap: 10px; }
 .search-result-label { margin-bottom: 18px; overflow-wrap: anywhere; }
 
 @media (max-width: 700px) {

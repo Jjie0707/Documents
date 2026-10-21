@@ -6,6 +6,7 @@ import java.util.List;
 import jjie.job_spring.job.common.JobResponse;
 import jjie.job_spring.job.common.JobApplication;
 import jjie.job_spring.job.common.JobListQuery;
+import jjie.job_spring.job.common.JobPageResponse;
 import jjie.job_spring.job.mapper.JobMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ public class JobReadService {
         this.mapper = mapper;
     }
 
-    public List<JobResponse> listForUser(Long currentUserId, JobListQuery query) {
+    public JobPageResponse listForUser(Long currentUserId, JobListQuery query) {
         LambdaQueryWrapper<JobApplication> conditions = new LambdaQueryWrapper<JobApplication>()
                 .eq(JobApplication::getUserId, currentUserId);
         if (query.status() != null) {
@@ -34,8 +35,16 @@ public class JobReadService {
                     .or().apply("LOWER(job_title) LIKE LOWER({0}) ESCAPE '!'", pattern)
                     .or().apply("LOWER(city) LIKE LOWER({0}) ESCAPE '!'", pattern));
         }
-        return mapper.selectList(conditions.orderByDesc(JobApplication::getId))
+        // COUNT 和取页共用筛选条件；COUNT 不需要排序，也不带 LIMIT。
+        long total = mapper.selectCount(conditions);
+        long totalPages = total / query.size() + (total % query.size() == 0 ? 0 : 1);
+        // 请求页超过末页时返回末页；无结果时统一为第 1 页、共 0 页。
+        int page = (int) Math.min(query.page(), Math.max(1, totalPages));
+        long offset = (page - 1L) * query.size();
+        List<JobResponse> items = total == 0 ? List.of() : mapper.selectPageRows(
+                        conditions.orderByDesc(JobApplication::getId), query.size(), offset)
                 .stream().map(JobResponse::from).toList();
+        return new JobPageResponse(items, page, query.size(), total, totalPages);
     }
 
     private static String containsPattern(String keyword) {

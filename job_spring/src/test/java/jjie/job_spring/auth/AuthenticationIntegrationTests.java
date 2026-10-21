@@ -125,13 +125,13 @@ class AuthenticationIntegrationTests {
         MockHttpSession alice = loginAs("alice");
         MockHttpSession bob = loginAs("bob");
         mvc.perform(get("/api/jobs").session(alice).param("userId", bobId.toString()))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(aliceJob))
-                .andExpect(jsonPath("$[0].userId").doesNotExist())
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].id").value(aliceJob))
+                .andExpect(jsonPath("$.items[0].userId").doesNotExist())
                 .andExpect(content().string(not(containsString("Bob Company"))));
         mvc.perform(get("/api/jobs").session(bob))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(bobJob));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].id").value(bobJob));
     }
 
     @Test
@@ -150,7 +150,7 @@ class AuthenticationIntegrationTests {
     void emptyAccountGetsEmptyList() throws Exception {
         jdbc.update("DELETE FROM job_applications WHERE user_id=?", aliceId);
         mvc.perform(get("/api/jobs").session(loginAs("alice")))
-                .andExpect(status().isOk()).andExpect(content().json("[]"));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items").isEmpty());
     }
 
     @Test

@@ -79,11 +79,11 @@ class JobDeleteIntegrationTests {
         assertThat(row(bobJob)).isEqualTo(bobBefore);
         mvc.perform(get("/api/jobs/" + aliceJob).with(user(alice))).andExpect(status().isNotFound());
         mvc.perform(get("/api/jobs").with(user(alice)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(aliceOtherJob));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].id").value(aliceOtherJob));
         mvc.perform(get("/api/jobs").with(user(bob)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(bobJob));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].id").value(bobJob));
     }
 
     @Test

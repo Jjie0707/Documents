@@ -82,7 +82,7 @@ class JobStatusIntegrationTests {
         mvc.perform(get("/api/jobs/" + aliceJob).with(user(alice)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value(status.name()));
         mvc.perform(get("/api/jobs").with(user(alice)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$[0].status").value(status.name()));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].status").value(status.name()));
     }
 
     @Test

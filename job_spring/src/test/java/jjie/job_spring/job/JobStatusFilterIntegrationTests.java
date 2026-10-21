@@ -70,9 +70,9 @@ class JobStatusFilterIntegrationTests {
         List<Map<String, Object>> before = rows();
         String response = mvc.perform(get("/api/jobs").with(user(alice)).param("status", state.name()))
                 .andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
-                .andExpect(jsonPath("$[0].status").value(state.name()))
-                .andExpect(jsonPath("$[1].status").value(state.name()))
-                .andExpect(jsonPath("$[0].userId").doesNotExist())
+                .andExpect(jsonPath("$.items[0].status").value(state.name()))
+                .andExpect(jsonPath("$.items[1].status").value(state.name()))
+                .andExpect(jsonPath("$.items[0].userId").doesNotExist())
                 .andReturn().getResponse().getContentAsString();
         assertThat(ids(response)).containsExactly(plain.get(state), matching.get(state));
         assertThat(response).doesNotContain("其他用户");
@@ -126,11 +126,11 @@ class JobStatusFilterIntegrationTests {
     }
 
     @Test
-    void unmatchedCombinationAndForeignOnlyMatchReturnEmptyArray() throws Exception {
+    void unmatchedCombinationAndForeignOnlyMatchReturnEmptyPage() throws Exception {
         seedJob(bob.getId(), JobStatus.OFFER, "FOREIGN_ONLY_MARKER", "其他用户岗位", null);
         for (String keyword : new String[]{"无匹配的虚构关键词", "FOREIGN_ONLY_MARKER"}) {
             mvc.perform(get("/api/jobs").with(user(alice)).param("keyword", keyword).param("status", "OFFER"))
-                    .andExpect(status().isOk()).andExpect(content().json("[]"));
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.items").isEmpty());
         }
     }
 
@@ -138,12 +138,12 @@ class JobStatusFilterIntegrationTests {
     void emptyAccountHasNoMatchesAndAnonymousQueryStillRequiresLogin() throws Exception {
         AppUserDetails emptyUser = seedUser("filter_demo_empty");
         mvc.perform(get("/api/jobs").with(user(emptyUser)).param("status", "OFFER"))
-                .andExpect(status().isOk()).andExpect(content().json("[]"));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items").isEmpty());
         mvc.perform(get("/api/jobs").param("status", "OFFER")).andExpect(status().isUnauthorized());
     }
 
     private static List<Long> ids(String response) {
-        List<Number> values = JsonPath.read(response, "$[*].id");
+        List<Number> values = JsonPath.read(response, "$.items[*].id");
         return values.stream().map(Number::longValue).toList();
     }
 

@@ -20,6 +20,8 @@ public class JobReadExceptionHandler {
             // 类型转换错误的默认消息可能包含原输入或异常细节，返回固定业务提示。
             String message = error.isBindingFailure() ? "查询参数格式不正确" : error.getDefaultMessage();
             if ("status".equals(error.getField())) message = "请选择有效的投递状态";
+            if ("page".equals(error.getField())) message = "页码必须是大于等于1的整数";
+            if ("size".equals(error.getField())) message = "每页条数必须是1到50之间的整数";
             fields.putIfAbsent(error.getField(), message);
         });
         return ResponseEntity.badRequest().body(

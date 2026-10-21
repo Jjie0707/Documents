@@ -36,7 +36,7 @@ class JobSearchControllerTests {
         account.setId(2L);
         account.setUsername("search_controller_demo");
         account.setPasswordHash(UUID.randomUUID().toString());
-        when(service.listForUser(2L, new JobListQuery("DO_NOT_ECHO", null)))
+        when(service.listForUser(2L, new JobListQuery("DO_NOT_ECHO", null, 1, 10)))
                 .thenThrow(new DataAccessResourceFailureException("PRIVATE_DATABASE_DETAILS"));
         mvc.perform(get("/api/jobs").with(user(new AppUserDetails(account))).param("keyword", "DO_NOT_ECHO"))
                 .andExpect(status().isServiceUnavailable())

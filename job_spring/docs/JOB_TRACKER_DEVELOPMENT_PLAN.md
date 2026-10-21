@@ -2,7 +2,7 @@
 
 这份文档用于规划项目，也可以直接提供给 Codex 作为开发上下文。项目按阶段推进：先完成不依赖 AI 的可用版本，再加入招聘截图识别。
 
-当前页面布局以用户于 2026-10-18 提供的两张草图为参考，见 [页面约定](pages.md)。用户已确认[阶段 2](authentication.md)、[最小新增岗位接口](job-creation.md)、[网页新增岗位表单](job-create-form.md)、[岗位状态修改后端接口](job-status.md)、[详情页状态修改操作](job-status-ui.md)、[编辑岗位基本信息后端接口](job-update.md)、[网页编辑岗位表单](job-edit-form.md)、[删除岗位后端接口](job-deletion.md)、[网页删除操作](job-delete-ui.md)、[关键词搜索后端接口](job-search.md)及[网页关键词搜索](job-search-ui.md)验收通过。2026-10-21 已完成[状态筛选接口与页面](job-status-filter.md)，支持与关键词取交集、重置两项条件及结果条件展示；开发验证已完成，用户验收待确认。阶段 3 尚余分页未实现，继续按小任务推进。README 后补。
+当前页面布局以用户于 2026-10-18 提供的两张草图为参考，见 [页面约定](pages.md)。用户已确认[阶段 2](authentication.md)、[最小新增岗位接口](job-creation.md)、[网页新增岗位表单](job-create-form.md)、[岗位状态修改后端接口](job-status.md)、[详情页状态修改操作](job-status-ui.md)、[编辑岗位基本信息后端接口](job-update.md)、[网页编辑岗位表单](job-edit-form.md)、[删除岗位后端接口](job-deletion.md)、[网页删除操作](job-delete-ui.md)、[关键词搜索后端接口](job-search.md)及[网页关键词搜索](job-search-ui.md)验收通过。2026-10-21 已完成[状态筛选接口与页面](job-status-filter.md)，支持与关键词取交集、重置两项条件及结果条件展示；开发验证已完成，用户验收待确认。2026-10-21 已完成[分页接口与页面](job-pagination.md)，包含数据库分页、总数与页码、每页条数选择和筛选组合。阶段 3 计划功能已全部实现，分页及阶段 3 全流程的用户验收待确认；尚未进入阶段 4。README 后补。
 
 ## 1. 项目目标
 
