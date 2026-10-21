@@ -29,13 +29,14 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest({InterviewRoundCreateController.class, InterviewRoundReadController.class})
+@WebMvcTest({InterviewRoundCreateController.class, InterviewRoundReadController.class, jjie.job_spring.interview.controller.InterviewRoundUpdateController.class})
 @org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc(print = org.springframework.boot.webmvc.test.autoconfigure.MockMvcPrint.NONE)
 @Import(SecurityConfig.class)
 class InterviewRoundControllerTests {
     @Autowired private MockMvc mvc;
     @MockitoBean private InterviewRoundCreateService createService;
     @MockitoBean private InterviewRoundReadService readService;
+    @MockitoBean private jjie.job_spring.interview.service.InterviewRoundUpdateService updateService;
     @MockitoBean private UserDetailsService users;
 
     @Test
@@ -51,7 +52,7 @@ class InterviewRoundControllerTests {
 
     @Test
     void readDatabaseFailureIsSanitized503() throws Exception {
-        when(readService.listForUser(10L, 1L)).thenThrow(new DataAccessResourceFailureException("PRIVATE_DATABASE_DETAILS"));
+        when(readService.listForUser(eq(10L), eq(1L), any())).thenThrow(new DataAccessResourceFailureException("PRIVATE_DATABASE_DETAILS"));
         mvc.perform(get("/api/jobs/10/interview-rounds").with(user(identity())))
                 .andExpect(status().isServiceUnavailable()).andExpect(jsonPath("$.code").value("SERVICE_UNAVAILABLE"))
                 .andExpect(content().string(not(containsString("PRIVATE_DATABASE_DETAILS"))));
@@ -89,6 +90,16 @@ class InterviewRoundControllerTests {
                         .contentType(MediaType.APPLICATION_JSON).content("{\"roundNo\":1,\"review\":\"PRIVATE_REVIEW\"}"))
                 .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("DUPLICATE_ROUND"))
                 .andExpect(jsonPath("$.fields.roundNo").isString())
+                .andExpect(content().string(not(containsString("PRIVATE_REVIEW"))));
+    }
+
+    @Test
+    void updateDatabaseFailureIsSanitized503() throws Exception {
+        when(updateService.updateForUser(eq(10L), eq(1L), any())).thenThrow(new DataAccessResourceFailureException("PRIVATE_DATABASE_DETAILS"));
+        mvc.perform(put("/api/interview-rounds/10").with(user(identity())).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"roundNo\":1,\"review\":\"PRIVATE_REVIEW\"}"))
+                .andExpect(status().isServiceUnavailable()).andExpect(jsonPath("$.code").value("SERVICE_UNAVAILABLE"))
+                .andExpect(content().string(not(containsString("PRIVATE_DATABASE_DETAILS"))))
                 .andExpect(content().string(not(containsString("PRIVATE_REVIEW"))));
     }
 

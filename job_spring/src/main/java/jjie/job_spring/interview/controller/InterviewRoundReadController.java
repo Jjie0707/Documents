@@ -1,8 +1,10 @@
 package jjie.job_spring.interview.controller;
 
-import java.util.List;
+import jakarta.validation.Valid;
 import jjie.job_spring.auth.common.AppUserDetails;
-import jjie.job_spring.interview.common.InterviewRoundResponse;
+import jjie.job_spring.interview.common.InterviewRoundPageQuery;
+import jjie.job_spring.interview.common.InterviewRoundPageResponse;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import jjie.job_spring.interview.service.InterviewRoundReadService;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +24,9 @@ public class InterviewRoundReadController {
     }
 
     @GetMapping
-    public ResponseEntity<List<InterviewRoundResponse>> list(@PathVariable Long id,
+    public ResponseEntity<InterviewRoundPageResponse> list(@PathVariable Long id,
+            @Valid @ModelAttribute InterviewRoundPageQuery query,
             @AuthenticationPrincipal AppUserDetails user) {
-        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(service.listForUser(id, user.getId()));
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(service.listForUser(id, user.getId(), query));
     }
 }

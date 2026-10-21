@@ -171,3 +171,10 @@ select { width: 100%; min-height: 44px; border-radius: 6px; border: 1px solid #d
 .interview-panel .form-message.error { color: #963f35; }
 .interview-panel .form-message.success { color: #346b52; }
 .interview-panel .field-error { color: #a13f35; }
+
+.interview-pagination { border-top: 1px solid var(--line); padding-top: 16px; }
+.interview-pagination-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.interview-pagination-actions .secondary-button { flex: 1; width: auto; margin-top: 0; padding: 10px 12px; }
+
+.interview-form-heading { margin-bottom: 18px; font-size: .95rem; }
+.interview-form > .input-help { margin-bottom: 18px; }

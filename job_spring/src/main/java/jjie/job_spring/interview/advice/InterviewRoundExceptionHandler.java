@@ -3,6 +3,8 @@ package jjie.job_spring.interview.advice;
 import java.util.Map;
 import java.util.TreeMap;
 import jjie.job_spring.interview.exception.DuplicateInterviewRoundException;
+import jjie.job_spring.interview.exception.InterviewRoundNotFoundException;
+import jjie.job_spring.interview.controller.InterviewRoundUpdateController;
 import jjie.job_spring.interview.controller.InterviewRoundCreateController;
 import jjie.job_spring.interview.controller.InterviewRoundReadController;
 import org.springframework.dao.DataAccessException;
@@ -15,14 +17,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
-@RestControllerAdvice(assignableTypes = {InterviewRoundCreateController.class, InterviewRoundReadController.class})
+@RestControllerAdvice(assignableTypes = {InterviewRoundCreateController.class, InterviewRoundReadController.class, InterviewRoundUpdateController.class})
 public class InterviewRoundExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<RoundError> invalidArguments(MethodArgumentNotValidException exception) {
         Map<String, String> fields = new TreeMap<>();
         exception.getBindingResult().getFieldErrors().forEach(error -> {
             String field = "interviewTimeSupported".equals(error.getField()) ? "interviewTime" : error.getField();
-            fields.putIfAbsent(field, error.getDefaultMessage());
+            String message = error.isBindingFailure() ? "查询参数格式不正确" : error.getDefaultMessage();
+            if ("page".equals(field)) message = "页码必须是大于等于1的整数";
+            if ("roundId".equals(field)) message = "轮次记录ID必须是正整数";
+            fields.putIfAbsent(field, message);
         });
         return ResponseEntity.badRequest().body(new RoundError("INVALID_REQUEST", "请检查面试轮次参数", fields));
     }
@@ -35,12 +40,17 @@ public class InterviewRoundExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     ResponseEntity<RoundError> invalidId() {
-        return ResponseEntity.badRequest().body(new RoundError("INVALID_REQUEST", "岗位ID格式不正确", Map.of()));
+        return ResponseEntity.badRequest().body(new RoundError("INVALID_REQUEST", "记录ID格式不正确", Map.of()));
     }
 
     @ExceptionHandler(ResponseStatusException.class)
     ResponseEntity<RoundError> missingJob() {
         return ResponseEntity.status(404).body(new RoundError("NOT_FOUND", "岗位不存在", Map.of()));
+    }
+
+    @ExceptionHandler(InterviewRoundNotFoundException.class)
+    ResponseEntity<RoundError> missingRound() {
+        return ResponseEntity.status(404).body(new RoundError("ROUND_NOT_FOUND", "面试轮次不存在或无法访问", Map.of()));
     }
 
     @ExceptionHandler(DuplicateInterviewRoundException.class)

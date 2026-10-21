@@ -1,8 +1,9 @@
 export class ApiError extends Error {
-  constructor(status, message, fields = {}) {
+  constructor(status, message, fields = {}, code = null) {
     super(message)
     this.status = status
     this.fields = fields
+    this.code = code
   }
 }
 
@@ -19,7 +20,7 @@ export async function request(path, options = {}) {
     })
     const body = response.status !== 204 && response.headers.get('content-type')?.includes('application/json')
       ? await response.json() : null
-    if (!response.ok) throw new ApiError(response.status, body?.message || `请求失败（${response.status}）`, body?.fields)
+    if (!response.ok) throw new ApiError(response.status, body?.message || `请求失败（${response.status}）`, body?.fields, body?.code)
     return body
   } catch (error) {
     if (error instanceof ApiError) throw error

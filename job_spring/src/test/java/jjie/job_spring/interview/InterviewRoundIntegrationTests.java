@@ -76,14 +76,14 @@ class InterviewRoundIntegrationTests {
                 .andReturn().getResponse().getContentAsString();
         long id = ((Number) JsonPath.read(body, "$.id")).longValue();
         assertThat(jdbc.queryForObject("SELECT user_id FROM interview_rounds WHERE id=?", Long.class, id)).isEqualTo(owner.getId());
-        read(jobId).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(id))
-                .andExpect(jsonPath("$[0].interviewTime").value("2026-10-21T14:30:00.123"));
+        read(jobId).andExpect(jsonPath("$.items.length()").value(1)).andExpect(jsonPath("$.items[0].id").value(id))
+                .andExpect(jsonPath("$.items[0].interviewTime").value("2026-10-21T14:30:00.123"));
         assertThat(jdbc.queryForMap("SELECT * FROM job_applications WHERE id=?", jobId)).isEqualTo(jobBefore);
     }
 
     @Test
     void emptyOwnedJobIs200AndOptionalFieldsBecomeNull() throws Exception {
-        read(jobId).andExpect(jsonPath("$").isEmpty());
+        read(jobId).andExpect(jsonPath("$.items").isEmpty());
         create(jobId, "{\"roundNo\":1}").andExpect(status().isCreated());
         create(jobId, "{\"roundNo\":2,\"interviewTime\":null,\"roundType\":\"  \",\"result\":\"\\t\",\"review\":\"\\n\"}")
                 .andExpect(status().isCreated());
@@ -95,12 +95,59 @@ class InterviewRoundIntegrationTests {
         for (int roundNo : new int[]{3, 1, 2}) create(jobId, "{\"roundNo\":" + roundNo + "}").andExpect(status().isCreated());
         // 模拟本次修正前已有的重复数据；读取不能静默隐藏、合并或删除历史记录。
         jdbc.update("INSERT INTO interview_rounds(user_id,job_application_id,round_no,review) VALUES (?,?,1,'历史虚构复盘')", owner.getId(), jobId);
-        String body = read(jobId)
+        java.util.List<Integer> numbers = new java.util.ArrayList<>();
+        java.util.List<Long> ids = new java.util.ArrayList<>();
+        for (int page = 1; page <= 4; page++) {
+            String body = mvc.perform(get(path(jobId)).with(user(owner)).param("page", String.valueOf(page)))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(1))
+                    .andExpect(jsonPath("$.totalPages").value(4))
+                    .andReturn().getResponse().getContentAsString();
+            numbers.add(JsonPath.read(body, "$.items[0].roundNo"));
+            ids.add(((Number) JsonPath.read(body, "$.items[0].id")).longValue());
+        }
+        assertThat(numbers).containsExactly(1, 1, 2, 3);
+        assertThat(ids).doesNotHaveDuplicates();
+        assertThat(ids.get(0)).isLessThan(ids.get(1));
+        read(secondJob).andExpect(jsonPath("$.items").isEmpty());
+    }
+
+    @Test
+    void paginationDefaultsEmptyMetadataAndOutOfRangePageAreConsistent() throws Exception {
+        read(jobId).andExpect(jsonPath("$.page").value(1)).andExpect(jsonPath("$.size").value(1))
+                .andExpect(jsonPath("$.total").value(0)).andExpect(jsonPath("$.totalPages").value(0));
+        create(jobId, "{\"roundNo\":3}").andExpect(status().isCreated());
+        create(jobId, "{\"roundNo\":9}").andExpect(status().isCreated());
+        read(jobId).andExpect(jsonPath("$.items[0].roundNo").value(3));
+        mvc.perform(get(path(jobId)).with(user(owner)).param("page", "2147483647").param("size", "50"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.page").value(2))
+                .andExpect(jsonPath("$.size").value(1)).andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].roundNo").value(9));
+    }
+
+    @Test
+    void focusedRecordUsesItsSortedPositionAndCannotCrossJobsOrOwners() throws Exception {
+        create(jobId, "{\"roundNo\":9}").andExpect(status().isCreated());
+        long target = jdbc.queryForObject("SELECT id FROM interview_rounds WHERE job_application_id=?", Long.class, jobId);
+        create(jobId, "{\"roundNo\":3}").andExpect(status().isCreated());
+        mvc.perform(get(path(jobId)).with(user(owner)).param("roundId", String.valueOf(target)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.page").value(2))
+                .andExpect(jsonPath("$.items[0].id").value(target));
+        mvc.perform(get(path(secondJob)).with(user(owner)).param("roundId", String.valueOf(target)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items").isEmpty());
+        mvc.perform(get(path(otherJob)).with(user(other)).param("roundId", String.valueOf(target)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items").isEmpty());
+        mvc.perform(get(path(jobId)).with(user(owner)).param("roundId", String.valueOf(Long.MAX_VALUE)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.page").value(1));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"page,0", "page,-1", "page,1.5", "page,2147483648", "page,DO_NOT_ECHO",
+            "roundId,0", "roundId,-1", "roundId,1.5", "roundId,9223372036854775808", "roundId,DO_NOT_ECHO"})
+    void invalidPageParametersAreSanitized400(String field, String value) throws Exception {
+        String body = mvc.perform(get(path(jobId)).with(user(owner)).param(field, value))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.fields." + field).isString())
                 .andReturn().getResponse().getContentAsString();
-        assertThat(JsonPath.<java.util.List<Integer>>read(body, "$[*].roundNo")).containsExactly(1, 1, 2, 3);
-        java.util.List<Number> ids = JsonPath.read(body, "$[*].id");
-        assertThat(ids.get(0).longValue()).isLessThan(ids.get(1).longValue());
-        read(secondJob).andExpect(jsonPath("$").isEmpty());
+        assertThat(body).doesNotContain("DO_NOT_ECHO", "NumberFormatException", "Failed to convert");
     }
 
     @Test
@@ -112,7 +159,7 @@ class InterviewRoundIntegrationTests {
                 .andExpect(jsonPath("$.fields.roundNo").isString())
                 .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("DO_NOT_ECHO"))));
         assertThat(jdbc.queryForList("SELECT * FROM interview_rounds ORDER BY id")).isEqualTo(before);
-        read(jobId).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].review").value("原虚构复盘"));
+        read(jobId).andExpect(jsonPath("$.items.length()").value(1)).andExpect(jsonPath("$.items[0].review").value("原虚构复盘"));
     }
 
     @Test
@@ -194,9 +241,9 @@ class InterviewRoundIntegrationTests {
         assertThat(jdbc.queryForObject("SELECT user_id FROM interview_rounds", Long.class)).isEqualTo(owner.getId());
         assertThat(jdbc.queryForObject("SELECT job_application_id FROM interview_rounds", Long.class)).isEqualTo(jobId);
         assertThat(jdbc.queryForObject("SELECT id FROM interview_rounds", Long.class)).isNotEqualTo(Long.MAX_VALUE);
-        mvc.perform(get(path(otherJob)).with(user(other))).andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
+        mvc.perform(get(path(otherJob)).with(user(other))).andExpect(status().isOk()).andExpect(jsonPath("$.items").isEmpty());
         mvc.perform(get(path(jobId)).with(user(other)).param("userId", owner.getId().toString())).andExpect(status().isNotFound());
-        read(secondJob).andExpect(jsonPath("$").isEmpty());
+        read(secondJob).andExpect(jsonPath("$.items").isEmpty());
     }
 
     @Test
@@ -226,7 +273,7 @@ class InterviewRoundIntegrationTests {
         create(jobId, "{\"roundNo\":1,\"review\":\"虚构复盘\"}").andExpect(status().isCreated());
         mvc.perform(delete("/api/jobs/" + jobId).with(user(owner)).with(csrf())).andExpect(status().isConflict());
         mvc.perform(get("/api/jobs/" + jobId).with(user(owner))).andExpect(status().isOk());
-        read(jobId).andExpect(jsonPath("$[0].review").value("虚构复盘"));
+        read(jobId).andExpect(jsonPath("$.items[0].review").value("虚构复盘"));
     }
 
     @Test
@@ -234,6 +281,131 @@ class InterviewRoundIntegrationTests {
         assertThatThrownBy(() -> jdbc.update("INSERT INTO interview_rounds(user_id,job_application_id,round_no) VALUES (?,?,1)", other.getId(), jobId))
                 .isInstanceOf(DataIntegrityViolationException.class);
         assertThat(count()).isZero();
+    }
+
+    @Test
+    void updatesFiveFieldsWithoutChangingIdentityOwnerOrOtherRows() throws Exception {
+        create(jobId, "{\"roundNo\":1,\"review\":\"原复盘\"}").andExpect(status().isCreated());
+        long id = roundId(jobId, 1);
+        create(secondJob, "{\"roundNo\":1}").andExpect(status().isCreated());
+        Map<String, Object> otherBefore = jdbc.queryForMap("SELECT * FROM interview_rounds WHERE job_application_id=?", secondJob);
+        Map<String, Object> jobBefore = jdbc.queryForMap("SELECT * FROM job_applications WHERE id=?", jobId);
+        String values = "{\"roundNo\":3,\"interviewTime\":\"2026-10-21T18:30:45.123456\",\"roundType\":\" 技术二面 \",\"result\":\" 通过 \",\"review\":\" 新复盘 \"}";
+        for (int i = 0; i < 2; i++) update(id, values).andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.id").value(id)).andExpect(jsonPath("$.roundNo").value(3))
+                .andExpect(jsonPath("$.interviewTime").value("2026-10-21T18:30:45.123"))
+                .andExpect(jsonPath("$.roundType").value("技术二面")).andExpect(jsonPath("$.result").value("通过"))
+                .andExpect(jsonPath("$.review").value("新复盘")).andExpect(jsonPath("$.userId").doesNotExist());
+        assertThat(count()).isEqualTo(2);
+        assertThat(jdbc.queryForMap("SELECT * FROM interview_rounds WHERE job_application_id=?", secondJob)).isEqualTo(otherBefore);
+        assertThat(jdbc.queryForMap("SELECT * FROM job_applications WHERE id=?", jobId)).isEqualTo(jobBefore);
+        assertThat(jdbc.queryForObject("SELECT user_id FROM interview_rounds WHERE id=?", Long.class, id)).isEqualTo(owner.getId());
+        read(jobId).andExpect(jsonPath("$.items[0].review").value("新复盘"));
+    }
+
+    @Test
+    void omittedNullAndBlankUpdateFieldsReallyClearStoredValues() throws Exception {
+        create(jobId, "{\"roundNo\":1,\"interviewTime\":\"2026-10-21T09:00:00\",\"roundType\":\"面试\",\"result\":\"结果\",\"review\":\"复盘\"}").andExpect(status().isCreated());
+        long id = roundId(jobId, 1);
+        update(id, "{\"roundNo\":1,\"interviewTime\":null,\"roundType\":\"  \",\"result\":null}").andExpect(status().isOk());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM interview_rounds WHERE id=? AND interview_time IS NULL AND round_type IS NULL AND result IS NULL AND review IS NULL", Long.class, id)).isEqualTo(1);
+    }
+
+    @Test
+    void conflictingRenumberReturns409AndLeavesAllContentUnchanged() throws Exception {
+        create(jobId, "{\"roundNo\":1,\"review\":\"第一轮原复盘\"}").andExpect(status().isCreated());
+        create(jobId, "{\"roundNo\":2,\"review\":\"第二轮原复盘\"}").andExpect(status().isCreated());
+        var before = jdbc.queryForList("SELECT * FROM interview_rounds ORDER BY id");
+        update(roundId(jobId, 1), "{\"roundNo\":2,\"review\":\"不能保存的草稿\"}")
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("DUPLICATE_ROUND"));
+        assertThat(jdbc.queryForList("SELECT * FROM interview_rounds ORDER BY id")).isEqualTo(before);
+    }
+
+    @Test
+    void historicalDuplicatesCanBeEditedIndividuallyAndRenumbered() throws Exception {
+        create(jobId, "{\"roundNo\":1,\"review\":\"原第一条\"}").andExpect(status().isCreated());
+        long id = roundId(jobId, 1);
+        jdbc.update("INSERT INTO interview_rounds(user_id,job_application_id,round_no,review) VALUES (?,?,1,'历史第二条')", owner.getId(), jobId);
+        update(id, "{\"roundNo\":1,\"review\":\"只改当前一条\"}").andExpect(status().isOk());
+        assertThat(jdbc.queryForObject("SELECT review FROM interview_rounds WHERE job_application_id=? AND id<>?", String.class, jobId, id)).isEqualTo("历史第二条");
+        update(id, "{\"roundNo\":3,\"review\":\"改为第三轮\"}").andExpect(status().isOk());
+        mvc.perform(get(path(jobId)).with(user(owner)).param("roundId", String.valueOf(id)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.page").value(2)).andExpect(jsonPath("$.items[0].id").value(id));
+        assertThat(count()).isEqualTo(2);
+    }
+
+    @Test
+    void nonexistentAndForeignUpdatesHaveIdentical404AndCannotChangeOwnerOrParent() throws Exception {
+        create(jobId, "{\"roundNo\":1}").andExpect(status().isCreated());
+        long id = roundId(jobId, 1);
+        String missing = update(Long.MAX_VALUE, "{\"roundNo\":1}").andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("ROUND_NOT_FOUND")).andReturn().getResponse().getContentAsString();
+        String foreign = mvc.perform(put("/api/interview-rounds/" + id).with(user(other)).with(csrf())
+                        .param("userId", owner.getId().toString()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"roundNo\":1,\"review\":\"不能写入\"}"))
+                .andExpect(status().isNotFound()).andReturn().getResponse().getContentAsString();
+        assertThat(foreign).isEqualTo(missing);
+        update(id, "{\"roundNo\":1,\"id\":9223372036854775807,\"userId\":%d,\"jobApplicationId\":%d,\"review\":\"允许的复盘\"}".formatted(other.getId(), otherJob))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(id));
+        assertThat(jdbc.queryForObject("SELECT user_id FROM interview_rounds WHERE id=?", Long.class, id)).isEqualTo(owner.getId());
+        assertThat(jdbc.queryForObject("SELECT job_application_id FROM interview_rounds WHERE id=?", Long.class, id)).isEqualTo(jobId);
+        assertThat(count()).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidFields")
+    void invalidUpdateFieldsDoNotChangeExistingRecord(Map<String, Object> values, String field) throws Exception {
+        create(jobId, "{\"roundNo\":1,\"review\":\"原虚构内容\"}").andExpect(status().isCreated());
+        long id = roundId(jobId, 1);
+        var before = jdbc.queryForMap("SELECT * FROM interview_rounds WHERE id=?", id);
+        String body = update(id, json.writeValueAsString(values)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fields." + field).isString()).andReturn().getResponse().getContentAsString();
+        assertThat(body).doesNotContain("DO_NOT_ECHO");
+        assertThat(jdbc.queryForMap("SELECT * FROM interview_rounds WHERE id=?", id)).isEqualTo(before);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{", "null", "{\"roundNo\":1.5}", "{\"roundNo\":\"1\"}", "{\"roundNo\":1,\"interviewTime\":\"2026-02-30T10:00:00\"}",
+            "{\"roundNo\":1,\"interviewTime\":\"2026-10-21T10:00:00Z\"}"})
+    void malformedUpdateDoesNotWrite(String body) throws Exception {
+        create(jobId, "{\"roundNo\":1}").andExpect(status().isCreated());
+        long id = roundId(jobId, 1);
+        var before = jdbc.queryForMap("SELECT * FROM interview_rounds WHERE id=?", id);
+        update(id, body).andExpect(status().isBadRequest());
+        assertThat(jdbc.queryForMap("SELECT * FROM interview_rounds WHERE id=?", id)).isEqualTo(before);
+    }
+
+    @Test
+    void updateRequiresLoginAndCsrf() throws Exception {
+        create(jobId, "{\"roundNo\":1}").andExpect(status().isCreated());
+        long id = roundId(jobId, 1);
+        var before = jdbc.queryForMap("SELECT * FROM interview_rounds WHERE id=?", id);
+        mvc.perform(put("/api/interview-rounds/" + id).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"roundNo\":1}"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(put("/api/interview-rounds/" + id).with(user(owner)).contentType(MediaType.APPLICATION_JSON).content("{\"roundNo\":1}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(put("/api/interview-rounds/" + id).with(user(owner)).with(csrf().useInvalidToken()).contentType(MediaType.APPLICATION_JSON).content("{\"roundNo\":1}"))
+                .andExpect(status().isForbidden());
+        assertThat(jdbc.queryForMap("SELECT * FROM interview_rounds WHERE id=?", id)).isEqualTo(before);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"bad-id", "9223372036854775808"})
+    void malformedUpdateIdIs400(String id) throws Exception {
+        mvc.perform(put("/api/interview-rounds/" + id).with(user(owner)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"roundNo\":1}"))
+                .andExpect(status().isBadRequest());
+        assertThat(count()).isZero();
+    }
+
+    private long roundId(Long job, int number) {
+        return jdbc.queryForObject("SELECT id FROM interview_rounds WHERE job_application_id=? AND round_no=?", Long.class, job, number);
+    }
+
+    private ResultActions update(Long id, String body) throws Exception {
+        return mvc.perform(put("/api/interview-rounds/" + id).with(user(owner)).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(body));
     }
 
     private ResultActions create(Long id, String body) throws Exception {

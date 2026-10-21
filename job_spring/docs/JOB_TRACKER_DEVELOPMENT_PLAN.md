@@ -2,7 +2,7 @@
 
 这份文档用于规划项目，也可以直接提供给 Codex 作为开发上下文。项目按阶段推进：先完成不依赖 AI 的可用版本，再加入招聘截图识别。
 
-当前页面布局以用户于 2026-10-18 提供的两张草图为参考，见 [页面约定](pages.md)。用户已确认[阶段 2](authentication.md)、[最小新增岗位接口](job-creation.md)、[网页新增岗位表单](job-create-form.md)、[岗位状态修改后端接口](job-status.md)、[详情页状态修改操作](job-status-ui.md)、[编辑岗位基本信息后端接口](job-update.md)、[网页编辑岗位表单](job-edit-form.md)、[删除岗位后端接口](job-deletion.md)、[网页删除操作](job-delete-ui.md)、[关键词搜索后端接口](job-search.md)及[网页关键词搜索](job-search-ui.md)验收通过。2026-10-21 已完成[状态筛选接口与页面](job-status-filter.md)，支持与关键词取交集、重置两项条件及结果条件展示；开发验证已完成，用户已在阶段 3 整体验收中确认通过。2026-10-21 已完成[分页接口与页面](job-pagination.md)，包含数据库分页、总数与页码、每页条数选择和筛选组合。用户已于 2026-10-21 明确确认阶段 3 验收完毕；分页及阶段 3 全流程验收通过，具体设备的逐项结果不额外推断。阶段 4 已开始：已完成[新增并查看面试轮次](interview-rounds.md)的后端、详情页 UI 与开发验证，用户已完成初版验收并提出两项修改；[拒绝重复轮次](interview-round-duplicates.md)已开发完成待验收，一轮一页待实施；问题管理、轮次编辑删除、问题搜索及主题筛选仍未实现，见[阶段 4 交接说明](stage4-handoff.md)。README 后补。
+当前页面布局以用户于 2026-10-18 提供的两张草图为参考，见 [页面约定](pages.md)。用户已确认[阶段 2](authentication.md)、[最小新增岗位接口](job-creation.md)、[网页新增岗位表单](job-create-form.md)、[岗位状态修改后端接口](job-status.md)、[详情页状态修改操作](job-status-ui.md)、[编辑岗位基本信息后端接口](job-update.md)、[网页编辑岗位表单](job-edit-form.md)、[删除岗位后端接口](job-deletion.md)、[网页删除操作](job-delete-ui.md)、[关键词搜索后端接口](job-search.md)及[网页关键词搜索](job-search-ui.md)验收通过。2026-10-21 已完成[状态筛选接口与页面](job-status-filter.md)，支持与关键词取交集、重置两项条件及结果条件展示；开发验证已完成，用户已在阶段 3 整体验收中确认通过。2026-10-21 已完成[分页接口与页面](job-pagination.md)，包含数据库分页、总数与页码、每页条数选择和筛选组合。用户已于 2026-10-21 明确确认阶段 3 验收完毕；分页及阶段 3 全流程验收通过，具体设备的逐项结果不额外推断。阶段 4 已开始：已完成[新增并查看面试轮次](interview-rounds.md)的后端、详情页 UI 与开发验证，用户已完成初版验收并提出两项修改；[拒绝重复轮次](interview-round-duplicates.md)已由用户确认验收；[一轮一页](interview-round-pagination.md)和[轮次信息编辑](interview-round-update.md)已开发完成，等待本次验收；问题管理、轮次删除、问题搜索及主题筛选仍未实现，见[阶段 4 交接说明](stage4-handoff.md)。README 后补。
 
 ## 1. 项目目标
 
@@ -164,9 +164,11 @@ GET    /api/vision/quota
 
 ### 阶段 4：面试复盘
 
-**状态：**2026-10-21 第一个小任务“新增并查看面试轮次”初版已由用户完成验收；[拒绝重复轮次修正](interview-round-duplicates.md)开发完成待验收，随后处理一轮一页，再单独安排轮次信息编辑；不代表阶段 4 已完成。详见[功能说明与学习要点](interview-rounds.md)。
+**状态：**2026-10-21 第一个小任务“新增并查看面试轮次”初版已由用户完成验收；[拒绝重复轮次修正](interview-round-duplicates.md)已验收；用户随后授权一次完成剩余要求，现[一轮一页](interview-round-pagination.md)与[轮次编辑](interview-round-update.md)开发完成待验收；不代表阶段 4 已完成。详见[功能说明与学习要点](interview-rounds.md)。
 
 在岗位详情页添加面试轮次，再为每轮添加问题、回答要点、知识主题和复盘备注。
+
+**2026-10-22 已确认的后续要求（待实现）：**先补[面试轮次删除](interview-deletion-plan.md)，再调整岗位删除：确认删除岗位时自动清除其面试轮次及问题记录，用户无需先逐轮删除。保留 RESTRICT 外键，由 Service 在单个事务内按“问题 → 轮次 → 岗位”顺序清理；仅限当前用户目标岗位，失败全部回滚，页面确认区明确关联删除范围。当前业务行为尚未改变。
 
 **完成标准：**能按岗位查看多轮面试记录，并搜索或筛选问题主题。
 

@@ -66,6 +66,45 @@ class InterviewRoundConcurrencyIntegrationTests {
         }
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"create", "update"})
+    void renumberAndAnotherWriteCannotClaimSameNumber(String secondAction) throws Exception {
+        AppUserDetails owner = seedUser();
+        jdbc.update("INSERT INTO job_applications(user_id,company_name,job_title) VALUES (?,'虚构并发改号公司','虚构测试岗位')", owner.getId());
+        Long jobId = jdbc.queryForObject("SELECT id FROM job_applications WHERE user_id=?", Long.class, owner.getId());
+        jdbc.update("INSERT INTO interview_rounds(user_id,job_application_id,round_no) VALUES (?,?,1)", owner.getId(), jobId);
+        jdbc.update("INSERT INTO interview_rounds(user_id,job_application_id,round_no) VALUES (?,?,2)", owner.getId(), jobId);
+        Long first = jdbc.queryForObject("SELECT id FROM interview_rounds WHERE job_application_id=? AND round_no=1", Long.class, jobId);
+        Long second = jdbc.queryForObject("SELECT id FROM interview_rounds WHERE job_application_id=? AND round_no=2", Long.class, jobId);
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var responses = new java.util.ArrayList<java.util.concurrent.Future<Integer>>();
+            for (int index = 0; index < 2; index++) {
+                final int action = index;
+                responses.add(executor.submit(() -> {
+                    ready.countDown();
+                    if (!start.await(5, TimeUnit.SECONDS)) throw new IllegalStateException("并发测试未启动");
+                    var request = action == 0
+                            ? org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/interview-rounds/" + first)
+                            : ("create".equals(secondAction) ? post("/api/jobs/" + jobId + "/interview-rounds")
+                            : org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/interview-rounds/" + second));
+                    return mvc.perform(request.with(user(owner)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"roundNo\":3,\"review\":\"并发改号虚构复盘\"}"))
+                            .andReturn().getResponse().getStatus();
+                }));
+            }
+            assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue(); start.countDown();
+            List<Integer> statuses = List.of(responses.get(0).get(15, TimeUnit.SECONDS), responses.get(1).get(15, TimeUnit.SECONDS));
+            assertThat(statuses).contains(409);
+            assertThat(statuses.stream().filter(status -> status >= 200 && status < 300).count()).isEqualTo(1);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM interview_rounds WHERE job_application_id=? AND round_no=3", Long.class, jobId)).isEqualTo(1);
+        } finally {
+            start.countDown(); executor.shutdownNow(); executor.awaitTermination(5, TimeUnit.SECONDS);
+        }
+    }
+
     private AppUserDetails seedUser() {
         String username = "concurrent_" + UUID.randomUUID().toString().replace("-", "");
         String credential = UUID.randomUUID().toString();

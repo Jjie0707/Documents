@@ -1,16 +1,21 @@
 <script setup>
 import { nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { post, request } from '../api.js'
+import { post, put, request } from '../api.js'
 import { clearUser } from '../auth.js'
 
 const props = defineProps({ jobId: { type: Number, required: true }, locked: Boolean })
 const emit = defineEmits(['busy', 'missing'])
 const router = useRouter()
 const rounds = ref([])
+const page = ref(1)
+const total = ref(0)
+let submittedPage = 1
+let submittedRoundId = null
 const loading = ref(false)
 const loadError = ref('')
 const editing = ref(false)
+const editRoundId = ref(null)
 const saving = ref(false)
 const uncertain = ref(false)
 const checked = ref(false)
@@ -26,17 +31,28 @@ onBeforeUnmount(() => { active = false; requestNumber++ })
 
 async function handleAccessFailure(failure) {
   if (failure.status === 401) { clearUser(); await router.replace('/login'); return true }
+  if (failure.status === 404 && failure.code === 'ROUND_NOT_FOUND') {
+    editing.value = false; resetForm()
+    saveError.value = '面试轮次不存在或无法访问，请核对最新列表。'
+    await loadRounds()
+    return true
+  }
   if (failure.status === 404) { emit('missing'); return true }
   return false
 }
 
-async function loadRounds() {
+async function loadRounds(requestedPage = page.value, roundId = null) {
+  submittedPage = requestedPage; submittedRoundId = roundId
   const number = ++requestNumber
   loading.value = true; loadError.value = ''; checked.value = false
   try {
-    const result = await request(`/api/jobs/${props.jobId}/interview-rounds`)
+    const query = new URLSearchParams({ page: String(requestedPage) })
+    if (roundId !== null) query.set('roundId', String(roundId))
+    const result = await request(`/api/jobs/${props.jobId}/interview-rounds?${query}`)
     if (!active || number !== requestNumber) return
-    rounds.value = result
+    rounds.value = result.items
+    page.value = result.page
+    total.value = result.total
     checked.value = true
   } catch (failure) {
     if (!active || number !== requestNumber) return
@@ -46,7 +62,19 @@ async function loadRounds() {
   }
 }
 
+function retryLoad() {
+  if (uncertain.value && editRoundId.value !== null) return loadRounds(page.value, editRoundId.value)
+  return loadRounds(submittedPage, submittedRoundId)
+}
+
+function changePage(nextPage) {
+  if (loading.value || saving.value || props.locked || (editing.value && !uncertain.value)) return
+  if (nextPage < 1 || nextPage > total.value) return
+  return loadRounds(nextPage)
+}
+
 function resetForm() {
+  editRoundId.value = null
   Object.assign(form, { roundNo: '', interviewTime: '', roundType: '', result: '', review: '' })
   fields.value = {}; saveError.value = ''
 }
@@ -63,6 +91,18 @@ async function openForm() {
   formElement.value?.querySelector('input')?.focus()
 }
 
+async function openEdit(round) {
+  if (props.locked || loading.value || saving.value || uncertain.value || editing.value) return
+  resetForm(); success.value = ''; editRoundId.value = round.id
+  Object.assign(form, {
+    roundNo: String(round.roundNo), interviewTime: round.interviewTime || '',
+    roundType: round.roundType || '', result: round.result || '', review: round.review || '',
+  })
+  editing.value = true
+  await nextTick()
+  formElement.value?.querySelector('input')?.focus()
+}
+
 function cancel() {
   if (props.locked || saving.value || uncertain.value) return
   editing.value = false; resetForm()
@@ -75,7 +115,7 @@ async function submit() {
   if (!/^\d+$/.test(String(form.roundNo)) || !Number.isInteger(roundNo) || roundNo < 1 || roundNo > 2147483647) {
     fields.value.roundNo = '面试轮次必须是1到2147483647之间的整数'
   }
-  if (form.interviewTime && (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(form.interviewTime)
+  if (form.interviewTime && (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?$/.test(form.interviewTime)
       || Number(form.interviewTime.slice(0, 4)) < 1000)) {
     fields.value.interviewTime = '请选择1000到9999年之间的有效日期和时间'
   }
@@ -83,17 +123,22 @@ async function submit() {
     if ([...form[key].trim()].length > limit) fields.value[key] = `${label}不能超过${limit}个字符`
   }
   if (Object.keys(fields.value).length) { await focusInvalid(); return }
+  const updating = editRoundId.value !== null
+  const values = {
+    roundNo, interviewTime: form.interviewTime
+      ? (form.interviewTime.length === 16 ? `${form.interviewTime}:00` : form.interviewTime) : null,
+    roundType: form.roundType, result: form.result, review: form.review,
+  }
   saving.value = true
   try {
-    await post(`/api/jobs/${props.jobId}/interview-rounds`, {
-      roundNo, interviewTime: form.interviewTime ? `${form.interviewTime}:00` : null,
-      roundType: form.roundType, result: form.result, review: form.review,
-    })
+    const saved = updating
+      ? await put(`/api/interview-rounds/${editRoundId.value}`, values)
+      : await post(`/api/jobs/${props.jobId}/interview-rounds`, values)
     if (!active) return
     editing.value = false; resetForm()
-    success.value = '面试轮次已保存。'
-    // POST 已成功；随后 GET 失败只表示列表加载失败，不应再次发送 POST。
-    await loadRounds()
+    success.value = updating ? '面试轮次已更新。' : '面试轮次已保存。'
+    // 写请求已成功；随后 GET 失败只表示列表加载失败，重试不能再次发送写请求。
+    await loadRounds(page.value, saved.id)
   } catch (failure) {
     if (!active) return
     if (!await handleAccessFailure(failure)) {
@@ -101,11 +146,11 @@ async function submit() {
       uncertain.value = failure.status === 0
       checked.value = false
       saveError.value = uncertain.value
-        ? `${failure.message} 保存结果暂时无法确认，请先重新加载轮次并核对，避免重复新增。`
+        ? `${failure.message} 保存结果暂时无法确认，请先重新加载轮次并核对保存结果。`
         : failure.message
       if (failure.status === 409 && failure.fields?.roundNo) {
         // 拒绝重复并保留草稿，只刷新列表；绝不自动重发 POST 或覆盖原记录。
-        await loadRounds()
+        await loadRounds(page.value, editRoundId.value)
       }
     }
   } finally {
@@ -124,7 +169,7 @@ function displayTime(value) {
   return value ? value.replace('T', ' ') : '未填写'
 }
 
-watch(() => props.jobId, loadRounds, { immediate: true })
+watch(() => props.jobId, () => loadRounds(1), { immediate: true })
 </script>
 
 <template>
@@ -133,9 +178,10 @@ watch(() => props.jobId, loadRounds, { immediate: true })
     <h2 id="interview-heading">面试轮次</h2>
     <p>记录每轮面试的时间、结果与整体复盘。</p>
     <p v-if="success" class="form-message success" role="status">{{ success }}</p>
+    <p v-if="!editing && saveError" class="form-message error" role="alert">{{ saveError }}</p>
     <p v-if="loading" class="interview-notice" role="status">正在加载面试轮次…</p>
     <div v-else-if="loadError" class="interview-notice" role="alert">
-      <p>{{ loadError }}</p><button type="button" class="text-button" @click="loadRounds">重新加载轮次</button>
+      <p>{{ loadError }}</p><button type="button" class="text-button" @click="retryLoad">重新加载轮次</button>
     </div>
     <template v-else>
       <p v-if="!rounds.length" class="interview-notice">暂无面试轮次，可以先添加第一轮。</p>
@@ -147,14 +193,27 @@ watch(() => props.jobId, loadRounds, { immediate: true })
             <div><dt>面试结果</dt><dd>{{ round.result || '未填写' }}</dd></div>
             <div><dt>整体复盘</dt><dd class="interview-review">{{ round.review || '未填写' }}</dd></div>
           </dl>
+          <button type="button" class="secondary-button"
+                  :disabled="locked || saving || editing || uncertain" @click="openEdit(round)">编辑本轮</button>
         </li>
       </ol>
+      <nav v-if="total" class="interview-pagination" aria-label="面试轮次分页">
+        <p class="muted">第 {{ page }} / {{ total }} 页 · 每页一轮</p>
+        <div class="interview-pagination-actions">
+          <button type="button" class="secondary-button"
+                  :disabled="page <= 1 || locked || saving || (editing && !uncertain)" @click="changePage(page - 1)">上一轮</button>
+          <button type="button" class="secondary-button"
+                  :disabled="page >= total || locked || saving || (editing && !uncertain)" @click="changePage(page + 1)">下一轮</button>
+        </div>
+      </nav>
     </template>
     <button v-if="!editing" type="button" class="secondary-button"
             :disabled="locked || loading || saving || uncertain || Boolean(loadError)" @click="openForm">新增面试轮次</button>
     <form v-if="editing" ref="formElement" class="job-form interview-form" novalidate :aria-busy="saving" @submit.prevent="submit">
+      <h3 class="interview-form-heading">{{ editRoundId !== null ? '编辑本轮' : '新增面试轮次' }}</h3>
+      <p v-if="editRoundId !== null" class="muted input-help">选填项留空会清除原内容；修改轮次号后，记录会按新编号排序。</p>
       <fieldset :disabled="locked || saving || uncertain">
-        <legend class="visually-hidden">新增面试轮次</legend>
+        <legend class="visually-hidden">{{ editRoundId !== null ? '编辑面试轮次' : '新增面试轮次' }}</legend>
         <div class="job-form-field">
           <label for="round-no">第几轮 <span class="required-mark">*</span></label>
           <input id="round-no" v-model="form.roundNo" name="roundNo" type="number" min="1" max="2147483647" step="1" required
@@ -163,8 +222,8 @@ watch(() => props.jobId, loadRounds, { immediate: true })
         </div>
         <div class="job-form-field">
           <label for="round-time">面试时间 <span class="optional-label">（选填）</span></label>
-          <input id="round-time" v-model="form.interviewTime" name="interviewTime" type="datetime-local" step="60"
-                 min="1000-01-01T00:00" max="9999-12-31T23:59"
+          <input id="round-time" v-model="form.interviewTime" name="interviewTime" type="datetime-local" step="0.001"
+                 min="1000-01-01T00:00:00" max="9999-12-31T23:59:59.999"
                  :aria-invalid="Boolean(fields.interviewTime)"
                  :aria-describedby="`round-time-help${fields.interviewTime ? ' round-time-error' : ''}`" />
           <p id="round-time-help" class="muted input-help">按上海时间填写，可以记录过去或未来的面试。</p>
@@ -188,12 +247,12 @@ watch(() => props.jobId, loadRounds, { immediate: true })
         </div>
         <div class="job-form-actions">
           <button type="button" class="secondary-button" @click="cancel">取消</button>
-          <button type="submit" class="primary-button" :disabled="loading || Boolean(loadError)">{{ saving ? '正在保存…' : '保存轮次' }}</button>
+          <button type="submit" class="primary-button" :disabled="loading || Boolean(loadError)">{{ saving ? '正在保存…' : (editRoundId !== null ? '保存修改' : '保存轮次') }}</button>
         </div>
       </fieldset>
       <p v-if="saveError" class="form-message error" role="alert">{{ saveError }}</p>
       <div v-if="uncertain" class="interview-notice">
-        <button type="button" class="text-button" :disabled="loading" @click="loadRounds">重新加载轮次并核对</button>
+        <button type="button" class="text-button" :disabled="loading" @click="retryLoad">重新加载轮次并核对</button>
         <button type="button" class="secondary-button" :disabled="!checked || loading || Boolean(loadError)"
                 @click="acknowledgeResult">已核对，恢复操作</button>
       </div>
