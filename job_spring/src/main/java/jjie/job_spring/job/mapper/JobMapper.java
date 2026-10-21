@@ -11,6 +11,10 @@ import org.apache.ibatis.annotations.Select;
 
 @Mapper
 public interface JobMapper extends BaseMapper<JobApplication> {
+    // 面试新增在事务内先锁定所属岗位，使同一岗位的并发新增依次检查轮次号。
+    @Select("SELECT id FROM job_applications WHERE id = #{jobId} AND user_id = #{userId} FOR UPDATE")
+    Long lockOwnedJob(@Param("jobId") Long jobId, @Param("userId") Long userId);
+
     // SQL 结构只来自 Service 构造的 Wrapper；筛选值、条数和偏移量都通过参数绑定。
     @Select("SELECT * FROM job_applications ${ew.customSqlSegment} LIMIT #{limit} OFFSET #{offset}")
     List<JobApplication> selectPageRows(@Param(Constants.WRAPPER) Wrapper<JobApplication> conditions,

@@ -151,3 +151,23 @@ select { width: 100%; min-height: 44px; border-radius: 6px; border: 1px solid #d
   .profile-placeholder { gap: 6px; }
   .profile-placeholder .avatar { display: none; }
 }
+
+.interview-panel { min-width: 0; }
+.interview-notice { margin-top: 18px; }
+.interview-round-list { list-style: none; padding: 0; margin: 20px 0 0; }
+.interview-round { border-top: 1px solid var(--line); padding: 18px 0; overflow-wrap: anywhere; }
+.interview-round h3 { font-size: .92rem; line-height: 1.8; }
+.interview-round dl { margin: 12px 0 0; font-size: .8rem; line-height: 1.8; }
+.interview-round dl > div + div { margin-top: 10px; }
+.interview-round dt { color: var(--muted); }
+.interview-round dd { margin: 3px 0 0; }
+.interview-review { white-space: pre-wrap; }
+.interview-form { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--line); }
+.interview-form .job-form-field + .job-form-field { margin-top: 20px; }
+.interview-form input { min-width: 0; max-width: 100%; }
+.interview-form textarea { width: 100%; min-height: 120px; resize: vertical; font: inherit; font-size: 16px; padding: 10px 12px; color: #25372f; background: #fcfdfb; border: 1px solid #d9dfd3; border-radius: 6px; }
+.interview-form textarea[aria-invalid='true'] { border-color: #b56054; }
+.interview-form .job-form-actions .secondary-button { width: auto; margin-top: 0; }
+.interview-panel .form-message.error { color: #963f35; }
+.interview-panel .form-message.success { color: #346b52; }
+.interview-panel .field-error { color: #a13f35; }

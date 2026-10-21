@@ -4,6 +4,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { patch, remove, request } from '../api.js'
 import { clearUser } from '../auth.js'
 import { jobStatus, jobStatuses } from '../job-status.js'
+import InterviewRoundsPanel from '../components/InterviewRoundsPanel.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,8 +24,10 @@ const deleteNotice = ref('')
 const deleteUncertain = ref(false)
 const deleteButton = ref(null)
 const cancelDeleteButton = ref(null)
-const actionsLocked = computed(() => savingStatus.value || confirmingDelete.value || deleting.value
+const roundBusy = ref(false)
+const otherActionsLocked = computed(() => savingStatus.value || confirmingDelete.value || deleting.value
   || statusUncertain.value || deleteUncertain.value || checkingDelete.value)
+const actionsLocked = computed(() => otherActionsLocked.value || roundBusy.value)
 let requestNumber = 0
 let active = true
 onBeforeUnmount(() => { active = false; requestNumber++ })
@@ -32,6 +35,7 @@ onBeforeUnmount(() => { active = false; requestNumber++ })
 async function loadJob() {
   const number = ++requestNumber
   loading.value = true; error.value = ''; job.value = null
+  roundBusy.value = false
   selectedStatus.value = ''; savingStatus.value = false
   statusError.value = ''; statusSuccess.value = ''; statusUncertain.value = false
   confirmingDelete.value = false; deleting.value = false; checkingDelete.value = false
@@ -165,6 +169,12 @@ async function checkDeleteResult() {
   }
 }
 
+function missingInterviewJob() {
+  roundBusy.value = false
+  job.value = null
+  error.value = '岗位不存在或无法访问。'
+}
+
 watch(() => route.params.id, loadJob, { immediate: true })
 </script>
 
@@ -196,9 +206,8 @@ watch(() => route.params.id, loadJob, { immediate: true })
           <div class="description-block"><h3>任职要求</h3><p>{{ job.requirements || '未填写' }}</p></div>
         </article>
         <aside class="detail-sidebar" aria-label="岗位相关操作">
-          <section class="action-panel" aria-labelledby="interview-heading"><span class="section-number">01 / 面试</span>
-            <h2 id="interview-heading">面试记录</h2><p>按轮次整理问题、回答要点和复盘。</p>
-            <button class="secondary-button" disabled>查看面试记录 ↗</button><small class="muted">阶段 4 开放</small></section>
+          <InterviewRoundsPanel :key="job.id" :job-id="job.id" :locked="otherActionsLocked"
+                                @busy="roundBusy = $event" @missing="missingInterviewJob" />
           <section class="action-panel" aria-labelledby="status-heading"><span class="section-number">02 / 进度</span>
             <h2 id="status-heading">投递状态</h2>
             <p class="status-current">当前状态：<strong>{{ jobStatus(job.status).label }}</strong></p>
