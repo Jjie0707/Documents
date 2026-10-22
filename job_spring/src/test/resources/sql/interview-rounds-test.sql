@@ -16,3 +16,17 @@ CREATE TABLE IF NOT EXISTS interview_rounds (
         REFERENCES job_applications(id, user_id) ON DELETE RESTRICT ON UPDATE RESTRICT
 );
 CREATE INDEX IF NOT EXISTS idx_interview_job_user_no ON interview_rounds(job_application_id, user_id, round_no);
+
+CREATE TABLE IF NOT EXISTS interview_questions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    interview_round_id BIGINT NOT NULL,
+    question TEXT NOT NULL,
+    answer_notes TEXT,
+    knowledge_topic VARCHAR(100),
+    review_notes TEXT,
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (interview_round_id, user_id)
+        REFERENCES interview_rounds(id, user_id) ON DELETE RESTRICT ON UPDATE RESTRICT
+);

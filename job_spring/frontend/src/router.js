@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import JobsView from './views/JobsView.vue'
 import JobDetailView from './views/JobDetailView.vue'
+import InterviewReviewView from './views/InterviewReviewView.vue'
 import JobCreateView from './views/JobCreateView.vue'
 import JobEditView from './views/JobEditView.vue'
 import AuthView from './views/AuthView.vue'
@@ -13,6 +14,7 @@ const router = createRouter({
     { path: '/', name: 'jobs', component: JobsView, meta: { requiresAuth: true } },
     { path: '/jobs/new', name: 'job-create', component: JobCreateView, meta: { requiresAuth: true } },
     { path: '/jobs/:id(\\d+)/edit', name: 'job-edit', component: JobEditView, meta: { requiresAuth: true } },
+    { path: '/jobs/:id(\\d+)/interview-rounds/:roundId(\\d+)/review', name: 'interview-review', component: InterviewReviewView, meta: { requiresAuth: true } },
     { path: '/jobs/:id(\\d+)', name: 'job-detail', component: JobDetailView, meta: { requiresAuth: true } },
     { path: '/login', name: 'login', component: AuthView, meta: { guestOnly: true } },
     { path: '/register', name: 'register', component: AuthView, meta: { guestOnly: true } },

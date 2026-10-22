@@ -6,6 +6,7 @@ import jjie.job_spring.interview.exception.DuplicateInterviewRoundException;
 import jjie.job_spring.interview.exception.InterviewRoundNotFoundException;
 import jjie.job_spring.interview.controller.InterviewRoundUpdateController;
 import jjie.job_spring.interview.controller.InterviewRoundCreateController;
+import jjie.job_spring.interview.controller.InterviewRoundDeleteController;
 import jjie.job_spring.interview.controller.InterviewRoundReadController;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
-@RestControllerAdvice(assignableTypes = {InterviewRoundCreateController.class, InterviewRoundReadController.class, InterviewRoundUpdateController.class})
+@RestControllerAdvice(assignableTypes = {InterviewRoundCreateController.class, InterviewRoundReadController.class, InterviewRoundUpdateController.class, InterviewRoundDeleteController.class})
 public class InterviewRoundExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<RoundError> invalidArguments(MethodArgumentNotValidException exception) {

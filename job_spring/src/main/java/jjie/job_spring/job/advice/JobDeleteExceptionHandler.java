@@ -26,7 +26,7 @@ public class JobDeleteExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     ResponseEntity<DeleteError> conflict() {
         return ResponseEntity.status(409).body(new DeleteError(
-                "CONFLICT", "岗位存在关联数据或约束冲突，无法删除", Map.of()));
+                "CONFLICT", "删除未完成，存在约束冲突，请重新加载后重试", Map.of()));
     }
 
     @ExceptionHandler(DataAccessException.class)

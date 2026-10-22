@@ -1,10 +1,10 @@
 <script setup>
-import { nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { post, put, request } from '../api.js'
+import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { post, put, remove, request } from '../api.js'
 import { clearUser } from '../auth.js'
 
-const props = defineProps({ jobId: { type: Number, required: true }, locked: Boolean })
+const props = defineProps({ jobId: { type: Number, required: true }, initialRoundId: { type: Number, default: null }, locked: Boolean })
 const emit = defineEmits(['busy', 'missing'])
 const router = useRouter()
 const rounds = ref([])
@@ -17,6 +17,16 @@ const loadError = ref('')
 const editing = ref(false)
 const editRoundId = ref(null)
 const saving = ref(false)
+const panelElement = ref(null)
+const cancelDeleteButton = ref(null)
+const confirmingDelete = ref(null)
+const deleteTarget = ref(null)
+const deleting = ref(false)
+const checkingDelete = ref(false)
+const deleteUncertain = ref(false)
+const deleteError = ref('')
+const deleteNotice = ref('')
+const deleteLocked = computed(() => Boolean(confirmingDelete.value) || deleting.value || checkingDelete.value || deleteUncertain.value)
 const uncertain = ref(false)
 const checked = ref(false)
 const success = ref('')
@@ -26,7 +36,7 @@ const formElement = ref(null)
 const form = reactive({ roundNo: '', interviewTime: '', roundType: '', result: '', review: '' })
 let active = true
 let requestNumber = 0
-watch(() => saving.value || uncertain.value, value => emit('busy', value), { flush: 'sync' })
+watch(() => saving.value || uncertain.value || deleteLocked.value, value => emit('busy', value), { flush: 'sync' })
 onBeforeUnmount(() => { active = false; requestNumber++ })
 
 async function handleAccessFailure(failure) {
@@ -54,6 +64,7 @@ async function loadRounds(requestedPage = page.value, roundId = null) {
     page.value = result.page
     total.value = result.total
     checked.value = true
+    return result
   } catch (failure) {
     if (!active || number !== requestNumber) return
     if (!await handleAccessFailure(failure)) loadError.value = failure.message
@@ -68,7 +79,7 @@ function retryLoad() {
 }
 
 function changePage(nextPage) {
-  if (loading.value || saving.value || props.locked || (editing.value && !uncertain.value)) return
+  if (loading.value || saving.value || props.locked || deleteLocked.value || (editing.value && !uncertain.value)) return
   if (nextPage < 1 || nextPage > total.value) return
   return loadRounds(nextPage)
 }
@@ -85,15 +96,15 @@ async function focusInvalid() {
 }
 
 async function openForm() {
-  if (props.locked || loading.value || saving.value || uncertain.value) return
-  resetForm(); success.value = ''; editing.value = true
+  if (props.locked || loading.value || saving.value || uncertain.value || deleteLocked.value) return
+  resetForm(); success.value = ''; deleteError.value = ''; deleteNotice.value = ''; editing.value = true
   await nextTick()
   formElement.value?.querySelector('input')?.focus()
 }
 
 async function openEdit(round) {
-  if (props.locked || loading.value || saving.value || uncertain.value || editing.value) return
-  resetForm(); success.value = ''; editRoundId.value = round.id
+  if (props.locked || loading.value || saving.value || uncertain.value || editing.value || deleteLocked.value) return
+  resetForm(); success.value = ''; deleteError.value = ''; deleteNotice.value = ''; editRoundId.value = round.id
   Object.assign(form, {
     roundNo: String(round.roundNo), interviewTime: round.interviewTime || '',
     roundType: round.roundType || '', result: round.result || '', review: round.review || '',
@@ -104,12 +115,12 @@ async function openEdit(round) {
 }
 
 function cancel() {
-  if (props.locked || saving.value || uncertain.value) return
+  if (props.locked || saving.value || uncertain.value || deleteLocked.value) return
   editing.value = false; resetForm()
 }
 
 async function submit() {
-  if (props.locked || saving.value || uncertain.value || loading.value) return
+  if (props.locked || saving.value || uncertain.value || loading.value || deleteLocked.value) return
   fields.value = {}; saveError.value = ''; success.value = ''
   const roundNo = Number(form.roundNo)
   if (!/^\d+$/.test(String(form.roundNo)) || !Number.isInteger(roundNo) || roundNo < 1 || roundNo > 2147483647) {
@@ -165,20 +176,87 @@ function acknowledgeResult() {
   editing.value = false; resetForm()
 }
 
+async function askToDelete(round) {
+  if (props.locked || loading.value || saving.value || editing.value || uncertain.value || deleteLocked.value) return
+  deleteError.value = ''; deleteNotice.value = ''; success.value = ''; saveError.value = ''
+  deleteTarget.value = { id: round.id, roundNo: round.roundNo, roundType: round.roundType }
+  confirmingDelete.value = deleteTarget.value
+  await nextTick()
+  cancelDeleteButton.value?.focus()
+}
+
+async function cancelDelete() {
+  if (deleting.value) return
+  confirmingDelete.value = null; deleteTarget.value = null; deleteError.value = ''
+  await nextTick()
+  panelElement.value?.querySelector('[data-round-delete]')?.focus()
+}
+
+async function deleteRound() {
+  if (!confirmingDelete.value || props.locked || saving.value || uncertain.value || deleting.value || deleteUncertain.value) return
+  const target = deleteTarget.value
+  const number = requestNumber
+  deleting.value = true; deleteError.value = ''; deleteNotice.value = ''
+  try {
+    await remove(`/api/interview-rounds/${target.id}`)
+    if (!active || number !== requestNumber) return
+    confirmingDelete.value = null; deleteTarget.value = null
+    success.value = '面试轮次及其问题记录已删除。'
+    // 删除最后一页时由后端修正到新末页；刷新失败只重试 GET。
+    await loadRounds(page.value)
+  } catch (failure) {
+    if (!active || number !== requestNumber) return
+    if (failure.status === 404 && failure.code === 'ROUND_NOT_FOUND') {
+      confirmingDelete.value = null; deleteTarget.value = null
+      deleteError.value = '该轮次不存在或无法访问，请核对最新列表。'
+      await loadRounds(page.value)
+    } else if (!await handleAccessFailure(failure)) {
+      deleteUncertain.value = failure.status === 0
+      if (deleteUncertain.value) confirmingDelete.value = null
+      deleteError.value = deleteUncertain.value
+        ? `${failure.message} 删除结果暂时无法确认，请先核对删除结果。` : failure.message
+    }
+  } finally {
+    if (active) deleting.value = false
+  }
+}
+
+async function checkDeleteResult() {
+  if (!deleteUncertain.value || !deleteTarget.value || checkingDelete.value || loading.value) return
+  const target = deleteTarget.value
+  checkingDelete.value = true
+  try {
+    const result = await loadRounds(page.value, target.id)
+    if (!active || !result) return
+    const exists = result.items.some(round => round.id === target.id)
+    deleteUncertain.value = false; deleteTarget.value = null; deleteError.value = ''
+    deleteNotice.value = exists
+      ? '轮次仍然存在，信息已重新加载。如需删除，请重新确认。'
+      : '该轮次已不存在或无法访问，列表已更新。'
+  } finally {
+    if (active) checkingDelete.value = false
+  }
+}
+
 function displayTime(value) {
   return value ? value.replace('T', ' ') : '未填写'
 }
 
-watch(() => props.jobId, () => loadRounds(1), { immediate: true })
+watch(() => [props.jobId, props.initialRoundId], () => loadRounds(1, props.initialRoundId), { immediate: true })
 </script>
 
 <template>
-  <section class="action-panel interview-panel" aria-labelledby="interview-heading">
+  <section ref="panelElement" class="action-panel interview-panel" aria-labelledby="interview-heading">
     <span class="section-number">01 / 面试</span>
     <h2 id="interview-heading">面试轮次</h2>
     <p>记录每轮面试的时间、结果与整体复盘。</p>
     <p v-if="success" class="form-message success" role="status">{{ success }}</p>
     <p v-if="!editing && saveError" class="form-message error" role="alert">{{ saveError }}</p>
+    <p v-if="deleteError" class="form-message error" role="alert">{{ deleteError }}</p>
+    <p v-if="deleteNotice" class="muted interview-notice" role="status">{{ deleteNotice }}</p>
+    <button v-if="deleteUncertain" type="button" class="text-button" :disabled="checkingDelete || loading" @click="checkDeleteResult">
+      {{ checkingDelete ? '正在核对…' : '核对轮次删除结果' }}
+    </button>
     <p v-if="loading" class="interview-notice" role="status">正在加载面试轮次…</p>
     <div v-else-if="loadError" class="interview-notice" role="alert">
       <p>{{ loadError }}</p><button type="button" class="text-button" @click="retryLoad">重新加载轮次</button>
@@ -187,32 +265,51 @@ watch(() => props.jobId, () => loadRounds(1), { immediate: true })
       <p v-if="!rounds.length" class="interview-notice">暂无面试轮次，可以先添加第一轮。</p>
       <ol v-else class="interview-round-list" aria-label="已保存的面试轮次">
         <li v-for="round in rounds" :key="round.id" class="interview-round">
-          <h3>第 {{ round.roundNo }} 轮<span v-if="round.roundType"> · {{ round.roundType }}</span></h3>
-          <dl>
-            <div><dt>面试时间（上海时间）</dt><dd>{{ displayTime(round.interviewTime) }}</dd></div>
-            <div><dt>面试结果</dt><dd>{{ round.result || '未填写' }}</dd></div>
-            <div><dt>整体复盘</dt><dd class="interview-review">{{ round.review || '未填写' }}</dd></div>
-          </dl>
+          <div class="round-summary">
+            <div class="round-summary-info">
+              <h3>第 {{ round.roundNo }} 轮<span v-if="round.roundType"> · {{ round.roundType }}</span></h3>
+              <dl>
+                <div><dt>面试时间（上海时间）</dt><dd>{{ displayTime(round.interviewTime) }}</dd></div>
+                <div><dt>面试结果</dt><dd>{{ round.result || '未填写' }}</dd></div>
+                <div><dt>整体复盘</dt><dd class="interview-review">{{ round.review || '未填写' }}</dd></div>
+              </dl>
+            </div>
+            <button v-if="locked || saving || editing || uncertain || deleteLocked" type="button" class="secondary-button round-review-link" disabled>面试回顾</button>
+            <RouterLink v-else :to="{ name: 'interview-review', params: { id: String(jobId), roundId: String(round.id) } }"
+                        class="secondary-button round-review-link">面试回顾</RouterLink>
+          </div>
           <button type="button" class="secondary-button"
-                  :disabled="locked || saving || editing || uncertain" @click="openEdit(round)">编辑本轮</button>
+                  :disabled="locked || saving || editing || uncertain || deleteLocked" @click="openEdit(round)">编辑本轮</button>
+          <button type="button" class="danger-button danger-outline round-delete-button" data-round-delete
+                  :disabled="locked || saving || editing || uncertain || deleteLocked" @click="askToDelete(round)">删除本轮</button>
         </li>
       </ol>
       <nav v-if="total" class="interview-pagination" aria-label="面试轮次分页">
         <p class="muted">第 {{ page }} / {{ total }} 页 · 每页一轮</p>
         <div class="interview-pagination-actions">
           <button type="button" class="secondary-button"
-                  :disabled="page <= 1 || locked || saving || (editing && !uncertain)" @click="changePage(page - 1)">上一轮</button>
+                  :disabled="page <= 1 || locked || saving || deleteLocked || (editing && !uncertain)" @click="changePage(page - 1)">上一轮</button>
           <button type="button" class="secondary-button"
-                  :disabled="page >= total || locked || saving || (editing && !uncertain)" @click="changePage(page + 1)">下一轮</button>
+                  :disabled="page >= total || locked || saving || deleteLocked || (editing && !uncertain)" @click="changePage(page + 1)">下一轮</button>
         </div>
       </nav>
     </template>
+    <div v-if="confirmingDelete" class="delete-confirmation" role="group" aria-labelledby="round-delete-heading"
+         :aria-busy="deleting" @keydown.esc.prevent="cancelDelete">
+      <h3 id="round-delete-heading">确认删除本轮面试？</h3>
+      <p class="delete-target">第 {{ confirmingDelete.roundNo }} 轮<span v-if="confirmingDelete.roundType"> · {{ confirmingDelete.roundType }}</span></p>
+      <p>本轮及其问题、回答要点和复盘会一并删除，无法恢复。岗位和其他轮次会保留。</p>
+      <div class="delete-actions">
+        <button ref="cancelDeleteButton" type="button" class="secondary-button" :disabled="deleting" @click="cancelDelete">取消删除</button>
+        <button type="button" class="danger-button" :disabled="deleting" @click="deleteRound">{{ deleting ? '正在删除…' : '确认删除本轮' }}</button>
+      </div>
+    </div>
     <button v-if="!editing" type="button" class="secondary-button"
-            :disabled="locked || loading || saving || uncertain || Boolean(loadError)" @click="openForm">新增面试轮次</button>
+            :disabled="locked || loading || saving || uncertain || deleteLocked || Boolean(loadError)" @click="openForm">新增面试轮次</button>
     <form v-if="editing" ref="formElement" class="job-form interview-form" novalidate :aria-busy="saving" @submit.prevent="submit">
       <h3 class="interview-form-heading">{{ editRoundId !== null ? '编辑本轮' : '新增面试轮次' }}</h3>
       <p v-if="editRoundId !== null" class="muted input-help">选填项留空会清除原内容；修改轮次号后，记录会按新编号排序。</p>
-      <fieldset :disabled="locked || saving || uncertain">
+      <fieldset :disabled="locked || saving || uncertain || deleteLocked">
         <legend class="visually-hidden">{{ editRoundId !== null ? '编辑面试轮次' : '新增面试轮次' }}</legend>
         <div class="job-form-field">
           <label for="round-no">第几轮 <span class="required-mark">*</span></label>

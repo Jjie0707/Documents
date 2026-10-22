@@ -25,6 +25,11 @@ const deleteUncertain = ref(false)
 const deleteButton = ref(null)
 const cancelDeleteButton = ref(null)
 const roundBusy = ref(false)
+const initialRoundId = computed(() => {
+  const value = route.query.roundId
+  return typeof value === 'string' && /^\d+$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) > 0
+    ? Number(value) : null
+})
 const otherActionsLocked = computed(() => savingStatus.value || confirmingDelete.value || deleting.value
   || statusUncertain.value || deleteUncertain.value || checkingDelete.value)
 const actionsLocked = computed(() => otherActionsLocked.value || roundBusy.value)
@@ -207,6 +212,7 @@ watch(() => route.params.id, loadJob, { immediate: true })
         </article>
         <aside class="detail-sidebar" aria-label="岗位相关操作">
           <InterviewRoundsPanel :key="job.id" :job-id="job.id" :locked="otherActionsLocked"
+                                :initial-round-id="initialRoundId"
                                 @busy="roundBusy = $event" @missing="missingInterviewJob" />
           <section class="action-panel" aria-labelledby="status-heading"><span class="section-number">02 / 进度</span>
             <h2 id="status-heading">投递状态</h2>
@@ -230,11 +236,12 @@ watch(() => route.params.id, loadJob, { immediate: true })
           <section class="action-panel delete-panel" aria-labelledby="delete-heading" :aria-busy="deleting || checkingDelete">
             <span class="section-number">03 / 管理</span>
             <h2 id="delete-heading">删除岗位</h2>
-            <p>删除后无法恢复。有关联面试记录的岗位无法直接删除。</p>
+            <p>删除岗位会一并清除其全部面试轮次、问题、回答要点和复盘，无法恢复。</p>
             <div v-if="confirmingDelete" class="delete-confirmation" role="group"
                  aria-labelledby="delete-confirm-heading" @keydown.esc.prevent="cancelDelete">
-              <h3 id="delete-confirm-heading">确认删除这个岗位？</h3>
+              <h3 id="delete-confirm-heading">确认删除这个岗位及其全部面试记录？</h3>
               <p class="delete-target">{{ job.companyName }} · {{ job.jobTitle }}</p>
+              <p>该岗位下的全部面试轮次与问题记录会一并删除，无法恢复。</p>
               <div class="delete-actions">
                 <button ref="cancelDeleteButton" type="button" class="secondary-button" :disabled="deleting" @click="cancelDelete">取消</button>
                 <button type="button" class="danger-button" :disabled="deleting" @click="deleteJob">

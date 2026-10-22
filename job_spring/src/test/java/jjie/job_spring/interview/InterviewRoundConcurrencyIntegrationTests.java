@@ -105,6 +105,84 @@ class InterviewRoundConcurrencyIntegrationTests {
         }
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"job-create", "round-update"})
+    void deletionCoordinatesWithConcurrentCreationAndEditing(String scenario) throws Exception {
+        AppUserDetails owner = seedUser();
+        jdbc.update("INSERT INTO job_applications(user_id,company_name,job_title) VALUES (?,'虚构并发删除公司','虚构测试岗位')", owner.getId());
+        Long jobId = jdbc.queryForObject("SELECT id FROM job_applications WHERE user_id=?", Long.class, owner.getId());
+        jdbc.update("INSERT INTO interview_rounds(user_id,job_application_id,round_no) VALUES (?,?,1)", owner.getId(), jobId);
+        Long roundId = jdbc.queryForObject("SELECT id FROM interview_rounds WHERE job_application_id=?", Long.class, jobId);
+        jdbc.update("INSERT INTO interview_questions(user_id,interview_round_id,question) VALUES (?,?,'虚构并发问题')", owner.getId(), roundId);
+        CountDownLatch ready = new CountDownLatch(2); CountDownLatch start = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var results = new java.util.ArrayList<java.util.concurrent.Future<Integer>>();
+            for (int index = 0; index < 2; index++) {
+                final int action = index;
+                results.add(executor.submit(() -> {
+                    ready.countDown();
+                    if (!start.await(5, TimeUnit.SECONDS)) throw new IllegalStateException("并发测试未启动");
+                    boolean jobScenario = "job-create".equals(scenario);
+                    var request = action == 0
+                            ? org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(jobScenario ? "/api/jobs/" + jobId : "/api/interview-rounds/" + roundId)
+                            : (jobScenario ? post("/api/jobs/" + jobId + "/interview-rounds")
+                            : org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/interview-rounds/" + roundId));
+                    return mvc.perform(request.with(user(owner)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                                    .content(jobScenario ? "{\"roundNo\":2}" : "{\"roundNo\":1,\"review\":\"并发修改虚构复盘\"}"))
+                            .andReturn().getResponse().getStatus();
+                }));
+            }
+            assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue(); start.countDown();
+            assertThat(results.get(0).get(15, TimeUnit.SECONDS)).isEqualTo(204);
+            assertThat(results.get(1).get(15, TimeUnit.SECONDS)).isIn("job-create".equals(scenario) ? 201 : 200, 404);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM interview_rounds WHERE job_application_id=?", Long.class, jobId)).isZero();
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM interview_questions WHERE interview_round_id=?", Long.class, roundId)).isZero();
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM job_applications WHERE id=?", Long.class, jobId))
+                    .isEqualTo("job-create".equals(scenario) ? 0 : 1);
+        } finally {
+            start.countDown(); executor.shutdownNow(); executor.awaitTermination(5, TimeUnit.SECONDS);
+        }
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"round", "job"})
+    void questionCreationCoordinatesWithParentDeletion(String kind) throws Exception {
+        AppUserDetails owner = seedUser();
+        jdbc.update("INSERT INTO job_applications(user_id,company_name,job_title) VALUES (?,'虚构问题并发公司','虚构岗位')", owner.getId());
+        Long jobId = jdbc.queryForObject("SELECT id FROM job_applications WHERE user_id=?", Long.class, owner.getId());
+        jdbc.update("INSERT INTO interview_rounds(user_id,job_application_id,round_no) VALUES (?,?,1)", owner.getId(), jobId);
+        Long roundId = jdbc.queryForObject("SELECT id FROM interview_rounds WHERE job_application_id=?", Long.class, jobId);
+        CountDownLatch ready = new CountDownLatch(2); CountDownLatch start = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var responses = new java.util.ArrayList<java.util.concurrent.Future<Integer>>();
+            for (int index = 0; index < 2; index++) {
+                final int action = index;
+                responses.add(executor.submit(() -> {
+                    ready.countDown();
+                    if (!start.await(5, TimeUnit.SECONDS)) throw new IllegalStateException("并发测试未启动");
+                    var request = action == 0
+                            ? post("/api/interview-rounds/" + roundId + "/questions")
+                            : org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(
+                                    "round".equals(kind) ? "/api/interview-rounds/" + roundId : "/api/jobs/" + jobId);
+                    return mvc.perform(request.with(user(owner)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"question\":\"虚构并发问题\"}"))
+                            .andReturn().getResponse().getStatus();
+                }));
+            }
+            assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue(); start.countDown();
+            assertThat(responses.get(0).get(15, TimeUnit.SECONDS)).isIn(201, 404);
+            assertThat(responses.get(1).get(15, TimeUnit.SECONDS)).isEqualTo(204);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM interview_questions WHERE interview_round_id=?", Long.class, roundId)).isZero();
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM interview_rounds WHERE id=?", Long.class, roundId)).isZero();
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM job_applications WHERE id=?", Long.class, jobId))
+                    .isEqualTo("job".equals(kind) ? 0 : 1);
+        } finally {
+            start.countDown(); executor.shutdownNow(); executor.awaitTermination(5, TimeUnit.SECONDS);
+        }
+    }
+
     private AppUserDetails seedUser() {
         String username = "concurrent_" + UUID.randomUUID().toString().replace("-", "");
         String credential = UUID.randomUUID().toString();

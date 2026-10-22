@@ -29,7 +29,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest({InterviewRoundCreateController.class, InterviewRoundReadController.class, jjie.job_spring.interview.controller.InterviewRoundUpdateController.class})
+@WebMvcTest({InterviewRoundCreateController.class, InterviewRoundReadController.class, jjie.job_spring.interview.controller.InterviewRoundUpdateController.class, jjie.job_spring.interview.controller.InterviewRoundDeleteController.class})
 @org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc(print = org.springframework.boot.webmvc.test.autoconfigure.MockMvcPrint.NONE)
 @Import(SecurityConfig.class)
 class InterviewRoundControllerTests {
@@ -37,6 +37,7 @@ class InterviewRoundControllerTests {
     @MockitoBean private InterviewRoundCreateService createService;
     @MockitoBean private InterviewRoundReadService readService;
     @MockitoBean private jjie.job_spring.interview.service.InterviewRoundUpdateService updateService;
+    @MockitoBean private jjie.job_spring.interview.service.InterviewRoundDeleteService deleteService;
     @MockitoBean private UserDetailsService users;
 
     @Test
@@ -101,6 +102,15 @@ class InterviewRoundControllerTests {
                 .andExpect(status().isServiceUnavailable()).andExpect(jsonPath("$.code").value("SERVICE_UNAVAILABLE"))
                 .andExpect(content().string(not(containsString("PRIVATE_DATABASE_DETAILS"))))
                 .andExpect(content().string(not(containsString("PRIVATE_REVIEW"))));
+    }
+
+    @Test
+    void deleteDatabaseFailureIsSanitized503() throws Exception {
+        org.mockito.Mockito.doThrow(new DataAccessResourceFailureException("PRIVATE_DATABASE_DETAILS"))
+                .when(deleteService).deleteForUser(10L, 1L);
+        mvc.perform(delete("/api/interview-rounds/10").with(user(identity())).with(csrf()))
+                .andExpect(status().isServiceUnavailable()).andExpect(jsonPath("$.code").value("SERVICE_UNAVAILABLE"))
+                .andExpect(content().string(not(containsString("PRIVATE_DATABASE_DETAILS"))));
     }
 
     private AppUserDetails identity() {

@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Select;
 
 @Mapper
 public interface JobMapper extends BaseMapper<JobApplication> {
-    // 面试新增在事务内先锁定所属岗位，使同一岗位的并发新增依次检查轮次号。
+    // 面试新增/编辑/删除及岗位删除统一先锁所属岗位，协调同岗位的并发写入。
     @Select("SELECT id FROM job_applications WHERE id = #{jobId} AND user_id = #{userId} FOR UPDATE")
     Long lockOwnedJob(@Param("jobId") Long jobId, @Param("userId") Long userId);
 

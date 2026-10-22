@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.datasource.username=sa", "spring.datasource.password=",
         "spring.datasource.driver-class-name=org.h2.Driver", "spring.sql.init.mode=never"
 })
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(print = org.springframework.boot.webmvc.test.autoconfigure.MockMvcPrint.NONE)
 @Transactional
 @Sql(scripts = {"/sql/users-test.sql", "/sql/auth-test.sql", "/sql/job-delete-test.sql"},
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS)
@@ -149,18 +149,16 @@ class JobDeleteIntegrationTests {
     }
 
     @Test
-    void relatedInterviewDataBlocksDeletionWithoutDeletingJobOrChildren() throws Exception {
+    void deletesRelatedInterviewDataInTheSameTransaction() throws Exception {
         seedInterview(aliceJob, alice.getId());
-        List<Map<String, Object>> before = jobs();
-        List<Map<String, Object>> rounds = jdbc.queryForList("SELECT * FROM interview_rounds");
-        List<Map<String, Object>> questions = jdbc.queryForList("SELECT * FROM interview_questions");
-        String response = deleteJob(aliceJob).andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("CONFLICT"))
-                .andReturn().getResponse().getContentAsString();
-        assertThat(response).doesNotContain("jdbc:", "REFERENCES", "FOREIGN KEY", testPassword, testHash);
-        assertThat(jobs()).isEqualTo(before);
-        assertThat(jdbc.queryForList("SELECT * FROM interview_rounds")).isEqualTo(rounds);
-        assertThat(jdbc.queryForList("SELECT * FROM interview_questions")).isEqualTo(questions);
+        seedInterview(aliceOtherJob, alice.getId());
+        seedInterview(bobJob, bob.getId());
+        List<Map<String, Object>> otherRounds = jdbc.queryForList("SELECT * FROM interview_rounds WHERE job_application_id<>? ORDER BY id", aliceJob);
+        List<Map<String, Object>> otherQuestions = jdbc.queryForList("SELECT * FROM interview_questions WHERE interview_round_id NOT IN (SELECT id FROM interview_rounds WHERE job_application_id=?) ORDER BY id", aliceJob);
+        deleteJob(aliceJob).andExpect(status().isNoContent()).andExpect(content().string(""));
+        assertThat(count(aliceJob)).isZero();
+        assertThat(jdbc.queryForList("SELECT * FROM interview_rounds ORDER BY id")).isEqualTo(otherRounds);
+        assertThat(jdbc.queryForList("SELECT * FROM interview_questions ORDER BY id")).isEqualTo(otherQuestions);
     }
 
     @Test

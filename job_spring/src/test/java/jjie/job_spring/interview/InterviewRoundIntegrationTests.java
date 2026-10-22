@@ -269,11 +269,11 @@ class InterviewRoundIntegrationTests {
     }
 
     @Test
-    void createdRoundBlocksJobDeletionAndRemainsReadable() throws Exception {
+    void deletingJobAlsoDeletesItsCreatedRound() throws Exception {
         create(jobId, "{\"roundNo\":1,\"review\":\"虚构复盘\"}").andExpect(status().isCreated());
-        mvc.perform(delete("/api/jobs/" + jobId).with(user(owner)).with(csrf())).andExpect(status().isConflict());
-        mvc.perform(get("/api/jobs/" + jobId).with(user(owner))).andExpect(status().isOk());
-        read(jobId).andExpect(jsonPath("$.items[0].review").value("虚构复盘"));
+        mvc.perform(delete("/api/jobs/" + jobId).with(user(owner)).with(csrf())).andExpect(status().isNoContent());
+        mvc.perform(get("/api/jobs/" + jobId).with(user(owner))).andExpect(status().isNotFound());
+        assertThat(count()).isZero();
     }
 
     @Test
