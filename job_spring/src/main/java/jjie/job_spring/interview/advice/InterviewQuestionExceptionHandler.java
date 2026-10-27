@@ -4,6 +4,9 @@ import java.util.Map;
 import java.util.TreeMap;
 import jjie.job_spring.interview.controller.InterviewQuestionCreateController;
 import jjie.job_spring.interview.controller.InterviewQuestionReadController;
+import jjie.job_spring.interview.controller.InterviewQuestionUpdateController;
+import jjie.job_spring.interview.controller.InterviewQuestionDeleteController;
+import jjie.job_spring.interview.exception.InterviewQuestionNotFoundException;
 import jjie.job_spring.interview.exception.InterviewRoundNotFoundException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -14,13 +17,15 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-@RestControllerAdvice(assignableTypes = {InterviewQuestionCreateController.class, InterviewQuestionReadController.class})
+@RestControllerAdvice(assignableTypes = {InterviewQuestionCreateController.class, InterviewQuestionReadController.class,
+        InterviewQuestionUpdateController.class, InterviewQuestionDeleteController.class})
 public class InterviewQuestionExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<QuestionError> invalidArguments(MethodArgumentNotValidException exception) {
         Map<String, String> fields = new TreeMap<>();
         exception.getBindingResult().getFieldErrors().forEach(error -> fields.putIfAbsent(error.getField(),
-                "page".equals(error.getField()) ? "页码必须是大于等于1的整数" : error.getDefaultMessage()));
+                "page".equals(error.getField()) ? "页码必须是大于等于1的整数"
+                        : "questionId".equals(error.getField()) ? "问题记录ID必须是正整数" : error.getDefaultMessage()));
         return ResponseEntity.badRequest().body(new QuestionError("INVALID_REQUEST", "请检查面试问题参数", fields));
     }
 
@@ -37,6 +42,11 @@ public class InterviewQuestionExceptionHandler {
     @ExceptionHandler(InterviewRoundNotFoundException.class)
     ResponseEntity<QuestionError> missingRound() {
         return ResponseEntity.status(404).body(new QuestionError("ROUND_NOT_FOUND", "面试轮次不存在或无法访问", Map.of()));
+    }
+
+    @ExceptionHandler(InterviewQuestionNotFoundException.class)
+    ResponseEntity<QuestionError> missingQuestion() {
+        return ResponseEntity.status(404).body(new QuestionError("QUESTION_NOT_FOUND", "面试问题不存在或无法访问", Map.of()));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

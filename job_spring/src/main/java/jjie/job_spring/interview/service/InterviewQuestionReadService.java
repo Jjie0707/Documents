@@ -30,7 +30,13 @@ public class InterviewQuestionReadService {
         long total = questions.selectCount(new LambdaQueryWrapper<InterviewQuestion>()
                 .eq(InterviewQuestion::getInterviewRoundId, roundId).eq(InterviewQuestion::getUserId, userId));
         long totalPages = total / PAGE_SIZE + (total % PAGE_SIZE == 0 ? 0 : 1);
-        int page = (int) Math.min(query.page(), Math.max(1, totalPages));
+        long requestedPage = query.page();
+        if (query.questionId() != null && questions.selectOne(new LambdaQueryWrapper<InterviewQuestion>()
+                .eq(InterviewQuestion::getId, query.questionId()).eq(InterviewQuestion::getUserId, userId)
+                .eq(InterviewQuestion::getInterviewRoundId, roundId)) != null) {
+            requestedPage = questions.countBeforeQuestion(roundId, userId, query.questionId()) / PAGE_SIZE + 1;
+        }
+        int page = (int) Math.min(requestedPage, Math.max(1, totalPages));
         var items = questions.selectPageRows(roundId, userId, PAGE_SIZE, (page - 1L) * PAGE_SIZE)
                 .stream().map(InterviewQuestionResponse::from).toList();
         return new InterviewQuestionPageResponse(items, page, PAGE_SIZE, total, totalPages);

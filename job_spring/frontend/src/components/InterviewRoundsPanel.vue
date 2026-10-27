@@ -36,7 +36,7 @@ const formElement = ref(null)
 const form = reactive({ roundNo: '', interviewTime: '', roundType: '', result: '', review: '' })
 let active = true
 let requestNumber = 0
-watch(() => saving.value || uncertain.value || deleteLocked.value, value => emit('busy', value), { flush: 'sync' })
+watch(() => editing.value || saving.value || uncertain.value || deleteLocked.value, value => emit('busy', value), { flush: 'sync' })
 onBeforeUnmount(() => { active = false; requestNumber++ })
 
 async function handleAccessFailure(failure) {

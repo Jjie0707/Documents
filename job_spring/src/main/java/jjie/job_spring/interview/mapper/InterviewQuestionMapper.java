@@ -10,6 +10,12 @@ import org.apache.ibatis.annotations.Select;
 
 @Mapper
 public interface InterviewQuestionMapper extends BaseMapper<InterviewQuestion> {
+    @Select("SELECT * FROM interview_questions WHERE id = #{id} AND user_id = #{userId} FOR UPDATE")
+    InterviewQuestion selectOwnedForUpdate(@Param("id") Long id, @Param("userId") Long userId);
+
+    @Select("SELECT COUNT(*) FROM interview_questions WHERE interview_round_id = #{roundId} AND user_id = #{userId} AND id > #{id}")
+    long countBeforeQuestion(@Param("roundId") Long roundId, @Param("userId") Long userId, @Param("id") Long id);
+
     @Select("""
             SELECT * FROM interview_questions
             WHERE interview_round_id = #{roundId} AND user_id = #{userId}

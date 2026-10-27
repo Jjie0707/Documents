@@ -2,7 +2,7 @@
 
 这份文档用于规划项目，也可以直接提供给 Codex 作为开发上下文。项目按阶段推进：先完成不依赖 AI 的可用版本，再加入招聘截图识别。
 
-当前页面布局以用户于 2026-10-18 提供的两张草图为参考，见 [页面约定](pages.md)。用户已确认[阶段 2](authentication.md)、[最小新增岗位接口](job-creation.md)、[网页新增岗位表单](job-create-form.md)、[岗位状态修改后端接口](job-status.md)、[详情页状态修改操作](job-status-ui.md)、[编辑岗位基本信息后端接口](job-update.md)、[网页编辑岗位表单](job-edit-form.md)、[删除岗位后端接口](job-deletion.md)、[网页删除操作](job-delete-ui.md)、[关键词搜索后端接口](job-search.md)及[网页关键词搜索](job-search-ui.md)验收通过。2026-10-21 已完成[状态筛选接口与页面](job-status-filter.md)，支持与关键词取交集、重置两项条件及结果条件展示；开发验证已完成，用户已在阶段 3 整体验收中确认通过。2026-10-21 已完成[分页接口与页面](job-pagination.md)，包含数据库分页、总数与页码、每页条数选择和筛选组合。用户已于 2026-10-21 明确确认阶段 3 验收完毕；分页及阶段 3 全流程验收通过，具体设备的逐项结果不额外推断。阶段 4 已开始：已完成[新增并查看面试轮次](interview-rounds.md)的后端、详情页 UI 与开发验证，用户已完成初版验收并提出两项修改；[拒绝重复轮次](interview-round-duplicates.md)已由用户确认验收；[一轮一页](interview-round-pagination.md)和[轮次信息编辑](interview-round-update.md)已开发完成，等待本次验收；[轮次删除及岗位关联清理](interview-deletion-plan.md)已由用户验收通过；[每轮新增并查看问题](interview-questions.md)及反馈要求的[独立回顾页](interview-review-page.md)已开发完成待验收；问题编辑/单条删除、问题搜索及主题筛选仍未实现，见[阶段 4 交接说明](stage4-handoff.md)。README 后补。
+当前页面布局以用户于 2026-10-18 提供的两张草图为参考，见 [页面约定](pages.md)。用户已确认[阶段 2](authentication.md)、[最小新增岗位接口](job-creation.md)、[网页新增岗位表单](job-create-form.md)、[岗位状态修改后端接口](job-status.md)、[详情页状态修改操作](job-status-ui.md)、[编辑岗位基本信息后端接口](job-update.md)、[网页编辑岗位表单](job-edit-form.md)、[删除岗位后端接口](job-deletion.md)、[网页删除操作](job-delete-ui.md)、[关键词搜索后端接口](job-search.md)及[网页关键词搜索](job-search-ui.md)验收通过。2026-10-21 已完成[状态筛选接口与页面](job-status-filter.md)，支持与关键词取交集、重置两项条件及结果条件展示；开发验证已完成，用户已在阶段 3 整体验收中确认通过。2026-10-21 已完成[分页接口与页面](job-pagination.md)，包含数据库分页、总数与页码、每页条数选择和筛选组合。用户已于 2026-10-21 明确确认阶段 3 验收完毕；分页及阶段 3 全流程验收通过，具体设备的逐项结果不额外推断。阶段 4 已开始：已完成[新增并查看面试轮次](interview-rounds.md)的后端、详情页 UI 与开发验证，用户已完成初版验收并提出两项修改；[拒绝重复轮次](interview-round-duplicates.md)已由用户确认验收；[一轮一页](interview-round-pagination.md)和[轮次信息编辑](interview-round-update.md)已开发完成，等待本次验收；[轮次删除及岗位关联清理](interview-deletion-plan.md)已由用户验收通过；[每轮新增并查看问题](interview-questions.md)及[独立回顾页](interview-review-page.md)已于 2026-10-23 由用户验收；[问题编辑/单条删除](interview-question-actions.md)及[详情栏目切换](job-detail-tabs.md)已开发完成待验收；剩余问题搜索和知识主题筛选两项功能，见[阶段 4 交接说明](stage4-handoff.md)。README 后补。
 
 ## 1. 项目目标
 
@@ -169,6 +169,8 @@ GET    /api/vision/quota
 在岗位详情页添加面试轮次，再为每轮添加问题、回答要点、知识主题和复盘备注。
 
 **2026-10-22 进度：**用户已确认[单轮删除接口/UI 及岗位关联清理](interview-deletion-plan.md)验收通过，授权继续阶段 4。本次完成[每轮新增并查看问题](interview-questions.md)：问题、回答要点、知识主题、问题复盘，固定每页 10 条及详情页 UI；全量 319 项测试、JAR、前端构建与隔离 H2 网页验证通过，等待用户本机验收。用户反馈内嵌列表太长，本次已迁移到[独立面试回顾页](interview-review-page.md)，轮次右侧放入口，沿用问题分页与新增；本次前端构建及隔离网页检查通过，Java 未改动且未重跑后端测试。后续为问题编辑、单条删除、问题搜索与主题筛选，不代表阶段 4 整体完成。
+
+**2026-10-23 当前进度：**用户已验收新增/查看问题和回顾页。本次按顺序完成[问题编辑/删除 API 与右侧上下按钮](interview-question-actions.md)、[详情右侧单面板栏目切换](job-detail-tabs.md)，等待用户验收。全量 353 项测试（新增 34）、JAR、前端构建与隔离 H2 网页检查通过。阶段 4 按小任务剩余 **2 项功能**：问题关键词搜索、知识主题筛选（含与搜索组合和分页），之后整体验收。上一段为 2026-10-22 历史交付结果。
 
 **完成标准：**能按岗位查看多轮面试记录，并搜索或筛选问题主题。
 

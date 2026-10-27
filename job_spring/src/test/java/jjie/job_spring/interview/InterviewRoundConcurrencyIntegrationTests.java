@@ -183,6 +183,49 @@ class InterviewRoundConcurrencyIntegrationTests {
         }
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"update-question", "update-round", "update-job", "delete-round", "delete-job"})
+    void questionWritesCoordinateWithQuestionAndParentDeletion(String scenario) throws Exception {
+        AppUserDetails owner = seedUser();
+        jdbc.update("INSERT INTO job_applications(user_id,company_name,job_title) VALUES (?,'虚构问题写入并发公司','虚构岗位')", owner.getId());
+        Long jobId = jdbc.queryForObject("SELECT id FROM job_applications WHERE user_id=?", Long.class, owner.getId());
+        jdbc.update("INSERT INTO interview_rounds(user_id,job_application_id,round_no) VALUES (?,?,1)", owner.getId(), jobId);
+        Long roundId = jdbc.queryForObject("SELECT id FROM interview_rounds WHERE job_application_id=?", Long.class, jobId);
+        jdbc.update("INSERT INTO interview_questions(user_id,interview_round_id,question) VALUES (?,?,'虚构并发目标')", owner.getId(), roundId);
+        Long questionId = jdbc.queryForObject("SELECT id FROM interview_questions WHERE interview_round_id=?", Long.class, roundId);
+        String scope = scenario.substring(scenario.indexOf('-') + 1);
+        boolean deletingQuestion = scenario.startsWith("delete-");
+        CountDownLatch ready = new CountDownLatch(2); CountDownLatch start = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var responses = new java.util.ArrayList<java.util.concurrent.Future<Integer>>();
+            for (int index = 0; index < 2; index++) {
+                final int action = index;
+                responses.add(executor.submit(() -> {
+                    ready.countDown();
+                    if (!start.await(5, TimeUnit.SECONDS)) throw new IllegalStateException("并发测试未启动");
+                    var request = action == 0
+                            ? (deletingQuestion ? org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/interview-questions/" + questionId)
+                            : org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/interview-questions/" + questionId))
+                            : org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(
+                                    "question".equals(scope) ? "/api/interview-questions/" + questionId
+                                    : "round".equals(scope) ? "/api/interview-rounds/" + roundId : "/api/jobs/" + jobId);
+                    return mvc.perform(request.with(user(owner)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"question\":\"虚构并发更新\"}"))
+                            .andReturn().getResponse().getStatus();
+                }));
+            }
+            assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue(); start.countDown();
+            assertThat(responses.get(0).get(15, TimeUnit.SECONDS)).isIn(deletingQuestion ? 204 : 200, 404);
+            assertThat(responses.get(1).get(15, TimeUnit.SECONDS)).isEqualTo(204);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM interview_questions WHERE id=?", Long.class, questionId)).isZero();
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM interview_rounds WHERE id=?", Long.class, roundId)).isEqualTo("question".equals(scope) ? 1 : 0);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM job_applications WHERE id=?", Long.class, jobId)).isEqualTo("job".equals(scope) ? 0 : 1);
+        } finally {
+            start.countDown(); executor.shutdownNow(); executor.awaitTermination(5, TimeUnit.SECONDS);
+        }
+    }
+
     private AppUserDetails seedUser() {
         String username = "concurrent_" + UUID.randomUUID().toString().replace("-", "");
         String credential = UUID.randomUUID().toString();

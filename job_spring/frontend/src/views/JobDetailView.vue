@@ -25,6 +25,13 @@ const deleteUncertain = ref(false)
 const deleteButton = ref(null)
 const cancelDeleteButton = ref(null)
 const roundBusy = ref(false)
+const selectedPanel = ref('interview')
+const sidebarElement = ref(null)
+const panels = [
+  { id: 'interview', number: '01', label: '面试轮次与回顾' },
+  { id: 'status', number: '02', label: '投递状态' },
+  { id: 'manage', number: '03', label: '岗位管理' },
+]
 const initialRoundId = computed(() => {
   const value = route.query.roundId
   return typeof value === 'string' && /^\d+$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) > 0
@@ -180,7 +187,22 @@ function missingInterviewJob() {
   error.value = '岗位不存在或无法访问。'
 }
 
-watch(() => route.params.id, loadJob, { immediate: true })
+function selectPanel(id) {
+  if (actionsLocked.value && selectedPanel.value !== id) return
+  selectedPanel.value = id
+}
+
+async function handlePanelKey(event) {
+  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key) || actionsLocked.value) return
+  event.preventDefault()
+  const index = panels.findIndex(panel => panel.id === selectedPanel.value)
+  const next = event.key === 'Home' ? 0 : event.key === 'End' ? panels.length - 1
+    : (index + (event.key === 'ArrowRight' ? 1 : -1) + panels.length) % panels.length
+  selectPanel(panels[next].id)
+  await nextTick(); sidebarElement.value?.querySelector(`#sidebar-tab-${selectedPanel.value}`)?.focus()
+}
+
+watch(() => route.params.id, () => { selectedPanel.value = 'interview'; loadJob() }, { immediate: true })
 </script>
 
 <template>
@@ -210,11 +232,21 @@ watch(() => route.params.id, loadJob, { immediate: true })
           <div class="description-block"><h3>岗位职责</h3><p>{{ job.responsibilities || '未填写' }}</p></div>
           <div class="description-block"><h3>任职要求</h3><p>{{ job.requirements || '未填写' }}</p></div>
         </article>
-        <aside class="detail-sidebar" aria-label="岗位相关操作">
-          <InterviewRoundsPanel :key="job.id" :job-id="job.id" :locked="otherActionsLocked"
+        <aside ref="sidebarElement" class="detail-sidebar detail-sidebar-tabs" aria-label="岗位相关操作">
+          <div class="sidebar-tabs" role="tablist" aria-label="岗位操作栏目" @keydown="handlePanelKey">
+            <button v-for="panel in panels" :id="`sidebar-tab-${panel.id}`" :key="panel.id" type="button" role="tab"
+                    :aria-selected="selectedPanel === panel.id" :aria-controls="`sidebar-panel-${panel.id}`"
+                    :tabindex="selectedPanel === panel.id ? 0 : -1" :disabled="actionsLocked && selectedPanel !== panel.id"
+                    @click="selectPanel(panel.id)">
+              <span class="sidebar-tab-number">{{ panel.number }}</span><span>{{ panel.label }}</span>
+            </button>
+          </div>
+          <InterviewRoundsPanel v-show="selectedPanel === 'interview'" id="sidebar-panel-interview" role="tabpanel"
+                                aria-labelledby="sidebar-tab-interview" :key="job.id" :job-id="job.id" :locked="otherActionsLocked"
                                 :initial-round-id="initialRoundId"
                                 @busy="roundBusy = $event" @missing="missingInterviewJob" />
-          <section class="action-panel" aria-labelledby="status-heading"><span class="section-number">02 / 进度</span>
+          <section v-show="selectedPanel === 'status'" id="sidebar-panel-status" role="tabpanel"
+                   class="action-panel" aria-labelledby="sidebar-tab-status"><span class="section-number">02 / 进度</span>
             <h2 id="status-heading">投递状态</h2>
             <p class="status-current">当前状态：<strong>{{ jobStatus(job.status).label }}</strong></p>
             <form class="status-form" :aria-busy="savingStatus" @submit.prevent="saveStatus">
@@ -233,7 +265,8 @@ watch(() => route.params.id, loadJob, { immediate: true })
               <button v-if="statusUncertain" type="button" class="text-button" @click="loadJob">重新加载岗位</button>
             </form>
           </section>
-          <section class="action-panel delete-panel" aria-labelledby="delete-heading" :aria-busy="deleting || checkingDelete">
+          <section v-show="selectedPanel === 'manage'" id="sidebar-panel-manage" role="tabpanel"
+                   class="action-panel delete-panel" aria-labelledby="sidebar-tab-manage" :aria-busy="deleting || checkingDelete">
             <span class="section-number">03 / 管理</span>
             <h2 id="delete-heading">删除岗位</h2>
             <p>删除岗位会一并清除其全部面试轮次、问题、回答要点和复盘，无法恢复。</p>

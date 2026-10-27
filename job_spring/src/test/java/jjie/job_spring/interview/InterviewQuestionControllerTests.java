@@ -34,7 +34,9 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest({InterviewQuestionCreateController.class, InterviewQuestionReadController.class})
+@WebMvcTest({InterviewQuestionCreateController.class, InterviewQuestionReadController.class,
+        jjie.job_spring.interview.controller.InterviewQuestionUpdateController.class,
+        jjie.job_spring.interview.controller.InterviewQuestionDeleteController.class})
 @AutoConfigureMockMvc(print = org.springframework.boot.webmvc.test.autoconfigure.MockMvcPrint.NONE)
 @Import(SecurityConfig.class)
 class InterviewQuestionControllerTests {
@@ -43,6 +45,7 @@ class InterviewQuestionControllerTests {
     @MockitoBean private InterviewQuestionCreateService createService;
     @MockitoBean private InterviewQuestionReadService readService;
     @MockitoBean private UserDetailsService users;
+    @MockitoBean private jjie.job_spring.interview.service.InterviewQuestionWriteService writeService;
 
     @Test
     void createDatabaseFailureIsSanitized503() throws Exception {
@@ -86,6 +89,31 @@ class InterviewQuestionControllerTests {
         mvc.perform(post(path()).with(user(identity())).with(csrf()).contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(new CreateInterviewQuestionRequest("虚构问题", null, "😀".repeat(101), null))))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.fields.knowledgeTopic").isString());
+    }
+
+    @Test
+    void updateAndDeleteDatabaseFailuresAreSanitized() throws Exception {
+        when(writeService.updateForUser(eq(10L), eq(1L), any())).thenThrow(new DataAccessResourceFailureException("PRIVATE_DATABASE_DETAILS"));
+        mvc.perform(put("/api/interview-questions/10").with(user(identity())).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"question\":\"PRIVATE_QUESTION\"}"))
+                .andExpect(status().isServiceUnavailable()).andExpect(content().string(not(containsString("PRIVATE_DATABASE_DETAILS"))))
+                .andExpect(content().string(not(containsString("PRIVATE_QUESTION"))));
+        org.mockito.Mockito.doThrow(new DataAccessResourceFailureException("PRIVATE_DATABASE_DETAILS")).when(writeService).deleteForUser(10L, 1L);
+        mvc.perform(delete("/api/interview-questions/10").with(user(identity())).with(csrf()))
+                .andExpect(status().isServiceUnavailable()).andExpect(content().string(not(containsString("PRIVATE_DATABASE_DETAILS"))));
+    }
+
+    @Test
+    void updateAcceptsCodePointLimitsAndRedactsDto() throws Exception {
+        var values = new jjie.job_spring.interview.common.UpdateInterviewQuestionRequest("😀".repeat(2000), "😀".repeat(4000), "😀".repeat(100), "😀".repeat(2000));
+        assertThat(values.toString()).doesNotContain("😀");
+        when(writeService.updateForUser(eq(10L), eq(1L), any())).thenAnswer(invocation -> {
+            jjie.job_spring.interview.common.UpdateInterviewQuestionRequest value = invocation.getArgument(2);
+            return new InterviewQuestionResponse(10L, value.question(), value.answerNotes(), value.knowledgeTopic(), value.reviewNotes());
+        });
+        mvc.perform(put("/api/interview-questions/10").with(user(identity())).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(values))).andExpect(status().isOk())
+                .andExpect(jsonPath("$.knowledgeTopic").value("😀".repeat(100)));
     }
 
     private String path() { return "/api/interview-rounds/10/questions"; }
