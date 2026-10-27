@@ -8,7 +8,7 @@
 
 在当前用户自己的岗位详情中新增面试轮次，并查看该岗位已保存的轮次。
 保留已有页面排列：电脑左侧岗位信息、右侧面试/状态/删除；700px 及以下按同一顺序单列排列。
-当前已完成新增、分页查看、编辑轮次及[单轮删除/岗位关联清理](interview-deletion-plan.md)；删除已由用户验收通过；[新增并查看问题](interview-questions.md)和回顾页已由用户验收；[问题编辑/单条删除](interview-question-actions.md)和[详情栏目切换](job-detail-tabs.md)开发完成待验收；问题搜索/主题筛选仍未实现，不涉及图片识别、部署或自动修改岗位状态。
+当前已完成新增、分页查看、编辑轮次及[单轮删除/岗位关联清理](interview-deletion-plan.md)；删除已由用户验收通过；[新增并查看问题](interview-questions.md)和回顾页已由用户验收；[问题编辑/单条删除](interview-question-actions.md)和[详情栏目切换](job-detail-tabs.md)已于 2026-10-27 由用户验收；[本轮关键词搜索](interview-question-search.md)已由用户验收；[知识主题筛选](interview-topic-filter.md)已开发完成待验收，之后进行阶段 4 整体验收，不涉及图片识别、部署或自动修改岗位状态。
 轮次列表已改为一轮一页，详情页提供上一轮/下一轮与编辑本轮；岗位列表既有分页对象与筛选接口保持不变。
 
 开始前通过只读 information_schema 查询核对了本机 MySQL 的相关字段、索引、检查约束与外键。

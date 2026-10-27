@@ -60,9 +60,11 @@ class InterviewQuestionControllerTests {
     @Test
     void readDatabaseFailureIsSanitized503() throws Exception {
         when(readService.listForUser(eq(10L), eq(1L), any())).thenThrow(new DataAccessResourceFailureException("PRIVATE_DATABASE_DETAILS"));
-        mvc.perform(get(path()).with(user(identity())))
+        mvc.perform(get(path()).with(user(identity())).param("keyword", "PRIVATE_SEARCH").param("topic", "PRIVATE_TOPIC"))
                 .andExpect(status().isServiceUnavailable()).andExpect(jsonPath("$.code").value("SERVICE_UNAVAILABLE"))
-                .andExpect(content().string(not(containsString("PRIVATE_DATABASE_DETAILS"))));
+                .andExpect(content().string(not(containsString("PRIVATE_DATABASE_DETAILS"))))
+                .andExpect(content().string(not(containsString("PRIVATE_SEARCH"))))
+                .andExpect(content().string(not(containsString("PRIVATE_TOPIC"))));
     }
 
     @Test

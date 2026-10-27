@@ -13,6 +13,23 @@ const total = ref(0)
 const totalPages = ref(0)
 const loading = ref(false)
 const loadError = ref('')
+const keyword = ref('')
+const submittedKeyword = ref('')
+const appliedKeyword = ref('')
+const keywordError = ref('')
+const searchInput = ref(null)
+const topics = ref([])
+const topic = ref('')
+const submittedTopic = ref('')
+const appliedTopic = ref('')
+const topicError = ref('')
+const topicInput = ref(null)
+const hasAppliedFilters = computed(() => Boolean(appliedKeyword.value || appliedTopic.value))
+const canResetFilters = computed(() => Boolean(keyword.value || submittedKeyword.value || appliedKeyword.value
+  || topic.value || submittedTopic.value || appliedTopic.value))
+// 当前选择的最后一条记录被改主题/删除后仍保留选项，避免静默切回“全部主题”。
+const topicOptions = computed(() => topic.value && !topics.value.includes(topic.value)
+  ? [topic.value, ...topics.value.filter(option => option.toLowerCase() !== topic.value.toLowerCase())] : topics.value)
 const editing = ref(false)
 const editId = ref(null)
 const panelElement = ref(null)
@@ -59,21 +76,33 @@ async function handleAccessFailure(failure) {
   return false
 }
 
-async function loadQuestions(requestedPage = page.value, questionId = null) {
+async function loadQuestions(requestedPage = page.value, questionId = null, searchKeyword = submittedKeyword.value, searchTopic = submittedTopic.value) {
   const number = ++requestNumber
-  submittedPage = requestedPage; submittedQuestionId = questionId
+  submittedPage = requestedPage; submittedQuestionId = questionId; submittedKeyword.value = searchKeyword; submittedTopic.value = searchTopic
   loading.value = true; loadError.value = ''; checked.value = false
   try {
     const query = new URLSearchParams({ page: String(requestedPage) })
     if (questionId !== null) query.set('questionId', String(questionId))
+    if (searchKeyword) query.set('keyword', searchKeyword)
+    if (searchTopic) query.set('topic', searchTopic)
     const result = await request(`/api/interview-rounds/${props.roundId}/questions?${query}`)
     if (!active || number !== requestNumber) return
     items.value = result.items; page.value = result.page; total.value = result.total; totalPages.value = result.totalPages
+    appliedKeyword.value = searchKeyword; appliedTopic.value = searchTopic; topics.value = result.topics
     checked.value = true
     return result
   } catch (failure) {
     if (!active || number !== requestNumber) return
-    if (!await handleAccessFailure(failure)) loadError.value = failure.message
+    if (!await handleAccessFailure(failure)) {
+      loadError.value = failure.fields?.keyword || failure.fields?.topic || failure.message
+      if (failure.fields?.keyword && keyword.value.trim() === searchKeyword) {
+        keywordError.value = failure.fields.keyword
+        await nextTick(); searchInput.value?.focus()
+      } else if (failure.fields?.topic && topic.value === searchTopic) {
+        topicError.value = failure.fields.topic
+        await nextTick(); topicInput.value?.focus()
+      }
+    }
   } finally {
     if (active && number === requestNumber) loading.value = false
   }
@@ -124,14 +153,17 @@ async function submit() {
     editing.value = false; editId.value = null
     success.value = updating ? '面试问题已更新。' : '面试问题已保存。'
     // 按 ID 倒序，新问题在首页；写入成功后的 GET 失败只重试读取。
-    await loadQuestions(updating ? page.value : 1, updating ? saved.id : null)
+    const result = await loadQuestions(updating ? page.value : 1, saved.id)
+    if (active && hasAppliedFilters.value && result && !result.items.some(item => item.id === saved.id)) {
+      success.value += ' 当前筛选结果未包含该问题，可重置条件查看。'
+    }
   } catch (failure) {
     if (!active) return
     if (!await handleAccessFailure(failure)) {
       fields.value = failure.fields || {}
       uncertain.value = failure.status === 0; checked.value = false
       saveError.value = uncertain.value
-        ? `${failure.message} 保存结果暂时无法确认，请先加载问题列表核对，确认后再继续操作。` : failure.message
+        ? `${failure.message} 保存结果暂时无法确认，请先加载问题列表核对；核对会重置搜索条件，避免遗漏记录。` : failure.message
     }
   } finally {
     if (active) saving.value = false
@@ -194,7 +226,7 @@ async function deleteQuestion() {
     } else if (!await handleAccessFailure(failure)) {
       deleteUncertain.value = failure.status === 0
       if (deleteUncertain.value) confirmingDelete.value = null
-      deleteError.value = deleteUncertain.value ? `${failure.message} 删除结果暂时无法确认，请先核对。` : failure.message
+      deleteError.value = deleteUncertain.value ? `${failure.message} 删除结果暂时无法确认，请先核对；核对会重置搜索条件，避免遗漏记录。` : failure.message
     }
   } finally { if (active) deleting.value = false }
 }
@@ -204,7 +236,8 @@ async function checkDeleteResult() {
   const target = deleteTarget.value
   checkingDelete.value = true
   try {
-    const result = await loadQuestions(page.value, target.id)
+    keyword.value = ''; keywordError.value = ''; topic.value = ''; topicError.value = ''
+    const result = await loadQuestions(page.value, target.id, '', '')
     if (!active || !result) return
     deleteNotice.value = result.items.some(item => item.id === target.id)
       ? '问题仍然存在，已重新加载。如需删除，请重新确认。' : '问题已不存在或无法访问，列表已更新。'
@@ -212,13 +245,68 @@ async function checkDeleteResult() {
   } finally { if (active) checkingDelete.value = false }
 }
 
+async function searchQuestions() {
+  if (props.locked || editing.value || saving.value || uncertain.value || deleteLocked.value) return
+  const value = keyword.value.trim()
+  keywordError.value = ''; topicError.value = ''
+  if ([...value].length > 100) {
+    keywordError.value = '搜索关键词不能超过100个字符'
+    await nextTick(); searchInput.value?.focus(); return
+  }
+  if (loading.value && value === submittedKeyword.value && topic.value === submittedTopic.value && submittedPage === 1 && submittedQuestionId === null) return
+  keyword.value = value; success.value = ''; saveError.value = ''; deleteError.value = ''; deleteNotice.value = ''
+  return loadQuestions(1, null, value, topic.value)
+}
+
+function resetFilters() {
+  if (props.locked || editing.value || saving.value || uncertain.value || deleteLocked.value) return
+  keyword.value = ''; keywordError.value = ''; topic.value = ''; topicError.value = ''; success.value = ''; saveError.value = ''; deleteError.value = ''; deleteNotice.value = ''
+  return loadQuestions(1, null, '', '')
+}
+
+function checkSaveResult() {
+  if (!uncertain.value || loading.value) return
+  keyword.value = ''; keywordError.value = ''; topic.value = ''; topicError.value = ''
+  return loadQuestions(editId.value !== null ? page.value : 1, editId.value, '', '')
+}
+
 watch(() => props.roundId, () => loadQuestions(1), { immediate: true })
 </script>
 
 <template>
   <section ref="panelElement" class="interview-questions" aria-label="本轮面试问题">
-    <h2 v-if="total">本轮问题 <span class="muted">（{{ total }}）</span></h2>
+    <h2 v-if="total || hasAppliedFilters">{{ hasAppliedFilters ? '匹配问题' : '本轮问题' }} <span class="muted">（{{ total }}）</span></h2>
     <p v-if="total" class="muted input-help">记录问题、回答要点与复盘；最新添加的排在前面。</p>
+    <form class="question-search" role="search" aria-label="搜索本轮面试问题" novalidate @submit.prevent="searchQuestions">
+      <div class="question-search-controls">
+        <div class="question-keyword-field">
+          <label :for="`question-search-${roundId}`">搜索本轮问题</label>
+          <input :id="`question-search-${roundId}`" ref="searchInput" v-model="keyword" type="search"
+                 :disabled="locked || editing || saving || uncertain || deleteLocked" :aria-invalid="Boolean(keywordError)"
+                 :aria-describedby="`question-search-help-${roundId}`" />
+        </div>
+        <div class="question-topic-field">
+          <label :for="`question-topic-filter-${roundId}`">知识主题筛选</label>
+          <select :id="`question-topic-filter-${roundId}`" ref="topicInput" v-model="topic"
+                  :disabled="locked || editing || saving || uncertain || deleteLocked" :aria-invalid="Boolean(topicError)"
+                  :aria-describedby="`question-topic-help-${roundId}`">
+            <option value="">全部主题</option>
+            <option v-for="option in topicOptions" :key="option" :value="option">{{ option }}</option>
+          </select>
+        </div>
+        <button type="submit" class="secondary-button" :disabled="locked || editing || saving || uncertain || deleteLocked">搜索问题</button>
+        <button type="button" class="secondary-button" :disabled="locked || editing || saving || uncertain || deleteLocked || !canResetFilters" @click="resetFilters">重置条件</button>
+      </div>
+      <p :id="`question-search-help-${roundId}`" class="input-help" :class="keywordError ? 'field-error' : 'muted'">
+        {{ keywordError || '在本轮的问题、回答要点、知识主题和复盘中搜索，最多 100 个字符。' }}
+      </p>
+      <p :id="`question-topic-help-${roundId}`" class="input-help" :class="topicError ? 'field-error' : 'muted'">
+        {{ topicError || '主题按完整名称匹配；选择后点击搜索，与关键词同时生效。' }}
+      </p>
+    </form>
+    <p v-if="hasAppliedFilters" class="question-search-result muted" role="status">
+      <span v-if="appliedKeyword">搜索“{{ appliedKeyword }}” · </span>主题：{{ appliedTopic || '全部主题' }} · 共 {{ total }} 条匹配 · 仅限本轮
+    </p>
     <p v-if="success" class="form-message success" role="status">{{ success }}</p>
     <p v-if="!editing && saveError" class="form-message error" role="alert">{{ saveError }}</p>
     <p v-if="deleteError" class="form-message error" role="alert">{{ deleteError }}</p>
@@ -230,7 +318,7 @@ watch(() => props.roundId, () => loadQuestions(1), { immediate: true })
       <button type="button" class="text-button" @click="retryLoad">重新加载问题</button>
     </div>
     <template v-else>
-      <p v-if="!items.length" class="muted review-empty">无面试过程记录</p>
+      <p v-if="!items.length" class="muted review-empty">{{ hasAppliedFilters ? '没有匹配的问题，可调整搜索条件或重置条件。' : '无面试过程记录' }}</p>
       <ol v-else class="interview-question-list" aria-label="本轮已保存的问题">
         <li v-for="(item, index) in items" :key="item.id" class="question-row">
           <div class="question-content-block">
@@ -272,7 +360,7 @@ watch(() => props.roundId, () => loadQuestions(1), { immediate: true })
       </div>
     </div>
     <button v-if="!editing" ref="addButton" type="button" class="secondary-button"
-            :disabled="locked || loading || deleteLocked || Boolean(loadError)" @click="openForm">{{ total ? '新增问题' : '添加记录' }}</button>
+            :disabled="locked || loading || deleteLocked || Boolean(loadError)" @click="openForm">{{ total || hasAppliedFilters ? '新增问题' : '添加记录' }}</button>
     <form v-else ref="formElement" class="job-form interview-form" novalidate :aria-busy="saving" @submit.prevent="submit">
       <h3>{{ editId !== null ? '编辑面试问题' : '新增面试问题' }}</h3>
       <p v-if="editId !== null" class="muted input-help">选填项留空会清除原内容。</p>
@@ -295,7 +383,7 @@ watch(() => props.roundId, () => loadQuestions(1), { immediate: true })
       </fieldset>
       <p v-if="saveError" class="form-message error" role="alert">{{ saveError }}</p>
       <div v-if="uncertain" class="interview-notice">
-        <button type="button" class="text-button" :disabled="loading" @click="loadQuestions(editId !== null ? page : 1, editId)">重新加载问题并核对</button>
+        <button type="button" class="text-button" :disabled="loading" @click="checkSaveResult">重新加载问题并核对</button>
         <button type="button" class="secondary-button" :disabled="!checked || loading || Boolean(loadError)" @click="acknowledgeResult">已核对问题，恢复操作</button>
       </div>
     </form>

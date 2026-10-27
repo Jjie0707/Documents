@@ -212,6 +212,240 @@ class InterviewQuestionIntegrationTests {
         assertThat(count()).isEqualTo(1);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"question", "answerNotes", "knowledgeTopic", "reviewNotes"})
+    void keywordMatchesEachFieldIgnoringCaseAndTrimmingEdges(String field) throws Exception {
+        var values = new java.util.HashMap<String, Object>();
+        values.put("question", "普通问题"); values.put(field, "前缀 Spring 后缀");
+        create(target, values).andExpect(status().isCreated());
+        create(target, Map.of("question", "无关问题")).andExpect(status().isCreated());
+        search(" \u2003sPrInG\n").andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1))
+                .andExpect(jsonPath("$.items[0]." + field).value("前缀 Spring 后缀"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"%", "_", "!", "\\", "' OR 1=1 --", "!%_"})
+    void keywordTreatsWildcardsEscapeAndSqlLookingInputLiterally(String keyword) throws Exception {
+        create(target, Map.of("question", "前缀" + keyword + "后缀")).andExpect(status().isCreated());
+        create(target, Map.of("question", "完全无关的内容")).andExpect(status().isCreated());
+        search(keyword).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1))
+                .andExpect(jsonPath("$.items[0].question").value("前缀" + keyword + "后缀"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", " \u2003\n", "   "})
+    void blankKeywordUsesOrdinaryPagination(String keyword) throws Exception {
+        create(target, Map.of("question", "普通问题")).andExpect(status().isCreated());
+        search(keyword).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1));
+    }
+
+    @Test
+    void searchOrBranchesCannotEscapeUserAndRoundScope() throws Exception {
+        create(target, Map.of("question", "目标问题", "reviewNotes", "命中")).andExpect(status().isCreated());
+        create(sibling, Map.of("question", "命中同岗位其他轮次")).andExpect(status().isCreated());
+        create(ownOtherJobRound, Map.of("question", "其他岗位", "answerNotes", "命中")).andExpect(status().isCreated());
+        mvc.perform(post(path(foreignRound)).with(user(other)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(Map.of("question", "他人问题", "knowledgeTopic", "命中"))))
+                .andExpect(status().isCreated());
+        search("命中").andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1))
+                .andExpect(jsonPath("$.items[0].question").value("目标问题"));
+        mvc.perform(get(path(foreignRound)).with(user(owner)).param("keyword", "命中"))
+                .andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("ROUND_NOT_FOUND"));
+        mvc.perform(get(path(target)).param("keyword", "命中")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void filteredCountPageAndFocusUseSameConditions() throws Exception {
+        for (int i = 1; i <= 11; i++) {
+            create(target, Map.of("question", "匹配" + i)).andExpect(status().isCreated());
+            create(target, Map.of("question", "不相关" + i)).andExpect(status().isCreated());
+        }
+        Long oldestMatch = jdbc.queryForObject("SELECT MIN(id) FROM interview_questions WHERE question LIKE '匹配%'", Long.class);
+        Long excluded = jdbc.queryForObject("SELECT MAX(id) FROM interview_questions WHERE question LIKE '不相关%'", Long.class);
+        search("匹配").andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(10))
+                .andExpect(jsonPath("$.total").value(11)).andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.items[0].question").value("匹配11"));
+        mvc.perform(get(path(target)).with(user(owner)).param("keyword", "匹配").param("questionId", oldestMatch.toString()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.page").value(2))
+                .andExpect(jsonPath("$.items[0].question").value("匹配1"));
+        for (Long focus : new Long[]{excluded, Long.MAX_VALUE}) {
+            mvc.perform(get(path(target)).with(user(owner)).param("keyword", "匹配").param("questionId", focus.toString()))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.page").value(1));
+        }
+        mvc.perform(get(path(target)).with(user(owner)).param("keyword", "匹配").param("page", "2147483647"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.page").value(2));
+        search("没有这样的内容").andExpect(status().isOk()).andExpect(jsonPath("$.items").isEmpty())
+                .andExpect(jsonPath("$.page").value(1)).andExpect(jsonPath("$.totalPages").value(0));
+    }
+
+    @Test
+    void writesRecalculateFilteredResultsWithoutChangingOtherQuestions() throws Exception {
+        for (int i = 1; i <= 11; i++) create(target, Map.of("question", "事务问题" + i)).andExpect(status().isCreated());
+        Long oldest = jdbc.queryForObject("SELECT MIN(id) FROM interview_questions WHERE interview_round_id=?", Long.class, target);
+        mvc.perform(put("/api/interview-questions/" + oldest).with(user(owner)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"question\":\"已改为集合问题\"}"))
+                .andExpect(status().isOk());
+        mvc.perform(get(path(target)).with(user(owner)).param("keyword", "事务").param("page", "2").param("questionId", oldest.toString()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.total").value(10)).andExpect(jsonPath("$.page").value(1));
+        mvc.perform(delete("/api/interview-questions/" + oldest).with(user(owner)).with(csrf())).andExpect(status().isNoContent());
+        search("事务").andExpect(status().isOk()).andExpect(jsonPath("$.total").value(10));
+        create(target, Map.of("question", "新增事务问题")).andExpect(status().isCreated());
+        search("事务").andExpect(status().isOk()).andExpect(jsonPath("$.total").value(11))
+                .andExpect(jsonPath("$.items[0].question").value("新增事务问题"));
+    }
+
+    @Test
+    void keywordValidatesUnicodeCodePointsAndDoesNotEchoRejectedContent() throws Exception {
+        String accepted = "😀".repeat(100);
+        create(target, Map.of("question", accepted)).andExpect(status().isCreated());
+        search(" " + accepted + " ").andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1));
+        String body = search("PRIVATE_SEARCH" + accepted).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fields.keyword").value("搜索关键词不能超过100个字符"))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(body).doesNotContain("PRIVATE_SEARCH", "😀", "Exception");
+        assertThat(new jjie.job_spring.interview.common.InterviewQuestionPageQuery(null, null, accepted, null).toString())
+                .doesNotContain(accepted);
+        assertThat(count()).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", " \u2003\n", "   "})
+    void blankTopicDoesNotRestrictKeywordResults(String topic) throws Exception {
+        create(target, Map.of("question", "事务一", "knowledgeTopic", "Spring")).andExpect(status().isCreated());
+        create(target, Map.of("question", "事务二")).andExpect(status().isCreated());
+        filter("事务", topic).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(2))
+                .andExpect(jsonPath("$.topics[0]").value("Spring"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Java", "%_!", "' OR 1=1 --", "\\"})
+    void topicIsFullLiteralNameWithTrimAndCaseInsensitiveMatching(String topic) throws Exception {
+        create(target, Map.of("question", "完整主题", "knowledgeTopic", topic)).andExpect(status().isCreated());
+        create(target, Map.of("question", "只包含主题", "knowledgeTopic", topic + " 扩展")).andExpect(status().isCreated());
+        create(target, Map.of("question", "未填主题")).andExpect(status().isCreated());
+        filter("", " \u2003" + topic.toLowerCase(java.util.Locale.ROOT) + "\n").andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(1)).andExpect(jsonPath("$.items[0].question").value("完整主题"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"question", "answerNotes", "knowledgeTopic", "reviewNotes"})
+    void topicAndEachKeywordBranchAreIntersectedWithoutEscapingScope(String field) throws Exception {
+        var values = new java.util.HashMap<String, Object>();
+        values.put("question", "目标问题"); values.put(field, "Spring"); values.put("knowledgeTopic", "Spring");
+        create(target, values).andExpect(status().isCreated());
+        // 同关键词不同主题、同主题不同关键词，以及同主题同关键词的其他归属均不能进入结果。
+        create(target, Map.of("question", "Spring", "knowledgeTopic", "Java")).andExpect(status().isCreated());
+        create(target, Map.of("question", "其他问题", "knowledgeTopic", "Spring")).andExpect(status().isCreated());
+        create(sibling, Map.of("question", "Spring", "knowledgeTopic", "Spring")).andExpect(status().isCreated());
+        create(ownOtherJobRound, Map.of("question", "Spring", "knowledgeTopic", "Spring")).andExpect(status().isCreated());
+        mvc.perform(post(path(foreignRound)).with(user(other)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(Map.of("question", "Spring", "knowledgeTopic", "Spring"))))
+                .andExpect(status().isCreated());
+        // knowledgeTopic 本身属于关键词搜索字段，因而另一条 Spring 主题也应匹配 Spring 关键词。
+        filter("Spring", "spring").andExpect(status().isOk()).andExpect(jsonPath("$.total").value(2));
+        String uniqueKeyword = "唯一命中";
+        values.put(field, uniqueKeyword);
+        String selectedTopic = field.equals("knowledgeTopic") ? uniqueKeyword : "Spring";
+        values.put("knowledgeTopic", selectedTopic);
+        create(target, values).andExpect(status().isCreated());
+        create(target, Map.of("question", uniqueKeyword, "knowledgeTopic", "不同主题")).andExpect(status().isCreated());
+        filter(uniqueKeyword, selectedTopic).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1));
+    }
+
+    @Test
+    void topicOptionsCoverWholeOwnedRoundIndependentOfKeywordTopicAndPage() throws Exception {
+        for (int i = 1; i <= 11; i++) create(target, Map.of("question", "问题" + i, "knowledgeTopic", "Java")).andExpect(status().isCreated());
+        create(target, Map.of("question", "其他主题", "knowledgeTopic", "Spring")).andExpect(status().isCreated());
+        create(target, Map.of("question", "同名大小写", "knowledgeTopic", "java")).andExpect(status().isCreated());
+        create(target, Map.of("question", "无主题")).andExpect(status().isCreated());
+        create(sibling, Map.of("question", "不可泄露", "knowledgeTopic", "SIBLING_TOPIC")).andExpect(status().isCreated());
+        create(ownOtherJobRound, Map.of("question", "不可泄露", "knowledgeTopic", "OTHER_JOB_TOPIC")).andExpect(status().isCreated());
+        mvc.perform(post(path(foreignRound)).with(user(other)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"question\":\"他人问题\",\"knowledgeTopic\":\"FOREIGN_TOPIC\"}"))
+                .andExpect(status().isCreated());
+        mvc.perform(get(path(target)).with(user(owner)).param("topic", "Java").param("page", "2"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.topics", org.hamcrest.Matchers.contains("Java", "Spring")));
+        for (String selected : new String[]{"Spring", "不存在的主题"}) {
+            filter("没有匹配的词", selected).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(0))
+                    .andExpect(jsonPath("$.topics", org.hamcrest.Matchers.contains("Java", "Spring")));
+        }
+    }
+
+    @Test
+    void combinedFilterCountRowsAndQuestionFocusUseSameConditions() throws Exception {
+        for (int i = 1; i <= 11; i++) {
+            create(target, Map.of("question", "命中" + i, "knowledgeTopic", "Java")).andExpect(status().isCreated());
+            create(target, Map.of("question", "命中但不同主题" + i, "knowledgeTopic", "Spring")).andExpect(status().isCreated());
+        }
+        create(target, Map.of("question", "无关内容", "knowledgeTopic", "Java")).andExpect(status().isCreated());
+        Long oldest = jdbc.queryForObject("SELECT MIN(id) FROM interview_questions WHERE knowledge_topic='Java'", Long.class);
+        Long excluded = jdbc.queryForObject("SELECT MAX(id) FROM interview_questions WHERE knowledge_topic='Spring'", Long.class);
+        Long siblingId = json.readTree(create(sibling, Map.of("question", "命中其他轮", "knowledgeTopic", "Java"))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString()).get("id").asLong();
+        filter("命中", "java").andExpect(status().isOk()).andExpect(jsonPath("$.total").value(11))
+                .andExpect(jsonPath("$.totalPages").value(2)).andExpect(jsonPath("$.items.length()").value(10))
+                .andExpect(jsonPath("$.items[0].question").value("命中11"));
+        mvc.perform(get(path(target)).with(user(owner)).param("keyword", "命中").param("topic", "java").param("questionId", oldest.toString()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.page").value(2))
+                .andExpect(jsonPath("$.items[0].id").value(oldest));
+        for (Long focus : new Long[]{excluded, siblingId}) {
+            mvc.perform(get(path(target)).with(user(owner)).param("keyword", "命中").param("topic", "Java").param("questionId", focus.toString()))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.page").value(1));
+        }
+        mvc.perform(get(path(target)).with(user(owner)).param("keyword", "命中").param("topic", "Java").param("page", "2147483647"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.page").value(2));
+    }
+
+    @Test
+    void topicOptionsAndFilterResultsReflectCreateUpdateAndDelete() throws Exception {
+        create(target, Map.of("question", "原问题", "knowledgeTopic", "Java")).andExpect(status().isCreated());
+        Long id = jdbc.queryForObject("SELECT id FROM interview_questions WHERE interview_round_id=?", Long.class, target);
+        mvc.perform(put("/api/interview-questions/" + id).with(user(owner)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"question\":\"已修改\",\"knowledgeTopic\":\"Spring\"}"))
+                .andExpect(status().isOk());
+        filter("", "Java").andExpect(status().isOk()).andExpect(jsonPath("$.total").value(0))
+                .andExpect(jsonPath("$.topics", org.hamcrest.Matchers.contains("Spring")));
+        filter("", "Spring").andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1));
+        mvc.perform(delete("/api/interview-questions/" + id).with(user(owner)).with(csrf())).andExpect(status().isNoContent());
+        filter("", "Spring").andExpect(status().isOk()).andExpect(jsonPath("$.total").value(0))
+                .andExpect(jsonPath("$.page").value(1)).andExpect(jsonPath("$.totalPages").value(0))
+                .andExpect(jsonPath("$.topics").isEmpty());
+        create(target, Map.of("question", "新问题", "knowledgeTopic", "事务")).andExpect(status().isCreated());
+        filter("", "事务").andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1))
+                .andExpect(jsonPath("$.topics", org.hamcrest.Matchers.contains("事务")));
+    }
+
+    @Test
+    void topicLengthUsesCodePointsAndDoesNotEchoRejectedValue() throws Exception {
+        String accepted = "😀".repeat(100);
+        filter("", " " + accepted + " ").andExpect(status().isOk()).andExpect(jsonPath("$.topics").isEmpty());
+        String body = filter("", "PRIVATE_TOPIC" + accepted).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fields.topic").value("知识主题不能超过100个字符"))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(body).doesNotContain("PRIVATE_TOPIC", "😀", "Exception");
+        assertThat(new jjie.job_spring.interview.common.InterviewQuestionPageQuery(null, null, null, accepted).toString())
+                .doesNotContain(accepted);
+        assertThat(count()).isZero();
+    }
+
+    @Test
+    void topicQueryKeepsParent404AndAuthenticationWithoutExposingOptions() throws Exception {
+        for (Long round : new Long[]{Long.MAX_VALUE, foreignRound}) {
+            mvc.perform(get(path(round)).with(user(owner)).param("topic", "PRIVATE_TOPIC"))
+                    .andExpect(status().isNotFound()).andExpect(jsonPath("$.code").value("ROUND_NOT_FOUND"))
+                    .andExpect(jsonPath("$.topics").doesNotExist());
+        }
+        mvc.perform(get(path(target)).param("topic", "Java")).andExpect(status().isUnauthorized());
+    }
+
+    private ResultActions filter(String keyword, String topic) throws Exception {
+        return mvc.perform(get(path(target)).with(user(owner)).param("keyword", keyword).param("topic", topic));
+    }
+
+    private ResultActions search(String keyword) throws Exception {
+        return mvc.perform(get(path(target)).with(user(owner)).param("keyword", keyword));
+    }
+
     private ResultActions create(Long id, Map<String, ?> values) throws Exception { return rawCreate(id, json.writeValueAsString(values)); }
     private ResultActions rawCreate(Long id, String body) throws Exception {
         return mvc.perform(post(path(id)).with(user(owner)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(body));
