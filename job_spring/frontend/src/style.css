@@ -97,12 +97,14 @@ select { width: 100%; min-height: 44px; border-radius: 6px; border: 1px solid #d
 .job-form fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .job-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 24px; }
 .job-form-field { min-width: 0; }
+.job-form-field-wide { grid-column: 1 / -1; }
 .job-form label { display: block; margin-bottom: 10px; font-size: .85rem; }
 .required-mark { color: #a13f35; }
 .optional-label { color: var(--muted); font-size: .78rem; }
-.job-form input { width: 100%; min-height: 46px; border: 1px solid #d9dfd3; border-radius: 6px; padding: 10px 12px; background: #fcfdfb; color: #25372f; font-size: 16px; }
-.job-form input[aria-invalid='true'] { border-color: #b56054; }
-.job-form input:disabled { opacity: .7; }
+.job-form input, .job-form textarea { width: 100%; min-height: 46px; border: 1px solid #d9dfd3; border-radius: 6px; padding: 10px 12px; background: #fcfdfb; color: #25372f; font-size: 16px; }
+.job-form textarea { min-height: 150px; resize: vertical; font-family: inherit; line-height: 1.8; }
+.job-form input[aria-invalid='true'], .job-form textarea[aria-invalid='true'] { border-color: #b56054; }
+.job-form input:disabled, .job-form textarea:disabled { opacity: .7; }
 .job-form-note { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); }
 .job-form-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
 .job-edit-recovery { margin-top: 14px; }

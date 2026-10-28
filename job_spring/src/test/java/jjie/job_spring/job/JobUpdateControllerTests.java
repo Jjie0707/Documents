@@ -38,13 +38,18 @@ class JobUpdateControllerTests {
         account.setId(2L);
         account.setUsername("update_controller_demo");
         account.setPasswordHash(UUID.randomUUID().toString());
-        when(service.updateForUser(1L, 2L, new UpdateJobRequest("虚构公司", "测试岗位", null, null)))
+        when(service.updateForUser(1L, 2L, new UpdateJobRequest("虚构公司", "测试岗位", null, null, "PRIVATE_RESPONSIBILITIES", "PRIVATE_REQUIREMENTS")))
                 .thenThrow(new DataAccessResourceFailureException("PRIVATE_DATABASE_DETAILS"));
         mvc.perform(put("/api/jobs/1").with(user(new AppUserDetails(account))).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"companyName\":\"虚构公司\",\"jobTitle\":\"测试岗位\"}"))
+                        .content("""
+                                {"companyName":"虚构公司","jobTitle":"测试岗位",
+                                 "responsibilities":"PRIVATE_RESPONSIBILITIES","requirements":"PRIVATE_REQUIREMENTS"}
+                                """))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.code").value("SERVICE_UNAVAILABLE"))
-                .andExpect(content().string(not(containsString("PRIVATE_DATABASE_DETAILS"))));
+                .andExpect(content().string(not(containsString("PRIVATE_DATABASE_DETAILS"))))
+                .andExpect(content().string(not(containsString("PRIVATE_RESPONSIBILITIES"))))
+                .andExpect(content().string(not(containsString("PRIVATE_REQUIREMENTS"))));
     }
 }

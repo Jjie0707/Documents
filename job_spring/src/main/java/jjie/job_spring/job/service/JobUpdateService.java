@@ -27,7 +27,9 @@ public class JobUpdateService {
                 .set(JobApplication::getJobTitle, request.jobTitle())
                 // 显式 SET 允许将选填项写为 SQL NULL，而不是跳过空值。
                 .set(JobApplication::getCity, request.city())
-                .set(JobApplication::getSalary, request.salary()));
+                .set(JobApplication::getSalary, request.salary())
+                .set(JobApplication::getResponsibilities, request.responsibilities())
+                .set(JobApplication::getRequirements, request.requirements()));
         // 相同内容也允许成功；按归属回读判断记录是否存在，不用影响行数判断 404。
         return readService.findForUser(id, currentUserId);
     }

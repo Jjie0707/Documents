@@ -43,11 +43,16 @@ class JobCreateControllerTests {
                 .thenThrow(new DataAccessResourceFailureException("PRIVATE_DATABASE_DETAILS"));
         mvc.perform(post("/api/jobs").with(user(new AppUserDetails(account))).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"companyName\":\"PRIVATE_JOB_CONTENT\",\"jobTitle\":\"示例岗位\"}"))
+                        .content("""
+                                {"companyName":"PRIVATE_JOB_CONTENT","jobTitle":"示例岗位",
+                                 "responsibilities":"PRIVATE_RESPONSIBILITIES","requirements":"PRIVATE_REQUIREMENTS"}
+                                """))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.code").value("SERVICE_UNAVAILABLE"))
                 .andExpect(jsonPath("$.message").value("岗位暂时无法保存，请稍后重试"))
                 .andExpect(content().string(not(containsString("PRIVATE_DATABASE_DETAILS"))))
-                .andExpect(content().string(not(containsString("PRIVATE_JOB_CONTENT"))));
+                .andExpect(content().string(not(containsString("PRIVATE_JOB_CONTENT"))))
+                .andExpect(content().string(not(containsString("PRIVATE_RESPONSIBILITIES"))))
+                .andExpect(content().string(not(containsString("PRIVATE_REQUIREMENTS"))));
     }
 }

@@ -24,6 +24,8 @@ public class JobCreateService {
         job.setJobTitle(request.jobTitle());
         job.setCity(request.city());
         job.setSalary(request.salary());
+        job.setResponsibilities(request.responsibilities());
+        job.setRequirements(request.requirements());
         job.setStatus(JobStatus.TO_APPLY.name());
         // AUTO 主键由数据库生成，MyBatis-Plus 将生成的 ID 回填到 job。
         mapper.insert(job);

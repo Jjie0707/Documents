@@ -2,7 +2,7 @@
 
 这份文档用于规划项目，也可以直接提供给 Codex 作为开发上下文。项目按阶段推进：先完成不依赖 AI 的可用版本，再加入招聘截图识别。
 
-当前页面布局以用户于 2026-10-18 提供的两张草图为参考，见 [页面约定](pages.md)。用户已确认[阶段 2](authentication.md)、[最小新增岗位接口](job-creation.md)、[网页新增岗位表单](job-create-form.md)、[岗位状态修改后端接口](job-status.md)、[详情页状态修改操作](job-status-ui.md)、[编辑岗位基本信息后端接口](job-update.md)、[网页编辑岗位表单](job-edit-form.md)、[删除岗位后端接口](job-deletion.md)、[网页删除操作](job-delete-ui.md)、[关键词搜索后端接口](job-search.md)及[网页关键词搜索](job-search-ui.md)验收通过。2026-10-21 已完成[状态筛选接口与页面](job-status-filter.md)，支持与关键词取交集、重置两项条件及结果条件展示；开发验证已完成，用户已在阶段 3 整体验收中确认通过。2026-10-21 已完成[分页接口与页面](job-pagination.md)，包含数据库分页、总数与页码、每页条数选择和筛选组合。用户已于 2026-10-21 明确确认阶段 3 验收完毕；分页及阶段 3 全流程验收通过，具体设备的逐项结果不额外推断。阶段 4 已开始：已完成[新增并查看面试轮次](interview-rounds.md)的后端、详情页 UI 与开发验证，用户已完成初版验收并提出两项修改；[拒绝重复轮次](interview-round-duplicates.md)已由用户确认验收；[一轮一页](interview-round-pagination.md)和[轮次信息编辑](interview-round-update.md)已开发完成，等待本次验收；[轮次删除及岗位关联清理](interview-deletion-plan.md)已由用户验收通过；[每轮新增并查看问题](interview-questions.md)及[独立回顾页](interview-review-page.md)已于 2026-10-23 由用户验收；[问题编辑/单条删除](interview-question-actions.md)及[详情栏目切换](job-detail-tabs.md)已于 2026-10-27 由用户验收；[当前轮次的问题关键词搜索](interview-question-search.md)已由用户验收；[知识主题筛选及组合分页](interview-topic-filter.md)已由用户验收；用户于 2026-10-27 确认阶段 4 验收完毕。阶段 5 尚未实现，现仅完成[小任务规划](stage5-plan.md)，见[阶段 4 交接说明](stage4-handoff.md)。README 后补。
+当前页面布局以用户于 2026-10-18 提供的两张草图为参考，见 [页面约定](pages.md)。用户已确认[阶段 2](authentication.md)、[最小新增岗位接口](job-creation.md)、[网页新增岗位表单](job-create-form.md)、[岗位状态修改后端接口](job-status.md)、[详情页状态修改操作](job-status-ui.md)、[编辑岗位基本信息后端接口](job-update.md)、[网页编辑岗位表单](job-edit-form.md)、[删除岗位后端接口](job-deletion.md)、[网页删除操作](job-delete-ui.md)、[关键词搜索后端接口](job-search.md)及[网页关键词搜索](job-search-ui.md)验收通过。2026-10-21 已完成[状态筛选接口与页面](job-status-filter.md)，支持与关键词取交集、重置两项条件及结果条件展示；开发验证已完成，用户已在阶段 3 整体验收中确认通过。2026-10-21 已完成[分页接口与页面](job-pagination.md)，包含数据库分页、总数与页码、每页条数选择和筛选组合。用户已于 2026-10-21 明确确认阶段 3 验收完毕；分页及阶段 3 全流程验收通过，具体设备的逐项结果不额外推断。阶段 4 已开始：已完成[新增并查看面试轮次](interview-rounds.md)的后端、详情页 UI 与开发验证，用户已完成初版验收并提出两项修改；[拒绝重复轮次](interview-round-duplicates.md)已由用户确认验收；[一轮一页](interview-round-pagination.md)和[轮次信息编辑](interview-round-update.md)已开发完成，等待本次验收；[轮次删除及岗位关联清理](interview-deletion-plan.md)已由用户验收通过；[每轮新增并查看问题](interview-questions.md)及[独立回顾页](interview-review-page.md)已于 2026-10-23 由用户验收；[问题编辑/单条删除](interview-question-actions.md)及[详情栏目切换](job-detail-tabs.md)已于 2026-10-27 由用户验收；[当前轮次的问题关键词搜索](interview-question-search.md)已由用户验收；[知识主题筛选及组合分页](interview-topic-filter.md)已由用户验收；用户于 2026-10-27 确认阶段 4 验收完毕。阶段 5 已于 2026-10-28 开始，仅完成 [5.1 岗位职责/任职要求 API 与表单](job-description-fields.md)及开发验证，等待本项用户验收；全量 400 项测试、JAR、前端构建与隔离 H2 网页检查通过，真实 MySQL/域名/手机待本机验收。5.2 及后续未开始，见[小任务规划](stage5-plan.md)与[交接说明](stage4-handoff.md)。README 后补。
 
 ## 1. 项目目标
 
@@ -184,7 +184,9 @@ GET    /api/vision/quota
 
 完成截图上传、视觉模型调用、JSON 校验、可编辑草稿、IP 每日限额和全站每日上限。
 
-**状态：**2026-10-27 仅完成[阶段 5 小任务规划](stage5-plan.md)，尚未开始实现。已核对现有写接口只开放四个岗位字段，需先补全手动保存能力。按 5.1～5.8 的任务组开发，其中 5.3 细分基础上传、电脑增强和手机适配三步，共十个开发小任务，5.9 整体验收；先从岗位职责/任职要求 API 与 UI 开始，用户确认后再实施。用户补充的完整岗位字段、四平台上传验收及免费视觉 API 优先策略，见[补充核查](stage5-research.md)；当前优先候选 GLM-4.6V-Flash，仅官方资料核对、尚未实测调用。
+**当前状态（2026-10-28）：**用户确认开始阶段 5，本次仅完成 [5.1 岗位职责/任职要求 API 与 UI](job-description-fields.md)，开发验证完成、等待用户本机验收。原新增/编辑接口及页面已开放六字段，两项新文本选填、各最多 10,000 码点，支持多行保存、预填、修改和显式清空；未开放列保持。Java 17 全量 400 项测试（比阶段 4 增加 14）、JAR、前端构建和隔离 H2 网页检查通过，未向用户 MySQL 写入测试数据。完成即停，5.2 及后续未开始。2026-10-27 原先仅完成规划，已由本记录更新。
+
+按[阶段 5 小任务规划](stage5-plan.md)的 5.1～5.8 任务组开发，其中 5.3 细分基础上传、电脑增强和手机适配三步，共十个开发小任务，5.9 整体验收。完整岗位字段、四平台上传及免费 API 优先策略见[补充核查](stage5-research.md)；2026-10-28 再核对官方资料后仍优先评估 GLM-4.6V-Flash，尚未实际调用或最终定型。
 
 **完成标准：**识别结果经用户确认后才保存；识别服务出错时仍能手动录入。
 

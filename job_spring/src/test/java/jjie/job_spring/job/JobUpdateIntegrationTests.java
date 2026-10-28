@@ -64,12 +64,15 @@ class JobUpdateIntegrationTests {
     }
 
     @Test
-    void updatesOnlyFourFieldsAndRepeatedIdenticalRequestIsSuccessful() throws Exception {
-        Map<String, Object> expected = expectedRow("修改公司", "Java 测试岗位", "修改城市", "薪资待定");
+    void updatesOnlySixFieldsAndRepeatedIdenticalRequestIsSuccessful() throws Exception {
+        Map<String, Object> expected = expectedRow("修改公司", "Java 测试岗位", "修改城市", "薪资待定",
+                "负责 Java 开发\n  编写测试", "熟悉 Java\r\n了解 SQL 😀");
         Map<String, Object> otherBefore = row(bobJob);
         String body = """
                 {"companyName":"  修改公司  ","jobTitle":" Java 测试岗位 ",
-                 "city":" 修改城市 ","salary":" 薪资待定 "}
+                 "city":" 修改城市 ","salary":" 薪资待定 ",
+                 "responsibilities":"  负责 Java 开发\\n  编写测试  ",
+                 "requirements":"  熟悉 Java\\r\\n了解 SQL 😀  "}
                 """;
         for (int attempt = 0; attempt < 2; attempt++) {
             update(aliceJob, body).andExpect(status().isOk())
@@ -79,6 +82,8 @@ class JobUpdateIntegrationTests {
                     .andExpect(jsonPath("$.jobTitle").value("Java 测试岗位"))
                     .andExpect(jsonPath("$.city").value("修改城市"))
                     .andExpect(jsonPath("$.salary").value("薪资待定"))
+                    .andExpect(jsonPath("$.responsibilities").value("负责 Java 开发\n  编写测试"))
+                    .andExpect(jsonPath("$.requirements").value("熟悉 Java\r\n了解 SQL 😀"))
                     .andExpect(jsonPath("$.status").value("INTERVIEWING"))
                     .andExpect(jsonPath("$.userId").doesNotExist());
         }
@@ -86,31 +91,49 @@ class JobUpdateIntegrationTests {
         assertThat(row(bobJob)).isEqualTo(otherBefore);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM job_applications", Integer.class)).isEqualTo(2);
         mvc.perform(get("/api/jobs/" + aliceJob).with(user(alice)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.companyName").value("修改公司"));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.companyName").value("修改公司"))
+                .andExpect(jsonPath("$.responsibilities").value("负责 Java 开发\n  编写测试"))
+                .andExpect(jsonPath("$.requirements").value("熟悉 Java\r\n了解 SQL 😀"));
         mvc.perform(get("/api/jobs").with(user(alice)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].companyName").value("修改公司"));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].companyName").value("修改公司"))
+                .andExpect(jsonPath("$.items[0].requirements").value("熟悉 Java\r\n了解 SQL 😀"));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {
             "{\"companyName\":\"修改公司\",\"jobTitle\":\"修改岗位\"}",
-            "{\"companyName\":\"修改公司\",\"jobTitle\":\"修改岗位\",\"city\":null,\"salary\":null}",
-            "{\"companyName\":\"修改公司\",\"jobTitle\":\"修改岗位\",\"city\":\"  \",\"salary\":\"\\t\\n\"}"
+            "{\"companyName\":\"修改公司\",\"jobTitle\":\"修改岗位\",\"city\":null,\"salary\":null,\"responsibilities\":null,\"requirements\":null}",
+            "{\"companyName\":\"修改公司\",\"jobTitle\":\"修改岗位\",\"city\":\"  \",\"salary\":\"\\t\\n\",\"responsibilities\":\"\\n\\t　 \",\"requirements\":\"　\\r\\n \"}"
     })
     void omittedNullAndBlankOptionalFieldsClearExistingValues(String body) throws Exception {
-        Map<String, Object> expected = expectedRow("修改公司", "修改岗位", null, null);
+        Map<String, Object> expected = expectedRow("修改公司", "修改岗位", null, null, null, null);
         update(aliceJob, body).andExpect(status().isOk());
+        assertThat(row(aliceJob)).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"responsibilities", "requirements"})
+    void oneDescriptionCanBeClearedWhileOtherFieldsArePreserved(String field) throws Exception {
+        Map<String, Object> before = row(aliceJob);
+        Map<String, String> body = new LinkedHashMap<>(Map.of(
+                "companyName", "虚构公司A", "jobTitle", "虚构测试岗位", "city", "测试城市", "salary", "面议",
+                "responsibilities", "虚构职责", "requirements", "虚构要求"));
+        body.put(field, "  \n\t");
+        Map<String, Object> expected = new LinkedHashMap<>(before);
+        expected.replaceAll((key, value) -> key.equalsIgnoreCase(field) ? null : value);
+        update(aliceJob, json.writeValueAsString(body)).andExpect(status().isOk());
         assertThat(row(aliceJob)).isEqualTo(expected);
     }
 
     @Test
     void acceptsLengthBoundariesAfterTrimming() throws Exception {
         Map<String, String> fields = Map.of("companyName", "公".repeat(200), "jobTitle", "岗".repeat(200),
-                "city", "城".repeat(100), "salary", "薪".repeat(100));
+                "city", "城".repeat(100), "salary", "薪".repeat(100),
+                "responsibilities", "😀".repeat(10000), "requirements", "要".repeat(10000));
         Map<String, String> raw = new LinkedHashMap<>();
         fields.forEach((key, value) -> raw.put(key, "  " + value + "  "));
         Map<String, Object> expected = expectedRow(fields.get("companyName"), fields.get("jobTitle"),
-                fields.get("city"), fields.get("salary"));
+                fields.get("city"), fields.get("salary"), fields.get("responsibilities"), fields.get("requirements"));
         update(aliceJob, json.writeValueAsString(raw)).andExpect(status().isOk());
         assertThat(row(aliceJob)).isEqualTo(expected);
     }
@@ -134,11 +157,17 @@ class JobUpdateIntegrationTests {
                 Arguments.of("companyName", null), Arguments.of("companyName", "  "),
                 Arguments.of("jobTitle", null), Arguments.of("jobTitle", "\t\n"),
                 Arguments.of("companyName", "公".repeat(201)), Arguments.of("jobTitle", "岗".repeat(201)),
-                Arguments.of("city", "城".repeat(101)), Arguments.of("salary", "薪".repeat(101)));
+                Arguments.of("city", "城".repeat(101)), Arguments.of("salary", "薪".repeat(101)),
+                Arguments.of("responsibilities", "职".repeat(10001)), Arguments.of("responsibilities", "😀".repeat(10001)),
+                Arguments.of("requirements", "要".repeat(10001)), Arguments.of("requirements", "😀".repeat(10001)));
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"{", "null", "[]", "{\"companyName\":{}}", "{\"companyName\":[]}"})
+    @ValueSource(strings = {"{", "null", "[]", "{\"companyName\":{}}", "{\"companyName\":[]}",
+            "{\"companyName\":\"修改公司\",\"jobTitle\":\"修改岗位\",\"responsibilities\":{}}",
+            "{\"companyName\":\"修改公司\",\"jobTitle\":\"修改岗位\",\"responsibilities\":[]}",
+            "{\"companyName\":\"修改公司\",\"jobTitle\":\"修改岗位\",\"requirements\":{}}",
+            "{\"companyName\":\"修改公司\",\"jobTitle\":\"修改岗位\",\"requirements\":[]}"})
     void malformedBodyReturns400WithoutChanges(String body) throws Exception {
         Map<String, Object> before = row(aliceJob);
         update(aliceJob, body).andExpect(status().isBadRequest())
@@ -158,7 +187,10 @@ class JobUpdateIntegrationTests {
     @Test
     void foreignAndMissingRecordsReturnIdentical404WithoutChangesOrInsert() throws Exception {
         Map<String, Object> before = row(bobJob);
-        String body = "{\"companyName\":\"修改公司\",\"jobTitle\":\"修改岗位\"}";
+        String body = """
+                {"companyName":"修改公司","jobTitle":"修改岗位",
+                 "responsibilities":"其他账号不可写入的职责","requirements":"其他账号不可写入的要求"}
+                """;
         String foreign = update(bobJob, body).andExpect(status().isNotFound())
                 .andReturn().getResponse().getContentAsString();
         String missing = update(Long.MAX_VALUE, body).andExpect(status().isNotFound())
@@ -171,10 +203,11 @@ class JobUpdateIntegrationTests {
     @Test
     void extraOwnerIdStatusAndOtherFieldsCannotBeWritten() throws Exception {
         Map<String, Object> otherBefore = row(bobJob);
-        Map<String, Object> expected = expectedRow("修改公司", "修改岗位", "修改城市", "面议");
+        Map<String, Object> expected = expectedRow("修改公司", "修改岗位", "修改城市", "面议", null, null);
         String body = """
                 {"companyName":"修改公司","jobTitle":"修改岗位","city":"修改城市","salary":"面议",
-                 "userId":%d,"id":%d,"status":"OFFER","responsibilities":"DO_NOT_WRITE"}
+                 "userId":%d,"id":%d,"status":"OFFER","educationRequirement":"DO_NOT_WRITE",
+                 "sourcePlatform":"DO_NOT_WRITE","originalUrl":"https://example.com/ignored","applicationDeadline":"2040-01-01"}
                 """.formatted(bob.getId(), bobJob);
         mvc.perform(put("/api/jobs/" + aliceJob).with(user(alice)).with(csrf())
                         .param("userId", bob.getId().toString()).contentType(MediaType.APPLICATION_JSON).content(body))
@@ -223,13 +256,16 @@ class JobUpdateIntegrationTests {
                 .contentType(MediaType.APPLICATION_JSON).content(body));
     }
 
-    private Map<String, Object> expectedRow(String company, String title, String city, String salary) {
+    private Map<String, Object> expectedRow(String company, String title, String city, String salary,
+                                             String responsibilities, String requirements) {
         Map<String, Object> expected = new LinkedHashMap<>(row(aliceJob));
         expected.replaceAll((key, value) -> switch (key.toLowerCase(java.util.Locale.ROOT)) {
             case "company_name" -> company;
             case "job_title" -> title;
             case "city" -> city;
             case "salary" -> salary;
+            case "responsibilities" -> responsibilities;
+            case "requirements" -> requirements;
             default -> value;
         });
         return expected;

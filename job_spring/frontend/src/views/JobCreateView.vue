@@ -6,7 +6,7 @@ import { clearUser } from '../auth.js'
 
 const router = useRouter()
 const formElement = ref(null)
-const form = reactive({ companyName: '', jobTitle: '', city: '', salary: '' })
+const form = reactive({ companyName: '', jobTitle: '', city: '', salary: '', responsibilities: '', requirements: '' })
 const fields = ref({})
 const message = ref('')
 const busy = ref(false)
@@ -18,6 +18,8 @@ const inputs = [
   { key: 'jobTitle', label: '岗位名', required: true, limit: 200, placeholder: '例如：Java 后端实习' },
   { key: 'city', label: '城市', required: false, limit: 100, placeholder: '例如：上海、远程' },
   { key: 'salary', label: '薪资', required: false, limit: 100, placeholder: '例如：15–20K·13薪、面议' },
+  { key: 'responsibilities', label: '岗位职责', required: false, limit: 10000, multiline: true, placeholder: '请输入岗位职责，可分行填写' },
+  { key: 'requirements', label: '任职要求', required: false, limit: 10000, multiline: true, placeholder: '请输入任职要求，可分行填写' },
 ]
 
 async function focusInvalidField() {
@@ -41,7 +43,7 @@ async function submit() {
 
   busy.value = true
   try {
-    // 只发送四个表单字段；归属、初始状态和主键继续由后端决定。
+    // 只发送六个表单字段；归属、初始状态和主键继续由后端决定。
     const created = await post('/api/jobs', { ...form })
     if (active) await router.replace({ name: 'job-detail', params: { id: String(created.id) } })
   } catch (error) {
@@ -75,7 +77,7 @@ function cancel() {
       <div>
         <p class="eyebrow">我的求职记录</p>
         <h1 id="create-heading">添加岗位</h1>
-        <p class="page-description">先记下岗位的基本信息，城市和薪资可以留空。</p>
+        <p class="page-description">记下岗位信息，公司名和岗位名必填，其余可以留空。</p>
       </div>
     </div>
 
@@ -88,13 +90,16 @@ function cancel() {
         <fieldset :disabled="busy">
           <legend class="visually-hidden">新增岗位信息</legend>
           <div class="job-form-grid">
-            <div v-for="input in inputs" :key="input.key" class="job-form-field">
+            <div v-for="input in inputs" :key="input.key" class="job-form-field" :class="{ 'job-form-field-wide': input.multiline }">
               <label :for="`job-${input.key}`">
                 {{ input.label }}
                 <span v-if="input.required" class="required-mark" aria-hidden="true">*</span>
                 <span v-else class="optional-label">（选填）</span>
               </label>
-              <input :id="`job-${input.key}`" v-model="form[input.key]" :name="input.key"
+              <textarea v-if="input.multiline" :id="`job-${input.key}`" v-model="form[input.key]" :name="input.key"
+                        rows="6" :placeholder="input.placeholder" :aria-invalid="Boolean(fields[input.key])"
+                        :aria-describedby="`job-${input.key}-help${fields[input.key] ? ` job-${input.key}-error` : ''}`"></textarea>
+              <input v-else :id="`job-${input.key}`" v-model="form[input.key]" :name="input.key"
                      type="text" :required="input.required" :placeholder="input.placeholder"
                      :aria-invalid="Boolean(fields[input.key])"
                      :aria-describedby="`job-${input.key}-help${fields[input.key] ? ` job-${input.key}-error` : ''}`" />

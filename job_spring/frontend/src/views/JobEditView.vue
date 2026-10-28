@@ -8,7 +8,7 @@ const route = useRoute()
 const router = useRouter()
 const job = ref(null)
 const formElement = ref(null)
-const form = reactive({ companyName: '', jobTitle: '', city: '', salary: '' })
+const form = reactive({ companyName: '', jobTitle: '', city: '', salary: '', responsibilities: '', requirements: '' })
 const loading = ref(false)
 const loadError = ref('')
 const fields = ref({})
@@ -24,6 +24,8 @@ const inputs = [
   { key: 'jobTitle', label: '岗位名', required: true, limit: 200 },
   { key: 'city', label: '城市', required: false, limit: 100 },
   { key: 'salary', label: '薪资', required: false, limit: 100 },
+  { key: 'responsibilities', label: '岗位职责', required: false, limit: 10000, multiline: true },
+  { key: 'requirements', label: '任职要求', required: false, limit: 10000, multiline: true },
 ]
 const hasChanges = computed(() => job.value && inputs.some(input =>
   form[input.key] !== (job.value[input.key] ?? '')))
@@ -37,7 +39,7 @@ async function loadJob() {
     const result = await request(`/api/jobs/${id}`)
     if (!active || number !== requestNumber) return
     job.value = result
-    // 仅将允许编辑的四个字段放入表单；null 在输入框中显示为空字符串。
+    // 仅将允许编辑的六个字段放入表单；null 在输入框中显示为空字符串。
     for (const input of inputs) form[input.key] = result[input.key] ?? ''
   } catch (failure) {
     if (!active || number !== requestNumber) return
@@ -70,7 +72,7 @@ async function submit() {
   const id = job.value.id
   busy.value = true
   try {
-    // PUT 提交四个字段的完整目标值，选填项留空会清空原值；不发送状态或用户 ID。
+    // PUT 提交六个字段的完整目标值，选填项留空会清空原值；不发送状态或用户 ID。
     const updated = await put(`/api/jobs/${id}`, { ...form })
     if (!active || number !== requestNumber) return
     await router.replace({ name: 'job-detail', params: { id: String(updated.id) } })
@@ -130,20 +132,23 @@ watch(() => route.params.id, loadJob, { immediate: true })
         <fieldset :disabled="busy || uncertain">
           <legend class="visually-hidden">编辑岗位基本信息</legend>
           <div class="job-form-grid">
-            <div v-for="input in inputs" :key="input.key" class="job-form-field">
+            <div v-for="input in inputs" :key="input.key" class="job-form-field" :class="{ 'job-form-field-wide': input.multiline }">
               <label :for="`edit-${input.key}`">
                 {{ input.label }}
                 <span v-if="input.required" class="required-mark" aria-hidden="true">*</span>
                 <span v-else class="optional-label">（选填）</span>
               </label>
-              <input :id="`edit-${input.key}`" v-model="form[input.key]" :name="input.key"
+              <textarea v-if="input.multiline" :id="`edit-${input.key}`" v-model="form[input.key]" :name="input.key"
+                        rows="6" :aria-invalid="Boolean(fields[input.key])"
+                        :aria-describedby="`edit-${input.key}-help${fields[input.key] ? ` edit-${input.key}-error` : ''}`"></textarea>
+              <input v-else :id="`edit-${input.key}`" v-model="form[input.key]" :name="input.key"
                      type="text" :required="input.required" :aria-invalid="Boolean(fields[input.key])"
                      :aria-describedby="`edit-${input.key}-help${fields[input.key] ? ` edit-${input.key}-error` : ''}`" />
               <p :id="`edit-${input.key}-help`" class="muted input-help">最多 {{ input.limit }} 个字符</p>
               <p v-if="fields[input.key]" :id="`edit-${input.key}-error`" class="field-error">{{ fields[input.key] }}</p>
             </div>
           </div>
-          <p class="muted job-form-note">城市和薪资留空会清除原值。</p>
+          <p class="muted job-form-note">城市、薪资、岗位职责和任职要求留空会清除原值。</p>
         </fieldset>
         <p v-if="message" class="form-message error" role="alert">{{ message }}</p>
         <div v-if="uncertain" class="job-edit-recovery">
