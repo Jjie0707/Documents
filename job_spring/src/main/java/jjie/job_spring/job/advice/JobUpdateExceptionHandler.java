@@ -3,6 +3,8 @@ package jjie.job_spring.job.advice;
 import java.util.Map;
 import java.util.TreeMap;
 import jjie.job_spring.job.controller.JobUpdateController;
+import jjie.job_spring.job.common.ApplicationDeadlineDeserializer;
+import tools.jackson.core.JacksonException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -24,7 +26,12 @@ public class JobUpdateExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    ResponseEntity<UpdateError> unreadableBody() {
+    ResponseEntity<UpdateError> unreadableBody(HttpMessageNotReadableException exception) {
+        if (exception.getCause() instanceof JacksonException json
+                && json.getPath().stream().anyMatch(part -> "applicationDeadline".equals(part.getPropertyName()))) {
+            return ResponseEntity.badRequest().body(new UpdateError("INVALID_REQUEST", "请检查岗位参数",
+                    Map.of("applicationDeadline", ApplicationDeadlineDeserializer.ERROR_MESSAGE)));
+        }
         return ResponseEntity.badRequest().body(
                 new UpdateError("INVALID_REQUEST", "请求体格式不正确", Map.of()));
     }

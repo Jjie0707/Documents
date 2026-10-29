@@ -1,5 +1,8 @@
 server:
   port: 8082
+  tomcat:
+    # 为略超 6 MiB 的拒绝请求保留有限的丢弃空间，使客户端能收到 413。
+    max-swallow-size: 8MB
   servlet:
     session:
       cookie:
@@ -7,6 +10,12 @@ server:
         same-site: lax
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+      # 合法请求在内存内处理，不将上传内容写入临时磁盘文件。
+      file-size-threshold: 6MB
   application:
     name: job_spring
   config:

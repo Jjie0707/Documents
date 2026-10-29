@@ -29,7 +29,11 @@ public class JobUpdateService {
                 .set(JobApplication::getCity, request.city())
                 .set(JobApplication::getSalary, request.salary())
                 .set(JobApplication::getResponsibilities, request.responsibilities())
-                .set(JobApplication::getRequirements, request.requirements()));
+                .set(JobApplication::getRequirements, request.requirements())
+                .set(JobApplication::getEducationRequirement, request.educationRequirement())
+                .set(JobApplication::getSourcePlatform, request.sourcePlatform())
+                .set(JobApplication::getOriginalUrl, request.originalUrl())
+                .set(JobApplication::getApplicationDeadline, request.applicationDeadline()));
         // 相同内容也允许成功；按归属回读判断记录是否存在，不用影响行数判断 404。
         return readService.findForUser(id, currentUserId);
     }

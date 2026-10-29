@@ -7,9 +7,14 @@ export class ApiError extends Error {
   }
 }
 
-export async function request(path, options = {}) {
+export async function request(path, options = {}, requestSettings = {}) {
+  const {
+    timeoutMs = 10000,
+    timeoutMessage = '请求超时，请检查连接后重试。',
+    timeoutCode = 'REQUEST_TIMEOUT',
+  } = requestSettings
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 10000)
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
     const response = await fetch(path, {
       ...options,
@@ -24,7 +29,8 @@ export async function request(path, options = {}) {
     return body
   } catch (error) {
     if (error instanceof ApiError) throw error
-    throw new ApiError(0, error.name === 'AbortError' ? '请求超时，请检查连接后重试。' : '暂时无法连接服务，请稍后重试。')
+    if (error.name === 'AbortError') throw new ApiError(0, timeoutMessage, {}, timeoutCode)
+    throw new ApiError(0, '暂时无法连接服务，请稍后重试。')
   } finally {
     clearTimeout(timer)
   }
@@ -57,4 +63,18 @@ export function put(path, values) {
 
 export function remove(path) {
   return sendWithCsrf('DELETE', path)
+}
+
+export async function postMultipart(path, formData) {
+  const csrf = await request('/api/auth/csrf', {}, {
+    timeoutMessage: '上传前的连接校验超时，图片尚未发送。请检查网络后重试。',
+    timeoutCode: 'UPLOAD_PRECHECK_TIMEOUT',
+  })
+  // 浏览器自动生成带 boundary 的 Content-Type，不能手工指定 application/json 或 multipart/form-data。
+  return request(path, { method: 'POST', headers: { [csrf.headerName]: csrf.token }, body: formData }, {
+    // 图片经过外网/隧道上传，比普通 JSON 请求需要更长的传输时间；仍保留有限超时，不自动重发。
+    timeoutMs: 60000,
+    timeoutMessage: '图片上传或检查超过60秒，请检查网络后重试，或继续手动填写。',
+    timeoutCode: 'UPLOAD_TIMEOUT',
+  })
 }

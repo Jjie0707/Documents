@@ -26,6 +26,10 @@ public class JobCreateService {
         job.setSalary(request.salary());
         job.setResponsibilities(request.responsibilities());
         job.setRequirements(request.requirements());
+        job.setEducationRequirement(request.educationRequirement());
+        job.setSourcePlatform(request.sourcePlatform());
+        job.setOriginalUrl(request.originalUrl());
+        job.setApplicationDeadline(request.applicationDeadline());
         job.setStatus(JobStatus.TO_APPLY.name());
         // AUTO 主键由数据库生成，MyBatis-Plus 将生成的 ID 回填到 job。
         mapper.insert(job);

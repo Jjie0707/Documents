@@ -8,7 +8,7 @@ const route = useRoute()
 const router = useRouter()
 const job = ref(null)
 const formElement = ref(null)
-const form = reactive({ companyName: '', jobTitle: '', city: '', salary: '', responsibilities: '', requirements: '' })
+const form = reactive({ companyName: '', jobTitle: '', city: '', salary: '', responsibilities: '', requirements: '', educationRequirement: '', sourcePlatform: '', originalUrl: '', applicationDeadline: '' })
 const loading = ref(false)
 const loadError = ref('')
 const fields = ref({})
@@ -24,6 +24,10 @@ const inputs = [
   { key: 'jobTitle', label: '岗位名', required: true, limit: 200 },
   { key: 'city', label: '城市', required: false, limit: 100 },
   { key: 'salary', label: '薪资', required: false, limit: 100 },
+  { key: 'educationRequirement', label: '学历要求', required: false, limit: 100 },
+  { key: 'sourcePlatform', label: '来源平台', required: false, limit: 100 },
+  { key: 'originalUrl', label: '原始链接', required: false, limit: 2048, type: 'url', help: '完整 HTTP/HTTPS 网址，不含账号密码；最多 2048 个字符' },
+  { key: 'applicationDeadline', label: '投递截止日期', required: false, type: 'date', help: '选填，1000～9999 年的有效日期，可补录过去日期' },
   { key: 'responsibilities', label: '岗位职责', required: false, limit: 10000, multiline: true },
   { key: 'requirements', label: '任职要求', required: false, limit: 10000, multiline: true },
 ]
@@ -39,7 +43,7 @@ async function loadJob() {
     const result = await request(`/api/jobs/${id}`)
     if (!active || number !== requestNumber) return
     job.value = result
-    // 仅将允许编辑的六个字段放入表单；null 在输入框中显示为空字符串。
+    // 仅将允许编辑的十个字段放入表单；null 在输入框中显示为空字符串。
     for (const input of inputs) form[input.key] = result[input.key] ?? ''
   } catch (failure) {
     if (!active || number !== requestNumber) return
@@ -61,7 +65,10 @@ async function submit() {
   for (const input of inputs) {
     const value = form[input.key].trim()
     if (input.required && !value) fields.value[input.key] = `${input.label}不能为空`
-    else if ([...value].length > input.limit) fields.value[input.key] = `${input.label}不能超过${input.limit}个字符`
+    else if (input.limit && [...value].length > input.limit) fields.value[input.key] = `${input.label}不能超过${input.limit}个字符`
+    if (input.type === 'date' && !formElement.value?.elements.namedItem(input.key)?.validity.valid) {
+      fields.value[input.key] = '请选择1000到9999年范围内的有效日期'
+    }
   }
   if (Object.keys(fields.value).length) {
     await focusInvalidField()
@@ -72,7 +79,7 @@ async function submit() {
   const id = job.value.id
   busy.value = true
   try {
-    // PUT 提交六个字段的完整目标值，选填项留空会清空原值；不发送状态或用户 ID。
+    // PUT 提交十个字段的完整目标值，选填项留空会清空原值；不发送状态或用户 ID。
     const updated = await put(`/api/jobs/${id}`, { ...form })
     if (!active || number !== requestNumber) return
     await router.replace({ name: 'job-detail', params: { id: String(updated.id) } })
@@ -142,13 +149,15 @@ watch(() => route.params.id, loadJob, { immediate: true })
                         rows="6" :aria-invalid="Boolean(fields[input.key])"
                         :aria-describedby="`edit-${input.key}-help${fields[input.key] ? ` edit-${input.key}-error` : ''}`"></textarea>
               <input v-else :id="`edit-${input.key}`" v-model="form[input.key]" :name="input.key"
-                     type="text" :required="input.required" :aria-invalid="Boolean(fields[input.key])"
+                     :type="input.type || 'text'" :required="input.required"
+                     :min="input.type === 'date' ? '1000-01-01' : undefined"
+                     :max="input.type === 'date' ? '9999-12-31' : undefined" :aria-invalid="Boolean(fields[input.key])"
                      :aria-describedby="`edit-${input.key}-help${fields[input.key] ? ` edit-${input.key}-error` : ''}`" />
-              <p :id="`edit-${input.key}-help`" class="muted input-help">最多 {{ input.limit }} 个字符</p>
+              <p :id="`edit-${input.key}-help`" class="muted input-help">{{ input.help || `最多 ${input.limit} 个字符` }}</p>
               <p v-if="fields[input.key]" :id="`edit-${input.key}-error`" class="field-error">{{ fields[input.key] }}</p>
             </div>
           </div>
-          <p class="muted job-form-note">城市、薪资、岗位职责和任职要求留空会清除原值。</p>
+          <p class="muted job-form-note">除公司名和岗位名外，其余选填项留空会清除原值。</p>
         </fieldset>
         <p v-if="message" class="form-message error" role="alert">{{ message }}</p>
         <div v-if="uncertain" class="job-edit-recovery">

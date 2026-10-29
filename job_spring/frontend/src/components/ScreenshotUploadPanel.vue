@@ -1,0 +1,167 @@
+<script setup>
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { ApiError, postMultipart } from '../api.js'
+import { clearUser } from '../auth.js'
+import { hasDraggedFiles, readDroppedScreenshot, readPastedScreenshot, selectSingleScreenshot } from '../screenshot-input.js'
+
+const props = defineProps({ disabled: Boolean })
+const router = useRouter()
+const inputArea = ref(null)
+const fileInput = ref(null)
+const file = ref(null)
+const previewUrl = ref('')
+const previewReady = ref(false)
+const checking = ref(false)
+const result = ref(null)
+const error = ref('')
+const dragDepth = ref(0)
+let revision = 0
+let active = true
+
+function clearSelection() {
+  revision++
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+  file.value = null; previewUrl.value = ''; previewReady.value = false
+  checking.value = false; result.value = null; error.value = ''
+  dragDepth.value = 0
+}
+
+function receiveSelection(selection) {
+  if (props.disabled) return
+  clearSelection()
+  if (selection.error) { error.value = selection.error; return }
+  file.value = selection.file
+  previewUrl.value = URL.createObjectURL(selection.file)
+}
+
+function selectFile(event) {
+  const files = Array.from(event.target.files || [])
+  event.target.value = '' // 允许再次选择同一文件；取消选择保留当前图片。
+  if (files.length) receiveSelection(selectSingleScreenshot(files))
+}
+
+function dragEnter(event) {
+  if (!props.disabled && hasDraggedFiles(event.dataTransfer)) dragDepth.value++
+}
+
+function dragOver(event) {
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = props.disabled ? 'none' : 'copy'
+}
+
+function dropFile(event) {
+  event.preventDefault()
+  dragDepth.value = 0
+  if (!props.disabled) receiveSelection(readDroppedScreenshot(event.dataTransfer))
+}
+
+function pasteImage(event) {
+  if (props.disabled) return
+  const selection = readPastedScreenshot(event.clipboardData)
+  if (!selection.handled) return
+  event.preventDefault()
+  receiveSelection(selection)
+}
+
+function guardOutsideDrag(event) {
+  if (!inputArea.value?.contains(event.target) && hasDraggedFiles(event.dataTransfer)) {
+    event.preventDefault()
+    if (event.type === 'drop') {
+      dragDepth.value = 0
+      if (!props.disabled) error.value = '请将图片拖到上方的截图区域。'
+    }
+  }
+}
+
+function previewLoaded(event) {
+  if (event.target.getAttribute('src') === previewUrl.value) previewReady.value = true
+}
+
+function previewFailed(event) {
+  if (event.target.getAttribute('src') !== previewUrl.value) return
+  previewReady.value = false
+  error.value = '图片无法预览，请换一张PNG或JPEG截图。'
+}
+
+async function checkImage() {
+  if (props.disabled || !file.value || !previewReady.value || checking.value) return
+  const number = revision
+  const selected = file.value
+  checking.value = true; result.value = null; error.value = ''
+  const body = new FormData()
+  body.append('image', selected)
+  try {
+    const response = await postMultipart('/api/vision/images/validate', body)
+    if (!active || number !== revision) return
+    if (!response || !['PNG', 'JPEG'].includes(response.format)
+        || !Number.isInteger(response.width) || response.width < 1
+        || !Number.isInteger(response.height) || response.height < 1) {
+      throw new ApiError(0, '未能读取图片检查结果，请重试。')
+    }
+    result.value = response
+  } catch (failure) {
+    if (!active || number !== revision) return
+    if (failure.status === 401) { clearUser(); await router.replace('/login') }
+    else error.value = failure.message
+  } finally {
+    if (active && number === revision) checking.value = false
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('dragover', guardOutsideDrag)
+  window.addEventListener('drop', guardOutsideDrag)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('dragover', guardOutsideDrag)
+  window.removeEventListener('drop', guardOutsideDrag)
+  active = false
+  clearSelection()
+})
+</script>
+
+<template>
+  <section ref="inputArea" class="workspace-panel screenshot-panel" :class="{ 'is-dragging': dragDepth > 0 }"
+           role="group" aria-labelledby="screenshot-heading" aria-describedby="screenshot-input-help screenshot-privacy"
+           :tabindex="disabled ? -1 : 0" :aria-disabled="disabled" :aria-busy="checking"
+           @dragenter="dragEnter" @dragover="dragOver" @dragleave="dragDepth = Math.max(0, dragDepth - 1)"
+           @drop="dropFile" @paste="pasteImage">
+    <h2 id="screenshot-heading">招聘截图（可选）</h2>
+    <p class="muted screenshot-help">选择一张PNG或JPEG截图，最多5 MiB。单边不超过10000像素，总像素不超过1200万。</p>
+    <p class="muted screenshot-help">当前支持预览和图片检查，截图识别尚未开放；你可以继续在下方手动填写岗位。</p>
+    <p id="screenshot-input-help" class="muted screenshot-help">可将一张图片文件拖到此区域；点击区域空白处后，按Ctrl+V或⌘V粘贴截图。也可使用下方按钮选图。</p>
+    <p v-if="dragDepth > 0" class="screenshot-drop-hint" role="status">松开以导入这张截图</p>
+    <button type="button" class="secondary-button screenshot-choose" :disabled="disabled" @click="fileInput?.click()">
+      {{ file ? '替换截图' : '选择截图' }}
+    </button>
+    <input id="job-screenshot" ref="fileInput" hidden type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" :disabled="disabled"
+           aria-describedby="screenshot-privacy" @change="selectFile" />
+    <p id="screenshot-privacy" class="muted screenshot-help">点击“检查图片”才上传到本站检查，不创建岗位，图片不长期保存。</p>
+    <template v-if="file">
+      <p class="screenshot-name">{{ file.name }} · {{ (file.size / 1024).toFixed(1) }} KiB</p>
+      <img :key="previewUrl" :src="previewUrl" alt="待检查的招聘截图" class="screenshot-preview"
+           @load="previewLoaded" @error="previewFailed" />
+      <div class="screenshot-actions">
+        <button type="button" class="secondary-button" :disabled="disabled" @click="clearSelection">移除截图</button>
+        <button type="button" class="primary-button" :disabled="disabled || checking || !previewReady" @click="checkImage">
+          {{ checking ? '正在检查…' : '检查图片' }}
+        </button>
+      </div>
+    </template>
+    <p v-if="checking" class="muted screenshot-help" role="status">正在上传并检查图片，网络较慢时请稍候。你仍可替换或移除截图。</p>
+    <p v-if="result" class="form-message success" role="status">图片检查通过：{{ result.format }}，{{ result.width }} × {{ result.height }}像素。可以继续手动填写岗位。</p>
+    <p v-if="error" class="form-message error" role="alert">{{ error }}</p>
+  </section>
+</template>
+
+<style scoped>
+.screenshot-panel { max-width: 840px; margin-bottom: 28px; }
+.screenshot-panel.is-dragging { border-color: var(--accent); background: #edf5ed; box-shadow: 0 0 0 3px #d9e8dd; }
+.screenshot-drop-hint { margin-top: 14px; color: var(--accent); font-weight: 600; }
+.screenshot-help { margin-top: 12px; }
+.screenshot-choose { margin-top: 20px; }
+.screenshot-name { margin-top: 18px; font-size: .84rem; overflow-wrap: anywhere; }
+.screenshot-preview { display: block; width: 100%; max-height: 320px; object-fit: contain; margin-top: 16px; background: #f4f7f1; }
+.screenshot-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+</style>

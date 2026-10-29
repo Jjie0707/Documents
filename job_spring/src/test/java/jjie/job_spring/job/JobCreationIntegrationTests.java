@@ -146,18 +146,18 @@ class JobCreationIntegrationTests {
 
     static Stream<Arguments> invalidJobs() {
         return Stream.of(
-                Arguments.of(new CreateJobRequest(null, "DO_NOT_ECHO", null, null, null, null), "companyName"),
-                Arguments.of(new CreateJobRequest("  ", "DO_NOT_ECHO", null, null, null, null), "companyName"),
-                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", null, null, null, null, null), "jobTitle"),
-                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "\t", null, null, null, null), "jobTitle"),
-                Arguments.of(new CreateJobRequest("x".repeat(201), "DO_NOT_ECHO", null, null, null, null), "companyName"),
-                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "x".repeat(201), null, null, null, null), "jobTitle"),
-                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "岗位", "x".repeat(101), null, null, null), "city"),
-                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "岗位", null, "x".repeat(101), null, null), "salary"),
-                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "岗位", null, null, "职".repeat(10001), null), "responsibilities"),
-                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "岗位", null, null, "😀".repeat(10001), null), "responsibilities"),
-                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "岗位", null, null, null, "要".repeat(10001)), "requirements"),
-                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "岗位", null, null, null, "😀".repeat(10001)), "requirements")
+                Arguments.of(new CreateJobRequest(null, "DO_NOT_ECHO", null, null, null, null, null, null, null, null), "companyName"),
+                Arguments.of(new CreateJobRequest("  ", "DO_NOT_ECHO", null, null, null, null, null, null, null, null), "companyName"),
+                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", null, null, null, null, null, null, null, null, null), "jobTitle"),
+                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "\t", null, null, null, null, null, null, null, null), "jobTitle"),
+                Arguments.of(new CreateJobRequest("x".repeat(201), "DO_NOT_ECHO", null, null, null, null, null, null, null, null), "companyName"),
+                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "x".repeat(201), null, null, null, null, null, null, null, null), "jobTitle"),
+                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "岗位", "x".repeat(101), null, null, null, null, null, null, null), "city"),
+                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "岗位", null, "x".repeat(101), null, null, null, null, null, null), "salary"),
+                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "岗位", null, null, "职".repeat(10001), null, null, null, null, null), "responsibilities"),
+                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "岗位", null, null, "😀".repeat(10001), null, null, null, null, null), "responsibilities"),
+                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "岗位", null, null, null, "要".repeat(10001), null, null, null, null), "requirements"),
+                Arguments.of(new CreateJobRequest("DO_NOT_ECHO", "岗位", null, null, null, "😀".repeat(10001), null, null, null, null), "requirements")
         );
     }
 
@@ -179,14 +179,14 @@ class JobCreationIntegrationTests {
     @Test
     void anonymousRequestWithValidCsrfStillRequiresLogin() throws Exception {
         mvc.perform(post("/api/jobs").with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                        .content(json.writeValueAsString(new CreateJobRequest("示例公司", "示例岗位", null, null, "虚构职责", "虚构要求"))))
+                        .content(json.writeValueAsString(new CreateJobRequest("示例公司", "示例岗位", null, null, "虚构职责", "虚构要求", null, null, null, null))))
                 .andExpect(status().isUnauthorized());
         assertThat(jobCount()).isZero();
     }
 
     @Test
     void missingOrInvalidCsrfDoesNotInsert() throws Exception {
-        String body = json.writeValueAsString(new CreateJobRequest("示例公司", "示例岗位", null, null, "虚构职责", "虚构要求"));
+        String body = json.writeValueAsString(new CreateJobRequest("示例公司", "示例岗位", null, null, "虚构职责", "虚构要求", null, null, null, null));
         mvc.perform(post("/api/jobs").with(user(alice)).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isForbidden());
         mvc.perform(post("/api/jobs").with(user(alice)).with(csrf().useInvalidToken())
@@ -196,11 +196,11 @@ class JobCreationIntegrationTests {
     }
 
     @Test
-    void extraFieldsCannotSetOwnerIdStatusOrOtherJobContent() throws Exception {
+    void extraFieldsCannotSetOwnerIdStatusOrAuditFields() throws Exception {
         String body = """
                 {"companyName":"示例公司","jobTitle":"示例岗位","userId":%d,
-                 "id":9223372036854775807,"status":"OFFER","educationRequirement":"EXTRA_CONTENT",
-                 "sourcePlatform":"EXTRA_CONTENT","originalUrl":"https://example.com/ignored","applicationDeadline":"2030-01-01"}
+                 "id":9223372036854775807,"status":"OFFER",
+                 "createdAt":"2040-01-01T00:00:00","updatedAt":"2040-01-01T00:00:00"}
                 """.formatted(bob.getId());
         mvc.perform(post("/api/jobs").param("userId", bob.getId().toString())
                         .with(user(alice)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(body))

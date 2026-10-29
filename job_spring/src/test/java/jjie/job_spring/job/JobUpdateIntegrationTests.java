@@ -64,7 +64,7 @@ class JobUpdateIntegrationTests {
     }
 
     @Test
-    void updatesOnlySixFieldsAndRepeatedIdenticalRequestIsSuccessful() throws Exception {
+    void updatesSixFieldsClearsOmittedFieldsAndRepeatedIdenticalRequestIsSuccessful() throws Exception {
         Map<String, Object> expected = expectedRow("修改公司", "Java 测试岗位", "修改城市", "薪资待定",
                 "负责 Java 开发\n  编写测试", "熟悉 Java\r\n了解 SQL 😀");
         Map<String, Object> otherBefore = row(bobJob);
@@ -117,7 +117,9 @@ class JobUpdateIntegrationTests {
         Map<String, Object> before = row(aliceJob);
         Map<String, String> body = new LinkedHashMap<>(Map.of(
                 "companyName", "虚构公司A", "jobTitle", "虚构测试岗位", "city", "测试城市", "salary", "面议",
-                "responsibilities", "虚构职责", "requirements", "虚构要求"));
+                "responsibilities", "虚构职责", "requirements", "虚构要求",
+                "educationRequirement", "不限", "sourcePlatform", "TEST_ONLY",
+                "originalUrl", "https://example.com/job", "applicationDeadline", "2030-01-01"));
         body.put(field, "  \n\t");
         Map<String, Object> expected = new LinkedHashMap<>(before);
         expected.replaceAll((key, value) -> key.equalsIgnoreCase(field) ? null : value);
@@ -206,8 +208,8 @@ class JobUpdateIntegrationTests {
         Map<String, Object> expected = expectedRow("修改公司", "修改岗位", "修改城市", "面议", null, null);
         String body = """
                 {"companyName":"修改公司","jobTitle":"修改岗位","city":"修改城市","salary":"面议",
-                 "userId":%d,"id":%d,"status":"OFFER","educationRequirement":"DO_NOT_WRITE",
-                 "sourcePlatform":"DO_NOT_WRITE","originalUrl":"https://example.com/ignored","applicationDeadline":"2040-01-01"}
+                 "userId":%d,"id":%d,"status":"OFFER",
+                 "createdAt":"2040-01-01T00:00:00","updatedAt":"2040-01-01T00:00:00"}
                 """.formatted(bob.getId(), bobJob);
         mvc.perform(put("/api/jobs/" + aliceJob).with(user(alice)).with(csrf())
                         .param("userId", bob.getId().toString()).contentType(MediaType.APPLICATION_JSON).content(body))
@@ -266,6 +268,7 @@ class JobUpdateIntegrationTests {
             case "salary" -> salary;
             case "responsibilities" -> responsibilities;
             case "requirements" -> requirements;
+            case "education_requirement", "source_platform", "original_url", "application_deadline" -> null;
             default -> value;
         });
         return expected;

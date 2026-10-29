@@ -1,9 +1,12 @@
 package jjie.job_spring.job.common;
 
 import jakarta.validation.constraints.NotBlank;
+import java.time.LocalDate;
+import jjie.job_spring.job.validation.ValidJobUrl;
 import org.hibernate.validator.constraints.CodePointLength;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
-// 提交当前开放的六个内容字段的完整目标值；选填项缺省、null 或空白表示清空。
+// 提交十个内容字段的完整目标值；选填项缺省、null 或空白表示清空。
 public record UpdateJobRequest(
         @NotBlank(message = "公司名不能为空")
         @CodePointLength(max = 200, message = "公司名不能超过200个字符")
@@ -18,7 +21,15 @@ public record UpdateJobRequest(
         @CodePointLength(max = 10000, message = "岗位职责不能超过10000个字符")
         String responsibilities,
         @CodePointLength(max = 10000, message = "任职要求不能超过10000个字符")
-        String requirements
+        String requirements,
+        @CodePointLength(max = 100, message = "学历要求不能超过100个字符")
+        String educationRequirement,
+        @CodePointLength(max = 100, message = "来源平台不能超过100个字符")
+        String sourcePlatform,
+        @CodePointLength(max = 2048, message = "原始链接不能超过2048个字符")
+        @ValidJobUrl String originalUrl,
+        @JsonDeserialize(using = ApplicationDeadlineDeserializer.class)
+        LocalDate applicationDeadline
 ) {
     public UpdateJobRequest {
         companyName = normalize(companyName);
@@ -27,6 +38,9 @@ public record UpdateJobRequest(
         salary = normalize(salary);
         responsibilities = normalize(responsibilities);
         requirements = normalize(requirements);
+        educationRequirement = normalize(educationRequirement);
+        sourcePlatform = normalize(sourcePlatform);
+        originalUrl = normalize(originalUrl);
     }
 
     private static String normalize(String value) {

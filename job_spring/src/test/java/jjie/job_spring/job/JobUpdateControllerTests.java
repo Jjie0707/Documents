@@ -38,7 +38,7 @@ class JobUpdateControllerTests {
         account.setId(2L);
         account.setUsername("update_controller_demo");
         account.setPasswordHash(UUID.randomUUID().toString());
-        when(service.updateForUser(1L, 2L, new UpdateJobRequest("虚构公司", "测试岗位", null, null, "PRIVATE_RESPONSIBILITIES", "PRIVATE_REQUIREMENTS")))
+        when(service.updateForUser(1L, 2L, new UpdateJobRequest("虚构公司", "测试岗位", null, null, "PRIVATE_RESPONSIBILITIES", "PRIVATE_REQUIREMENTS", null, null, null, null)))
                 .thenThrow(new DataAccessResourceFailureException("PRIVATE_DATABASE_DETAILS"));
         mvc.perform(put("/api/jobs/1").with(user(new AppUserDetails(account))).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
