@@ -1,4 +1,6 @@
 server:
+  # 额度按连接来源计算，暂不信任客户端提供的转发头；可信代理策略在 5.6 完善。
+  forward-headers-strategy: none
   port: 8082
   tomcat:
     # 为略超 6 MiB 的拒绝请求保留有限的丢弃空间，使客户端能收到 413。
@@ -10,6 +12,14 @@ server:
         same-site: lax
 
 spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      connect-timeout: 1s
+      timeout: 1s
+      repositories:
+        enabled: false
   servlet:
     multipart:
       max-file-size: 5MB
@@ -21,7 +31,9 @@ spring:
   config:
     # IDEA 运行配置的 Working directory 应为本项目根目录。
     # 本地密码文件放在 resources 之外，不随应用打包。
-    import: optional:file:./config/application-local.yaml
+    import:
+      - optional:file:./config/application-local.yaml
+      - optional:file:./config/vision-quota-local.yaml
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/job_tracker?characterEncoding=UTF-8&connectionTimeZone=Asia/Shanghai
     username: root
@@ -35,3 +47,9 @@ spring:
     init:
       # 表已手动建立，启动时不执行建表或数据初始化脚本。
       mode: never
+
+vision:
+  quota:
+    daily-limit: ${VISION_QUOTA_DAILY_LIMIT:5}
+    # 至少 32 字节的随机密钥；为空时仅额度不可用，不影响手动岗位功能。
+    hmac-secret: ${VISION_QUOTA_HMAC_SECRET:}

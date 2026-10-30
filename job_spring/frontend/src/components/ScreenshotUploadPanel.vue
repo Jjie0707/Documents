@@ -4,14 +4,18 @@ import { useRouter } from 'vue-router'
 import { ApiError, postMultipart } from '../api.js'
 import { clearUser } from '../auth.js'
 import { hasDraggedFiles, readDroppedScreenshot, readPastedScreenshot, selectSingleScreenshot } from '../screenshot-input.js'
+import VisionQuotaPanel from './VisionQuotaPanel.vue'
 
 const props = defineProps({ disabled: Boolean })
 const router = useRouter()
 const inputArea = ref(null)
 const fileInput = ref(null)
+const cameraInput = ref(null)
+const cameraAvailable = ref(false)
 const file = ref(null)
 const previewUrl = ref('')
 const previewReady = ref(false)
+const previewExpanded = ref(false)
 const checking = ref(false)
 const result = ref(null)
 const error = ref('')
@@ -23,6 +27,7 @@ function clearSelection() {
   revision++
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
   file.value = null; previewUrl.value = ''; previewReady.value = false
+  previewExpanded.value = false
   checking.value = false; result.value = null; error.value = ''
   dragDepth.value = 0
 }
@@ -81,7 +86,7 @@ function previewLoaded(event) {
 function previewFailed(event) {
   if (event.target.getAttribute('src') !== previewUrl.value) return
   previewReady.value = false
-  error.value = '图片无法预览，请换一张PNG或JPEG截图。'
+  error.value = '图片无法预览，请换一张PNG或JPEG截图。HEIC/HEIF照片请先导出为JPEG或PNG，不能只修改后缀。'
 }
 
 async function checkImage() {
@@ -110,6 +115,8 @@ async function checkImage() {
 }
 
 onMounted(() => {
+  // 这是浏览器能力提示，不代表设备一定有相机；普通选图入口始终保留。
+  cameraAvailable.value = !!cameraInput.value && 'capture' in cameraInput.value
   window.addEventListener('dragover', guardOutsideDrag)
   window.addEventListener('drop', guardOutsideDrag)
 })
@@ -130,24 +137,42 @@ onBeforeUnmount(() => {
     <h2 id="screenshot-heading">招聘截图（可选）</h2>
     <p class="muted screenshot-help">选择一张PNG或JPEG截图，最多5 MiB。单边不超过10000像素，总像素不超过1200万。</p>
     <p class="muted screenshot-help">当前支持预览和图片检查，截图识别尚未开放；你可以继续在下方手动填写岗位。</p>
+    <VisionQuotaPanel :disabled="disabled" />
     <p id="screenshot-input-help" class="muted screenshot-help">可将一张图片文件拖到此区域；点击区域空白处后，按Ctrl+V或⌘V粘贴截图。也可使用下方按钮选图。</p>
     <p v-if="dragDepth > 0" class="screenshot-drop-hint" role="status">松开以导入这张截图</p>
-    <button type="button" class="secondary-button screenshot-choose" :disabled="disabled" @click="fileInput?.click()">
-      {{ file ? '替换截图' : '选择截图' }}
-    </button>
+    <div class="screenshot-actions screenshot-choose">
+      <button type="button" class="secondary-button" :disabled="disabled" @click="fileInput?.click()">
+        {{ file ? '替换截图' : '选择截图' }}
+      </button>
+      <button v-if="cameraAvailable" type="button" class="secondary-button" :disabled="disabled" @click="cameraInput?.click()">
+        拍照选图
+      </button>
+    </div>
     <input id="job-screenshot" ref="fileInput" hidden type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" :disabled="disabled"
            aria-describedby="screenshot-privacy" @change="selectFile" />
+    <input id="job-camera" ref="cameraInput" hidden type="file" accept="image/*" capture="environment" :disabled="disabled"
+           aria-describedby="screenshot-mobile-help screenshot-privacy" @change="selectFile" />
+    <p id="screenshot-mobile-help" class="muted screenshot-help">手机可从系统相册或文件中选图。HEIC/HEIF照片请先导出为JPEG或PNG；长截图过大时可裁去无关内容，保留清晰正文。</p>
+    <p v-if="cameraAvailable" class="muted screenshot-help">拍照选图由系统决定是否打开相机；取消、拒绝或无法拍照时，可继续使用“{{ file ? '替换截图' : '选择截图' }}”。</p>
     <p id="screenshot-privacy" class="muted screenshot-help">点击“检查图片”才上传到本站检查，不创建岗位，图片不长期保存。</p>
     <template v-if="file">
       <p class="screenshot-name">{{ file.name }} · {{ (file.size / 1024).toFixed(1) }} KiB</p>
-      <img :key="previewUrl" :src="previewUrl" alt="待检查的招聘截图" class="screenshot-preview"
-           @load="previewLoaded" @error="previewFailed" />
+      <div id="screenshot-preview-frame" class="screenshot-preview-frame" :class="{ 'is-expanded': previewExpanded }"
+           :tabindex="previewExpanded ? 0 : undefined" role="region" aria-label="截图预览">
+        <img :key="previewUrl" :src="previewUrl" alt="待检查的招聘截图" class="screenshot-preview"
+             @load="previewLoaded" @error="previewFailed" />
+      </div>
       <div class="screenshot-actions">
+        <button type="button" class="secondary-button" :disabled="disabled || !previewReady" :aria-expanded="previewExpanded"
+                aria-controls="screenshot-preview-frame" @click="previewExpanded = !previewExpanded">
+          {{ previewExpanded ? '收起预览' : '展开预览' }}
+        </button>
         <button type="button" class="secondary-button" :disabled="disabled" @click="clearSelection">移除截图</button>
         <button type="button" class="primary-button" :disabled="disabled || checking || !previewReady" @click="checkImage">
           {{ checking ? '正在检查…' : '检查图片' }}
         </button>
       </div>
+      <p class="muted screenshot-help">可展开预览并滚动查看长图；请确认文字方向和清晰度。检查返回文件原始像素尺寸，可能与按方向信息显示的宽高不同。</p>
     </template>
     <p v-if="checking" class="muted screenshot-help" role="status">正在上传并检查图片，网络较慢时请稍候。你仍可替换或移除截图。</p>
     <p v-if="result" class="form-message success" role="status">图片检查通过：{{ result.format }}，{{ result.width }} × {{ result.height }}像素。可以继续手动填写岗位。</p>
@@ -162,6 +187,9 @@ onBeforeUnmount(() => {
 .screenshot-help { margin-top: 12px; }
 .screenshot-choose { margin-top: 20px; }
 .screenshot-name { margin-top: 18px; font-size: .84rem; overflow-wrap: anywhere; }
-.screenshot-preview { display: block; width: 100%; max-height: 320px; object-fit: contain; margin-top: 16px; background: #f4f7f1; }
+.screenshot-preview-frame { margin-top: 16px; background: #f4f7f1; }
+.screenshot-preview { display: block; width: 100%; max-height: 320px; object-fit: contain; image-orientation: from-image; }
+.screenshot-preview-frame.is-expanded { max-height: 70vh; overflow: auto; overscroll-behavior: contain; }
+.screenshot-preview-frame.is-expanded .screenshot-preview { height: auto; max-height: none; }
 .screenshot-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
 </style>

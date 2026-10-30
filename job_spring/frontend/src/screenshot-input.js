@@ -6,6 +6,15 @@ export function selectSingleScreenshot(files) {
   if (selected.length !== 1) return { error: '一次只能导入一张截图，请重新选择。' }
   if (!selected[0].size) return { error: '请选择非空的PNG或JPEG图片。' }
   if (selected[0].size > MAX_IMAGE_BYTES) return { error: '图片不能超过5 MiB。' }
+  const file = selected[0]
+  const type = file.type?.toLowerCase() || ''
+  // 系统可能将 HEIC 转成 JPEG 后保留旧文件名，以明确的 PNG/JPEG MIME 为准。
+  // 这里只提供快速提示，不能代替后端按内容判断格式。
+  const heifType = /^image\/(heic|heif)(-sequence)?$/.test(type)
+  const heifNameWithoutType = (!type || type === 'application/octet-stream') && /\.(heic|heif)$/i.test(file.name || '')
+  if (heifType || heifNameWithoutType) {
+    return { error: '这张照片被标记为HEIC/HEIF，暂不支持。请先导出为JPEG或PNG，或重新截取屏幕截图；只修改文件后缀无效。' }
+  }
   return { file: selected[0] }
 }
 

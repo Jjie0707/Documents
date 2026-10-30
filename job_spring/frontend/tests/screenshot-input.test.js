@@ -78,3 +78,30 @@ test('empty or oversized clipboard images are rejected through the common rule',
   assert.match(readPastedScreenshot({ items: [item(image('image/png', 0))] }).error, /非空/)
   assert.match(readPastedScreenshot({ files: [image('image/png', 5 * 1024 * 1024 + 1)] }).error, /5 MiB/)
 })
+
+test('HEIC and HEIF declarations give conversion guidance through every entrance', () => {
+  for (const type of ['image/heic', 'image/heif', 'image/heic-sequence', 'IMAGE/HEIF-SEQUENCE']) {
+    const file = image(type, 1024, 'photo.jpg')
+    for (const result of [selectSingleScreenshot([file]), readDroppedScreenshot({ files: [file] }), readPastedScreenshot({ items: [item(file)] })]) {
+      assert.match(result.error, /HEIC\/HEIF/)
+      assert.match(result.error, /导出为JPEG或PNG/)
+      assert.match(result.error, /后缀无效/)
+      assert.equal(result.file, undefined)
+    }
+  }
+})
+
+test('HEIF extension is a hint when the system omits a specific media type', () => {
+  for (const type of ['', 'application/octet-stream']) {
+    for (const name of ['photo.HEIC', 'photo.heif']) {
+      assert.match(selectSingleScreenshot([image(type, 1024, name)]).error, /HEIC\/HEIF/)
+    }
+  }
+})
+
+test('system-converted JPEG and PNG can retain an old HEIC filename', () => {
+  for (const type of ['image/jpeg', 'image/png', 'IMAGE/JPEG']) {
+    const file = image(type, 1024, 'photo.HEIC')
+    assert.equal(selectSingleScreenshot([file]).file, file)
+  }
+})
