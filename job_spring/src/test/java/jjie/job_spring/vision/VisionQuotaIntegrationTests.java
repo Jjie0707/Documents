@@ -62,7 +62,7 @@ class VisionQuotaIntegrationTests {
         mvc.perform(get("/api/vision/quota").with(user("quota_demo")))
                 .andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
                 .andExpect(jsonPath("$.available").value(true))
-                .andExpect(jsonPath("$.dailyLimit").value(5)).andExpect(jsonPath("$.remaining").value(5))
+                .andExpect(jsonPath("$.dailyLimit").value(30)).andExpect(jsonPath("$.remaining").value(30))
                 .andExpect(jsonPath("$.resetAt").isString())
                 .andExpect(content().string(not(containsString("127.0.0.1"))))
                 .andExpect(content().string(not(containsString(SECRET))));

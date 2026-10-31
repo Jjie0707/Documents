@@ -3,6 +3,7 @@ package jjie.job_spring.vision.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import jjie.job_spring.vision.common.VisionQuotaResponse;
 import jjie.job_spring.vision.service.VisionQuotaService;
+import jjie.job_spring.vision.service.VisionClientIpService;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,13 +12,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class VisionQuotaController {
     private final VisionQuotaService service;
+    private final VisionClientIpService clients;
 
-    public VisionQuotaController(VisionQuotaService service) { this.service = service; }
+    public VisionQuotaController(VisionQuotaService service, VisionClientIpService clients) {
+        this.service = service;
+        this.clients = clients;
+    }
 
     @GetMapping("/api/vision/quota")
     public ResponseEntity<VisionQuotaResponse> quota(HttpServletRequest request) {
-        // 暂只使用连接来源；不直接读取 X-Forwarded-For / CF-Connecting-IP 等不可信头。
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-                .body(service.query(request.getRemoteAddr()));
+                .body(service.query(clients.resolve(request)));
     }
 }

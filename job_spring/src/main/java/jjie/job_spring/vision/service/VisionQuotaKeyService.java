@@ -17,6 +17,10 @@ public class VisionQuotaKeyService {
         this.properties = properties;
     }
 
+    public String dailyGlobalKey(LocalDate day) {
+        return "vision:quota:v1:{" + day + "}:global";
+    }
+
     public String dailyIpKey(LocalDate day, String clientAddress) {
         try {
             // 每次创建 Mac，避免共享有状态实例的线程安全问题；加日期避免跨日关联标识。

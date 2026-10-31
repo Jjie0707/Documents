@@ -104,3 +104,23 @@ test('image rejection remains a backend error rather than becoming a timeout', a
   t.mock.timers.tick(60000)
   assert.equal(signal.aborted, false)
 })
+
+test('recognition waits up to 120 seconds and never retries an uncertain result', async t => {
+  const { extractScreenshot } = await import('../src/api.js')
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  let calls = 0
+  t.mock.method(globalThis, 'fetch', async (path, options) => {
+    if (path === '/api/auth/csrf') return jsonResponse({ headerName: 'X-CSRF-TOKEN', token: randomUUID() })
+    assert.equal(path, '/api/vision/extract')
+    calls++
+    return waitForAbort(options.signal)
+  })
+  const failure = assert.rejects(extractScreenshot(new FormData()), error =>
+    error instanceof ApiError && error.code === 'RECOGNITION_TIMEOUT' && error.message.includes('次数消耗暂时无法确认'))
+  await flushPromises()
+  t.mock.timers.tick(60000)
+  assert.equal(calls, 1)
+  t.mock.timers.tick(60000)
+  await failure
+  assert.equal(calls, 1)
+})

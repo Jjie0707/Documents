@@ -1,5 +1,5 @@
 server:
-  # 额度按连接来源计算，暂不信任客户端提供的转发头；可信代理策略在 5.6 完善。
+  # 保持原始连接来源，由额度 Service 按显式可信代理配置解析 IP。
   forward-headers-strategy: none
   port: 8082
   tomcat:
@@ -34,6 +34,7 @@ spring:
     import:
       - optional:file:./config/application-local.yaml
       - optional:file:./config/vision-quota-local.yaml
+      - optional:file:./config/vision-model-local.yaml
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/job_tracker?characterEncoding=UTF-8&connectionTimeZone=Asia/Shanghai
     username: root
@@ -49,7 +50,16 @@ spring:
       mode: never
 
 vision:
+  model:
+    # 仅支持两款已核查免费视觉型号，不自动切换或重试。
+    name: ${VISION_MODEL_NAME:glm-4.1v-thinking-flash}
+    enabled: ${VISION_MODEL_ENABLED:false}
+    api-key: ${VISION_MODEL_API_KEY:}
+    timeout-seconds: ${VISION_MODEL_TIMEOUT_SECONDS:45}
   quota:
-    daily-limit: ${VISION_QUOTA_DAILY_LIMIT:5}
+    daily-limit: ${VISION_QUOTA_DAILY_LIMIT:30}
+    global-daily-limit: ${VISION_QUOTA_GLOBAL_DAILY_LIMIT:300}
+    # 默认不信任转发头；配置前须保证请求只能经指定代理进入。
+    trusted-proxies: []
     # 至少 32 字节的随机密钥；为空时仅额度不可用，不影响手动岗位功能。
     hmac-secret: ${VISION_QUOTA_HMAC_SECRET:}

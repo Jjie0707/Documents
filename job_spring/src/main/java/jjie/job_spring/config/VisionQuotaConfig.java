@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties(VisionQuotaProperties.class)
+@EnableConfigurationProperties({VisionQuotaProperties.class, VisionModelProperties.class})
 public class VisionQuotaConfig {
     @Bean
     Clock visionQuotaClock() {

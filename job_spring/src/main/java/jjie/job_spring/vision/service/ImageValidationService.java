@@ -11,6 +11,7 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.MemoryCacheImageInputStream;
 import jjie.job_spring.vision.common.ImageUploadLimits;
 import jjie.job_spring.vision.common.ImageValidationResponse;
+import jjie.job_spring.vision.common.ValidatedImage;
 import jjie.job_spring.vision.exception.ImageValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,10 @@ public class ImageValidationService {
     private static final byte[] PNG_END = {0, 0, 0, 0, 73, 69, 78, 68, (byte) 174, 66, 96, (byte) 130};
 
     public ImageValidationResponse validate(MultipartFile file) {
+        return validateAndRead(file).metadata();
+    }
+
+    public ValidatedImage validateAndRead(MultipartFile file) {
         if (file.getSize() > ImageUploadLimits.MAX_BYTES) throw tooLarge();
         try (var source = file.getInputStream()) {
             // 即使声明大小不准确，也只读取上限 + 1 字节，不使用无界 readAllBytes。
@@ -29,7 +34,7 @@ public class ImageValidationService {
             if (bytes.length == 0) {
                 throw new ImageValidationException(HttpStatus.BAD_REQUEST, "EMPTY_IMAGE", "请选择非空的PNG或JPEG图片");
             }
-            return inspect(bytes);
+            return new ValidatedImage(bytes, inspect(bytes));
         } catch (IOException exception) {
             throw invalidImage();
         } catch (RuntimeException exception) {

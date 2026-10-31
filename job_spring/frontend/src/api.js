@@ -65,7 +65,7 @@ export function remove(path) {
   return sendWithCsrf('DELETE', path)
 }
 
-export async function postMultipart(path, formData) {
+export async function postMultipart(path, formData, requestSettings = {}) {
   const csrf = await request('/api/auth/csrf', {}, {
     timeoutMessage: '上传前的连接校验超时，图片尚未发送。请检查网络后重试。',
     timeoutCode: 'UPLOAD_PRECHECK_TIMEOUT',
@@ -76,5 +76,14 @@ export async function postMultipart(path, formData) {
     timeoutMs: 60000,
     timeoutMessage: '图片上传或检查超过60秒，请检查网络后重试，或继续手动填写。',
     timeoutCode: 'UPLOAD_TIMEOUT',
+    ...requestSettings,
+  })
+}
+
+export function extractScreenshot(formData) {
+  return postMultipart('/api/vision/extract', formData, {
+    timeoutMs: 120000,
+    timeoutMessage: '识别请求超过120秒，结果和次数消耗暂时无法确认。请刷新额度后再决定是否重试，也可继续手动填写。',
+    timeoutCode: 'RECOGNITION_TIMEOUT',
   })
 }

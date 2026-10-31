@@ -35,6 +35,7 @@ build/
 ### Local database credentials ###
 /config/application-local.yaml
 /config/vision-quota-local.yaml
+/config/vision-model-local.yaml
 /docs/http/http-client.private.env.json
 
 ### Frontend ###

@@ -50,7 +50,7 @@ class VisionQuotaServiceTests {
             var response = service.query(IP);
             assertThat(response.available()).isTrue();
             assertThat(response.used()).isZero();
-            assertThat(response.remaining()).isEqualTo(5L);
+            assertThat(response.remaining()).isEqualTo(30L);
         }
         verify(redis, times(2)).opsForValue();
         verify(values, times(2)).get(keys.dailyIpKey(LocalDate.of(2026, 10, 30), IP));
@@ -69,7 +69,7 @@ class VisionQuotaServiceTests {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"5", "6", "9223372036854775807"})
+    @ValueSource(strings = {"30", "31", "9223372036854775807"})
     void exhaustedCountNeverReturnsNegativeRemaining(String count) {
         when(values.get(anyString())).thenReturn(count);
         var response = service.query(IP);
