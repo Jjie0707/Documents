@@ -1,12 +1,19 @@
 <script setup>
 import { nextTick, onBeforeUnmount, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { post } from '../api.js'
+import { ApiError, post } from '../api.js'
 import { clearUser } from '../auth.js'
 import ScreenshotUploadPanel from '../components/ScreenshotUploadPanel.vue'
+import { recognitionConflicts, recognitionPatch, snapshotRecognition } from '../recognition-prefill.js'
 
 const router = useRouter()
 const formElement = ref(null)
+const screenshotPanel = ref(null)
+const confirmationElement = ref(null)
+const pendingDraft = ref(null)
+const conflicts = ref([])
+const prefillMessage = ref('')
+const saveUncertain = ref(false)
 const form = reactive({ companyName: '', jobTitle: '', city: '', salary: '', responsibilities: '', requirements: '', educationRequirement: '', sourcePlatform: '', originalUrl: '', applicationDeadline: '' })
 const fields = ref({})
 const message = ref('')
@@ -32,8 +39,39 @@ async function focusInvalidField() {
   formElement.value?.querySelector('[aria-invalid="true"]')?.focus()
 }
 
-async function submit() {
+async function requestPrefill(draft) {
+  if (busy.value || pendingDraft.value) return
+  const snapshot = snapshotRecognition(draft)
+  conflicts.value = recognitionConflicts(form, snapshot)
+  if (conflicts.value.length) {
+    pendingDraft.value = snapshot
+    await nextTick()
+    confirmationElement.value?.querySelector('button')?.focus()
+  } else await applyPrefill(snapshot)
+}
+
+async function applyPrefill(draft, overwrite = false) {
   if (busy.value) return
+  const patch = recognitionPatch(form, draft, overwrite)
+  Object.assign(form, patch)
+  // 只清除本次更新字段的旧校验提示，保留其他字段的错误。
+  for (const key of Object.keys(patch)) delete fields.value[key]
+  pendingDraft.value = null
+  prefillMessage.value = Object.keys(patch).length
+    ? `已填入 ${Object.keys(patch).length} 个字段。请检查并修改，点击“保存岗位”后才会保存。`
+    : '没有需要填入的字段，现有内容已保留。'
+  await nextTick()
+  formElement.value?.querySelector('input')?.focus()
+}
+
+async function cancelPrefill() {
+  pendingDraft.value = null
+  await nextTick()
+  screenshotPanel.value?.focusApply()
+}
+
+async function submit() {
+  if (busy.value || pendingDraft.value || saveUncertain.value) return
   fields.value = {}
   message.value = ''
   for (const input of inputs) {
@@ -53,6 +91,7 @@ async function submit() {
   try {
     // 只发送十个表单字段；归属、初始状态和主键继续由后端决定。
     const created = await post('/api/jobs', { ...form })
+    if (!Number.isSafeInteger(created?.id) || created.id < 1) throw new ApiError(0, '未能确认保存结果。')
     if (active) await router.replace({ name: 'job-detail', params: { id: String(created.id) } })
   } catch (error) {
     if (!active) return
@@ -62,8 +101,10 @@ async function submit() {
     } else {
       fields.value = error.fields || {}
       message.value = error.status === 0
-        ? `${error.message} 保存结果暂时无法确认，请先返回列表检查是否已新增，避免重复提交。`
+        ? '保存结果暂时无法确认，请先返回列表检查是否已新增，避免重复提交。本页已暂停再次保存；确认未新增后可重新添加。'
         : error.message
+      // 服务端可能已经写入。阻止在同一页面盲目重发，先去列表核对。
+      if (error.status === 0) saveUncertain.value = true
     }
   } finally {
     busy.value = false
@@ -89,14 +130,25 @@ function cancel() {
       </div>
     </div>
 
-    <ScreenshotUploadPanel :disabled="busy" />
+    <ScreenshotUploadPanel ref="screenshotPanel" :disabled="busy || Boolean(pendingDraft)" @apply-draft="requestPrefill" />
+    <div v-if="pendingDraft" ref="confirmationElement" class="workspace-panel prefill-confirmation" role="group"
+         aria-labelledby="prefill-confirm-heading" @keydown.esc.prevent="cancelPrefill">
+      <h2 id="prefill-confirm-heading">部分字段已有不同内容</h2>
+      <p>冲突字段：{{ conflicts.map(([, label]) => label).join('、') }}。请选择如何填入；未识别字段始终保留原输入。</p>
+      <div class="prefill-actions">
+        <button type="button" class="primary-button" @click="applyPrefill(pendingDraft)">仅补充空白字段</button>
+        <button type="button" class="secondary-button" @click="applyPrefill(pendingDraft, true)">覆盖冲突字段并填入</button>
+        <button type="button" class="secondary-button" @click="cancelPrefill">取消填入</button>
+      </div>
+    </div>
     <div class="workspace-panel job-create-panel">
       <div class="panel-topline">
         <h2>基本信息</h2>
         <span class="muted"><span class="required-mark" aria-hidden="true">*</span> 为必填项</span>
       </div>
+      <p v-if="prefillMessage" class="form-message success" role="status">{{ prefillMessage }}</p>
       <form ref="formElement" class="job-form" novalidate :aria-busy="busy" @submit.prevent="submit">
-        <fieldset :disabled="busy">
+        <fieldset :disabled="busy || Boolean(pendingDraft)">
           <legend class="visually-hidden">新增岗位信息</legend>
           <div class="job-form-grid">
             <div v-for="input in inputs" :key="input.key" class="job-form-field" :class="{ 'job-form-field-wide': input.multiline }">
@@ -122,7 +174,7 @@ function cancel() {
           <p v-if="message" class="form-message error" role="alert">{{ message }}</p>
           <div class="job-form-actions">
             <button type="button" class="secondary-button" @click="cancel">取消</button>
-            <button type="submit" class="primary-button">{{ busy ? '正在保存…' : '保存岗位' }}</button>
+            <button type="submit" class="primary-button" :disabled="saveUncertain">{{ busy ? '正在保存…' : '保存岗位' }}</button>
           </div>
           <p v-if="busy" class="muted input-help" role="status">正在保存，请稍候。</p>
         </fieldset>
@@ -130,3 +182,9 @@ function cancel() {
     </div>
   </section>
 </template>
+
+<style scoped>
+.prefill-confirmation { max-width: 840px; margin-bottom: 28px; }
+.prefill-confirmation p { margin-top: 12px; overflow-wrap: anywhere; }
+.prefill-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+</style>

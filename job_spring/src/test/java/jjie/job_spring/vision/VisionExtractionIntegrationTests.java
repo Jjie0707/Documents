@@ -2,6 +2,7 @@ package jjie.job_spring.vision;
 
 import java.io.ByteArrayOutputStream;
 import java.util.UUID;
+import java.util.Map;
 import javax.imageio.ImageIO;
 import jjie.job_spring.auth.common.AppUserDetails;
 import jjie.job_spring.user.common.UserAccount;
@@ -15,6 +16,9 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.http.MediaType;
+import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.*;
 import org.springframework.test.context.jdbc.Sql;
@@ -27,6 +31,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(properties={"spring.config.import=", "spring.datasource.url=jdbc:h2:mem:vision-extract;MODE=MySQL;DB_CLOSE_DELAY=-1",
@@ -39,6 +45,7 @@ class VisionExtractionIntegrationTests {
     }
     @Autowired MockMvc mvc;
     @Autowired JdbcTemplate jdbc;
+    @Autowired ObjectMapper json;
     @Autowired VisionModelProperties model;
     @MockitoBean StringRedisTemplate redis;
     @MockitoBean GlmVisionClient client;
@@ -104,5 +111,66 @@ class VisionExtractionIntegrationTests {
         mvc.perform(multipart("/api/vision/extract").file(image()).with(user(account())).with(csrf()))
                 .andExpect(status().isGatewayTimeout());
         verify(client).extract(any());
+    }
+
+    @Test @Transactional
+    void partialDraftRequiresExplicitCompletionAndSaveThenRemainsOwnedByCurrentUser() throws Exception {
+        var owner = seedAccount("stage59_owner");
+        var other = seedAccount("stage59_other");
+        long before = jdbc.queryForObject("SELECT COUNT(*) FROM job_applications", Long.class);
+        var extracted = mvc.perform(multipart("/api/vision/extract").file(image()).with(user(owner)).with(csrf()))
+                .andExpect(status().isOk()).andReturn();
+        Map<String, Object> values = json.readValue(extracted.getResponse().getContentAsString(),
+                json.getTypeFactory().constructMapType(Map.class, String.class, Object.class));
+        // 草稿允许缺公司名；原创建接口依然拒绝不完整的最终表单。
+        mvc.perform(post("/api/jobs").with(user(owner)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsString(values))).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fields.companyName").isNotEmpty());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM job_applications", Long.class)).isEqualTo(before);
+        values.put("companyName", "手动补齐的虚构公司");
+        values.put("jobTitle", "人工修正后的Java岗位");
+        values.put("responsibilities", "检查后保存\n编写测试");
+        values.put("userId", other.getId());
+        values.put("status", "OFFER");
+        String body = json.writeValueAsString(values);
+        mvc.perform(post("/api/jobs").with(user(owner)).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
+        var saved = mvc.perform(post("/api/jobs").with(user(owner)).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.status").value("TO_APPLY"))
+                .andExpect(jsonPath("$.sourcePlatform").isEmpty()).andReturn();
+        long id = json.readTree(saved.getResponse().getContentAsString()).get("id").asLong();
+        mvc.perform(get("/api/jobs/" + id).with(user(owner))).andExpect(status().isOk())
+                .andExpect(jsonPath("$.jobTitle").value("人工修正后的Java岗位"))
+                .andExpect(jsonPath("$.responsibilities").value("检查后保存\n编写测试"));
+        mvc.perform(get("/api/jobs/" + id).with(user(other))).andExpect(status().isNotFound());
+        assertThat(jdbc.queryForObject("SELECT user_id FROM job_applications WHERE id=?", Long.class, id)).isEqualTo(owner.getId());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM job_applications", Long.class)).isEqualTo(before + 1);
+        verify(client).extract(any()); // 修改/保存表单不重复识别、不重复扣额。
+        verify(redis).execute(any(RedisScript.class), anyList(), any(Object[].class));
+    }
+
+    @Test @Transactional
+    void redisFailureStopsRecognitionButDoesNotBlockManualJobCreation() throws Exception {
+        var owner = seedAccount("stage59_manual");
+        when(redis.execute(any(RedisScript.class), anyList(), any(Object[].class)))
+                .thenThrow(new org.springframework.data.redis.RedisConnectionFailureException("fictional outage"));
+        long before = jdbc.queryForObject("SELECT COUNT(*) FROM job_applications", Long.class);
+        mvc.perform(multipart("/api/vision/extract").file(image()).with(user(owner)).with(csrf()))
+                .andExpect(status().isServiceUnavailable());
+        verifyNoInteractions(client);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM job_applications", Long.class)).isEqualTo(before);
+        mvc.perform(post("/api/jobs").with(user(owner)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"companyName\":\"虚构手动公司\",\"jobTitle\":\"手动岗位\"}"))
+                .andExpect(status().isCreated());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM job_applications", Long.class)).isEqualTo(before + 1);
+    }
+
+    private AppUserDetails seedAccount(String name) {
+        jdbc.update("INSERT INTO users(username,password_hash) VALUES (?,?)", name, UUID.randomUUID().toString());
+        var account = new UserAccount();
+        account.setId(jdbc.queryForObject("SELECT id FROM users WHERE username=?", Long.class, name));
+        account.setUsername(name); account.setPasswordHash("fictional");
+        return new AppUserDetails(account);
     }
 }

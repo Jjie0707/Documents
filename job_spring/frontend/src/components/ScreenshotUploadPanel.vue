@@ -8,6 +8,9 @@ import VisionQuotaPanel from './VisionQuotaPanel.vue'
 import RecognitionDraftPanel from './RecognitionDraftPanel.vue'
 
 const props = defineProps({ disabled: Boolean })
+const emit = defineEmits(['apply-draft'])
+const applyButton = ref(null)
+defineExpose({ focusApply: () => applyButton.value?.focus() })
 const router = useRouter()
 const inputArea = ref(null)
 const fileInput = ref(null)
@@ -209,7 +212,10 @@ onBeforeUnmount(() => {
     <p v-if="recognizing" class="muted screenshot-help" role="status">正在识别，请等待；不会自动重试。离开页面后结果可能丢失，已预占次数不会自动返还。</p>
     <p v-if="recognitionError" class="form-message error" role="alert">{{ recognitionError }}</p>
     <RecognitionDraftPanel v-if="draft" :draft="draft" />
-    <button v-if="draft" type="button" class="secondary-button" :disabled="disabled || recognizing" @click="draft = null">清除识别草稿</button>
+    <div v-if="draft" class="screenshot-actions">
+      <button ref="applyButton" type="button" class="primary-button" :disabled="disabled || recognizing" @click="emit('apply-draft', draft)">填入岗位表单</button>
+      <button type="button" class="secondary-button" :disabled="disabled || recognizing" @click="draft = null">清除识别草稿</button>
+    </div>
   </section>
 </template>
 
