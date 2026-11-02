@@ -1,6 +1,6 @@
 # 全站视觉更新：角色目录风格
 
-日期：2026-11-02。状态：前端实现及开发验证完成，独立审阅和文档收尾中；尚未由用户验收或部署。
+日期：2026-11-02。状态：前端实现、开发验证、独立审阅修正复核和设计文档完成；等待用户页面验收，尚未部署。
 
 ## 本次目标与范围
 
@@ -24,7 +24,9 @@ index.html → src/main.js → App.vue → router.js → 对应 views 页面
 
 `frontend/src/style.css` 定义颜色、字体、按钮、输入框、状态提示、表单和焦点等共用规则；它导入 `styles/layout.css`，后者负责页面宽度、卡片网格和响应式结构。CSS 变量使全站共用一套参数，避免每个页面单独指定近似颜色和圆角。
 
-关键参数：正文 `--ink: #2e3457`，背景 `--ground: #fbf8f2`，主按钮 `--primary: #b23c70`，导航 `--lavender: #eee5f8`；输入框圆角 10px、面板圆角 16px。浅色用于背景，深色用于文字与操作，避免柔彩导致内容难读。控件至少 44px 高，输入字号 16px，键盘焦点有明确轮廓；动效约 180ms，并尊重减少动态效果设置。
+关键参数：正文 `--ink: #2e3457`，背景 `--ground: #fbf8f2`，主按钮 `--primary: #b23c70`，导航 `--lavender: #eee5f8`；输入框圆角 10px、面板圆角 16px。浅色用于背景，深色用于文字与操作，避免柔彩导致内容难读。按钮通常至少 44px 高，输入字号 16px（每页条数是较紧凑的辅助选择器），键盘焦点有明确轮廓；动效约 180ms，并尊重减少动态效果设置。页面与文本框滚动条使用奶白轨道和浅紫灰滑块。
+
+标题与品牌使用自托管 `LXGW Marker Gothic / 霞鹜漫黑`，正文、岗位卡片中的数据标题和表单保留系统字体。`@font-face` 指向 `frontend/public/fonts/lxgw-marker-gothic.woff`；`font-display: swap` 让字体下载前先显示回退字形，避免等待时没有文字。全字库保留 15,285 个 Unicode 映射，约 1.85MB，会增加首次访问下载量；后续部署应设置静态资源缓存。本轮未改 Nginx 缓存配置或安装系统字体。来源、原文件摘要和转换方式见 [SOURCE.md](../frontend/public/fonts/SOURCE.md)，OFL 许可随构建分发。
 
 `views/JobsView.vue` 把“添加岗位”放到页面标题旁，保留搜索、状态筛选和分页。桌面岗位卡片为双列，700px 及以下单列。卡片底色循环呈现四种柔彩，**不代表业务状态**；状态由右上方文字与圆点共同表达。
 
@@ -44,13 +46,13 @@ index.html → src/main.js → App.vue → router.js → 对应 views 页面
 
 使用内置 `image_gen` 工具生成原创淡紫文件夹角色，透明背景，网页资源为 `frontend/src/assets/record-pal.png`（512×512，约 180KB）。生成图片不经过本项目的真实识别接口，不读取项目 API Key。
 
-完整生成提示保存在 [record-pal.prompt.txt](../.impeccable/record-pal.prompt.txt)，并嵌入 PNG 元数据。资源出处检查为 1 个 raster、0 个缺失提示。未引入外部字体、图标库或新的前端依赖。
+完整生成提示保存在 [record-pal.prompt.txt](../.impeccable/record-pal.prompt.txt)，并嵌入 PNG 元数据。资源出处检查为 1 个 raster、0 个缺失提示。未引入图标库或新的前端依赖；字体由本项目提供，不依赖第三方在线字体请求。
 
-用户选择与产品约束见 [PRODUCT.md](../PRODUCT.md)，页面方向约定见 [surface brief](../.impeccable/surfaces/frontend-src-app-vue.md)。完成后的规范保存于根目录 `DESIGN.md` 与 `.impeccable/design.json`，供后续页面沿用。
+用户选择与产品约束见 [PRODUCT.md](../PRODUCT.md)，页面方向约定见 [surface brief](../.impeccable/surfaces/frontend-src-app-vue.md)。完成后的规范已保存于根目录 [DESIGN.md](../DESIGN.md) 与 [.impeccable/design.json](../.impeccable/design.json)，供后续页面沿用。规范包含实际 tokens、8 个标准章节、9 个独立组件示例与 5 个实际断点；YAML/JSON 解析、token 引用、源码色值和元数据结构已核对。
 
 ## 验证与边界
 
-自动验证：在 `frontend` 目录执行 `npm test`，26 项通过；`npm run build` 通过，构建 54 个模块。主要产物为约 25KB CSS、183KB JavaScript 与上述图片，输出到 `frontend/dist`。`git diff --check -- frontend` 通过。Impeccable 静态检测运行一次，无发现；静态检测不能代替网页功能与视觉检查。
+自动验证：在 `frontend` 目录执行 `npm test`，26 项通过；三项审阅修正后再次执行测试通过，最终 `npm run build` 通过，构建 54 个模块。主要产物为约 26KB CSS、183KB JavaScript、180KB 图片和上述 1.85MB 字体，输出到 `frontend/dist`；已核对字体与许可均在最终产物中。`git diff --check -- frontend` 通过。Impeccable 静态检测运行一次，无发现；修正后未重复运行检测，静态检测不能代替网页功能与视觉检查。
 
 后端本轮未修改，未重跑后端测试或 JAR 构建。715 项后端测试及 JAR 是此前验证记录，不能作为本轮新结果。
 
@@ -65,11 +67,13 @@ index.html → src/main.js → App.vue → router.js → 对应 views 页面
 
 可靠截图在 `.impeccable/review/verified/`，全部为虚构数据；`geometry.json` 记录视口与滚动位置。部分长页以首屏和标明 lower/actions/form 的下半部分截图组合审阅。较早的 `round1/`、`final/` 整页截图受浏览器截图裁切影响，不作为最终验收证据。
 
-独立审阅结果将在收尾后补充。采用全新上下文的通用子代理按 Impeccable 审阅协议执行，未使用专用注册审阅代理；审阅不继承实现过程的对话。
+独立审阅首次提出标题字体、超长用户名挤压导航和滚动条配色三项修正；集中完成后，以相同视口重新采集 31 张截图，同一审阅者将三项全部评为 resolved，`disposition: ship`。最终结论覆盖三项修正的复核范围，不扩大为再次完成全站完整审计。详见[独立审阅记录](../.impeccable/review/finish-review.md)。采用全新上下文的通用子代理按 Impeccable 审阅协议执行，替代未注册的专用代理；审阅不继承实现过程的对话。
 
 ## 用户验收与后续部署
 
-请用自己原来的 Mac 启动方式访问项目，在电脑和手机上确认整体风格、文字、留白和操作是否合适。建议依次检查登录/退出、列表搜索与状态筛选、手动新增与编辑、岗位详情、轮次及面试回顾，删除时核对确认对象。测试记录使用虚构内容，避免影响已有记录。
+请用自己原来的 Mac 启动方式访问项目，在电脑和手机上确认整体风格、文字、留白和操作是否合适。后端继续使用此前验收的 mac 配置。前端若已运行可刷新页面；未运行时在项目的 `frontend` 目录执行 `npm run dev`。建议依次检查登录/退出、列表搜索与状态筛选、手动新增与编辑、岗位详情、轮次及面试回顾，删除时核对确认对象。测试记录使用虚构内容，避免影响已有记录。
+
+助手已关闭自己用于本轮的 `15175` 临时预览并确认端口不再监听，恢复浏览器默认视口、关闭隔离预览标签。本轮没有启动 Java 后端，没有启停用户原有后端、前端、MySQL、Redis 或 SSH。
 
 截图识别的真实链路此前已由用户验收；如本次自行复测真实识别，会消耗现有每日额度。隔离替身成功不代表真实模型本次已经重测。
 

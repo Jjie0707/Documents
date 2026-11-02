@@ -1,0 +1,493 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-02T15:13:48.627523Z",
+  "title": "Design System: 岗位投递记录 / JOB TRACKER",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "深靛蓝正文",
+        "canonical": "#2e3457",
+        "tonalRamp": [
+          "oklch(15% 0.0330 275.2)",
+          "oklch(26% 0.0482 275.2)",
+          "oklch(38% 0.0586 275.2)",
+          "oklch(50% 0.0621 275.2)",
+          "oklch(62% 0.0586 275.2)",
+          "oklch(74% 0.0482 275.2)",
+          "oklch(86% 0.0314 275.2)",
+          "oklch(95% 0.0141 275.2)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "灰紫说明",
+        "canonical": "#68647b",
+        "tonalRamp": [
+          "oklch(15% 0.0193 293.1)",
+          "oklch(26% 0.0281 293.1)",
+          "oklch(38% 0.0342 293.1)",
+          "oklch(50% 0.0362 293.1)",
+          "oklch(62% 0.0342 293.1)",
+          "oklch(74% 0.0281 293.1)",
+          "oklch(86% 0.0183 293.1)",
+          "oklch(95% 0.0082 293.1)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "白色面板",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.0)",
+          "oklch(26% 0.0000 0.0)",
+          "oklch(38% 0.0000 0.0)",
+          "oklch(50% 0.0000 0.0)",
+          "oklch(62% 0.0000 0.0)",
+          "oklch(74% 0.0000 0.0)",
+          "oklch(86% 0.0000 0.0)",
+          "oklch(95% 0.0000 0.0)"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "奶白底纸",
+        "canonical": "#fbf8f2",
+        "tonalRamp": [
+          "oklch(15% 0.0046 84.6)",
+          "oklch(26% 0.0066 84.6)",
+          "oklch(38% 0.0081 84.6)",
+          "oklch(50% 0.0086 84.6)",
+          "oklch(62% 0.0081 84.6)",
+          "oklch(74% 0.0066 84.6)",
+          "oklch(86% 0.0043 84.6)",
+          "oklch(95% 0.0019 84.6)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "浅灰紫边线",
+        "canonical": "#e2dce9",
+        "tonalRamp": [
+          "oklch(15% 0.0099 306.6)",
+          "oklch(26% 0.0145 306.6)",
+          "oklch(38% 0.0176 306.6)",
+          "oklch(50% 0.0186 306.6)",
+          "oklch(62% 0.0176 306.6)",
+          "oklch(74% 0.0145 306.6)",
+          "oklch(86% 0.0094 306.6)",
+          "oklch(95% 0.0042 306.6)"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "清晰灰紫边线",
+        "canonical": "#9b8da8",
+        "tonalRamp": [
+          "oklch(15% 0.0225 308.5)",
+          "oklch(26% 0.0329 308.5)",
+          "oklch(38% 0.0400 308.5)",
+          "oklch(50% 0.0424 308.5)",
+          "oklch(62% 0.0400 308.5)",
+          "oklch(74% 0.0329 308.5)",
+          "oklch(86% 0.0214 308.5)",
+          "oklch(95% 0.0096 308.5)"
+        ]
+      },
+      "accent": {
+        "role": "secondary",
+        "displayName": "墨紫交互",
+        "canonical": "#7852a5",
+        "tonalRamp": [
+          "oklch(15% 0.0698 303.3)",
+          "oklch(26% 0.1019 303.3)",
+          "oklch(38% 0.1238 303.3)",
+          "oklch(50% 0.1312 303.3)",
+          "oklch(62% 0.1238 303.3)",
+          "oklch(74% 0.1019 303.3)",
+          "oklch(86% 0.0663 303.3)",
+          "oklch(95% 0.0297 303.3)"
+        ]
+      },
+      "accent-deep": {
+        "role": "secondary",
+        "displayName": "深墨紫文字",
+        "canonical": "#5e3d87",
+        "tonalRamp": [
+          "oklch(15% 0.0642 302.2)",
+          "oklch(26% 0.0938 302.2)",
+          "oklch(38% 0.1139 302.2)",
+          "oklch(50% 0.1208 302.2)",
+          "oklch(62% 0.1139 302.2)",
+          "oklch(74% 0.0938 302.2)",
+          "oklch(86% 0.0610 302.2)",
+          "oklch(95% 0.0274 302.2)"
+        ]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "莓粉主操作",
+        "canonical": "#b23c70",
+        "tonalRamp": [
+          "oklch(15% 0.0851 356.7)",
+          "oklch(26% 0.1242 356.7)",
+          "oklch(38% 0.1509 356.7)",
+          "oklch(50% 0.1600 356.7)",
+          "oklch(62% 0.1509 356.7)",
+          "oklch(74% 0.1242 356.7)",
+          "oklch(86% 0.0808 356.7)",
+          "oklch(95% 0.0363 356.7)"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "莓粉悬停",
+        "canonical": "#95305d",
+        "tonalRamp": [
+          "oklch(15% 0.0754 356.5)",
+          "oklch(26% 0.1101 356.5)",
+          "oklch(38% 0.1337 356.5)",
+          "oklch(50% 0.1418 356.5)",
+          "oklch(62% 0.1337 356.5)",
+          "oklch(74% 0.1101 356.5)",
+          "oklch(86% 0.0716 356.5)",
+          "oklch(95% 0.0321 356.5)"
+        ]
+      },
+      "lavender": {
+        "role": "secondary",
+        "displayName": "柔紫纸面",
+        "canonical": "#eee5f8",
+        "tonalRamp": [
+          "oklch(15% 0.0144 307.1)",
+          "oklch(26% 0.0210 307.1)",
+          "oklch(38% 0.0256 307.1)",
+          "oklch(50% 0.0271 307.1)",
+          "oklch(62% 0.0256 307.1)",
+          "oklch(74% 0.0210 307.1)",
+          "oklch(86% 0.0137 307.1)",
+          "oklch(95% 0.0061 307.1)"
+        ]
+      },
+      "lavender-soft": {
+        "role": "secondary",
+        "displayName": "浅柔紫纸面",
+        "canonical": "#f6f1fb",
+        "tonalRamp": [
+          "oklch(15% 0.0076 308.3)",
+          "oklch(26% 0.0111 308.3)",
+          "oklch(38% 0.0134 308.3)",
+          "oklch(50% 0.0142 308.3)",
+          "oklch(62% 0.0134 308.3)",
+          "oklch(74% 0.0111 308.3)",
+          "oklch(86% 0.0072 308.3)",
+          "oklch(95% 0.0032 308.3)"
+        ]
+      },
+      "blush": {
+        "role": "tertiary",
+        "displayName": "浅粉卡面",
+        "canonical": "#fcecf2",
+        "tonalRamp": [
+          "oklch(15% 0.0101 352.6)",
+          "oklch(26% 0.0147 352.6)",
+          "oklch(38% 0.0179 352.6)",
+          "oklch(50% 0.0190 352.6)",
+          "oklch(62% 0.0179 352.6)",
+          "oklch(74% 0.0147 352.6)",
+          "oklch(86% 0.0096 352.6)",
+          "oklch(95% 0.0043 352.6)"
+        ]
+      },
+      "mint": {
+        "role": "tertiary",
+        "displayName": "薄荷色面",
+        "canonical": "#edf7f2",
+        "tonalRamp": [
+          "oklch(15% 0.0066 164.8)",
+          "oklch(26% 0.0097 164.8)",
+          "oklch(38% 0.0117 164.8)",
+          "oklch(50% 0.0124 164.8)",
+          "oklch(62% 0.0117 164.8)",
+          "oklch(74% 0.0097 164.8)",
+          "oklch(86% 0.0063 164.8)",
+          "oklch(95% 0.0028 164.8)"
+        ]
+      },
+      "sky": {
+        "role": "tertiary",
+        "displayName": "天蓝卡面",
+        "canonical": "#edf4fb",
+        "tonalRamp": [
+          "oklch(15% 0.0064 248.0)",
+          "oklch(26% 0.0093 248.0)",
+          "oklch(38% 0.0113 248.0)",
+          "oklch(50% 0.0120 248.0)",
+          "oklch(62% 0.0113 248.0)",
+          "oklch(74% 0.0093 248.0)",
+          "oklch(86% 0.0061 248.0)",
+          "oklch(95% 0.0027 248.0)"
+        ]
+      },
+      "butter": {
+        "role": "tertiary",
+        "displayName": "奶油黄状态底",
+        "canonical": "#fff6d9",
+        "tonalRamp": [
+          "oklch(15% 0.0207 92.7)",
+          "oklch(26% 0.0303 92.7)",
+          "oklch(38% 0.0368 92.7)",
+          "oklch(50% 0.0390 92.7)",
+          "oklch(62% 0.0368 92.7)",
+          "oklch(74% 0.0303 92.7)",
+          "oklch(86% 0.0197 92.7)",
+          "oklch(95% 0.0088 92.7)"
+        ]
+      },
+      "error": {
+        "role": "tertiary",
+        "displayName": "深红错误",
+        "canonical": "#9d3d4d",
+        "tonalRamp": [
+          "oklch(15% 0.0682 12.9)",
+          "oklch(26% 0.0996 12.9)",
+          "oklch(38% 0.1210 12.9)",
+          "oklch(50% 0.1282 12.9)",
+          "oklch(62% 0.1210 12.9)",
+          "oklch(74% 0.0996 12.9)",
+          "oklch(86% 0.0648 12.9)",
+          "oklch(95% 0.0291 12.9)"
+        ]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "深绿成功",
+        "canonical": "#30694e",
+        "tonalRamp": [
+          "oklch(15% 0.0399 161.0)",
+          "oklch(26% 0.0583 161.0)",
+          "oklch(38% 0.0709 161.0)",
+          "oklch(50% 0.0751 161.0)",
+          "oklch(62% 0.0709 161.0)",
+          "oklch(74% 0.0583 161.0)",
+          "oklch(86% 0.0379 161.0)",
+          "oklch(95% 0.0170 161.0)"
+        ]
+      },
+      "status-waiting-text": {
+        "role": "tertiary",
+        "displayName": "待投递文字",
+        "canonical": "#746028",
+        "tonalRamp": [
+          "oklch(15% 0.0418 89.6)",
+          "oklch(26% 0.0611 89.6)",
+          "oklch(38% 0.0742 89.6)",
+          "oklch(50% 0.0786 89.6)",
+          "oklch(62% 0.0742 89.6)",
+          "oklch(74% 0.0611 89.6)",
+          "oklch(86% 0.0397 89.6)",
+          "oklch(95% 0.0178 89.6)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "页面标题",
+        "purpose": "h1；窄屏按 Layout 缩小。"
+      },
+      "headline": {
+        "displayName": "区块标题",
+        "purpose": "h2；登录面板有已记录的尺寸变体。"
+      },
+      "brand": {
+        "displayName": "品牌",
+        "purpose": "头部名称，常规字重。"
+      },
+      "title": {
+        "displayName": "内容标题",
+        "purpose": "h3；使用平台字体。"
+      },
+      "card-title": {
+        "displayName": "岗位标题",
+        "purpose": "岗位卡内的关键数据标题。"
+      },
+      "body": {
+        "displayName": "长文正文",
+        "purpose": "职责与要求等长描述。"
+      },
+      "muted": {
+        "displayName": "辅助说明",
+        "purpose": "常见次级文字；继承平台字体。"
+      },
+      "label": {
+        "displayName": "字段标签",
+        "purpose": "主要表单可见标签；继承平台字体。"
+      },
+      "button": {
+        "displayName": "按钮文字",
+        "purpose": "主、次、危险按钮；继承平台字体。"
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "duration",
+        "value": "180ms",
+        "purpose": "按钮、输入与岗位卡的颜色和边线状态过渡。"
+      },
+      {
+        "name": "ease",
+        "value": "cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "与全局 --ease 相同的过渡曲线。"
+      },
+      {
+        "name": "loading-pulse",
+        "value": "1.4s ease-in-out infinite alternate",
+        "purpose": "骨架底色交替；从浅柔紫转为 #e9e0f1。"
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation: none; transition: none; scroll-behavior: auto",
+        "purpose": "prefers-reduced-motion: reduce 时应用。"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "detail-stack",
+        "value": "960px"
+      },
+      {
+        "name": "auth-tight",
+        "value": "900px"
+      },
+      {
+        "name": "mobile-stack",
+        "value": "700px"
+      },
+      {
+        "name": "draft-stack",
+        "value": "500px"
+      },
+      {
+        "name": "narrow",
+        "value": "380px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "主操作按钮",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "添加、登录、搜索与显式保存的主要操作。",
+      "html": "<button type=\"button\" class=\"ds-btn-primary\"><svg class=\"ds-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M12 5v14M5 12h14\"></path></svg>添加岗位</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:11px 18px; border:1px solid transparent; border-radius:var(--radius-control, 10px); font-family:ui-rounded, \"SF Pro Rounded\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif; font-size:.875rem; font-weight:650; line-height:1.45; text-align:center; cursor:pointer; transition:background var(--duration, 180ms) var(--ease, cubic-bezier(.16, 1, .3, 1)), border-color var(--duration, 180ms) var(--ease, cubic-bezier(.16, 1, .3, 1)); }.ds-btn-primary:focus-visible { outline:3px solid var(--accent, #7852a5); outline-offset:4px; } .ds-btn-primary:disabled { opacity:.55; cursor:not-allowed; }.ds-btn-primary { background:var(--primary, #b23c70); color:var(--surface, #ffffff); } .ds-btn-primary:hover:not(:disabled) { background:var(--primary-hover, #95305d); } .ds-btn-primary:active:not(:disabled) { background:#80284f; }.ds-icon { width:20px; height:20px; display:inline-block; vertical-align:middle; flex:0 0 auto; }@media (prefers-reduced-motion:reduce) { .ds-btn-primary { transition:none; } }"
+    },
+    {
+      "name": "次操作按钮",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "取消、编辑、分页及补充操作。",
+      "html": "<button type=\"button\" class=\"ds-btn-secondary\">取消</button>",
+      "css": ".ds-btn-secondary { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:11px 18px; border:1px solid transparent; border-radius:var(--radius-control, 10px); font-family:ui-rounded, \"SF Pro Rounded\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif; font-size:.875rem; font-weight:650; line-height:1.45; text-align:center; cursor:pointer; transition:background var(--duration, 180ms) var(--ease, cubic-bezier(.16, 1, .3, 1)), border-color var(--duration, 180ms) var(--ease, cubic-bezier(.16, 1, .3, 1)); }.ds-btn-secondary:focus-visible { outline:3px solid var(--accent, #7852a5); outline-offset:4px; } .ds-btn-secondary:disabled { opacity:.55; cursor:not-allowed; }.ds-btn-secondary { background:var(--lavender-soft, #f6f1fb); color:var(--accent-deep, #5e3d87); border-color:var(--line, #e2dce9); } .ds-btn-secondary:hover:not(:disabled) { background:var(--lavender, #eee5f8); border-color:var(--line-strong, #9b8da8); } .ds-btn-secondary:active:not(:disabled) { background:#e4d7f0; }.ds-icon { width:20px; height:20px; display:inline-block; vertical-align:middle; flex:0 0 auto; }@media (prefers-reduced-motion:reduce) { .ds-btn-secondary { transition:none; } }"
+    },
+    {
+      "name": "危险确认按钮",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "明确确认区域中的破坏性操作。",
+      "html": "<button type=\"button\" class=\"ds-btn-danger\">确认删除岗位</button>",
+      "css": ".ds-btn-danger { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:11px 18px; border:1px solid transparent; border-radius:var(--radius-control, 10px); font-family:ui-rounded, \"SF Pro Rounded\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif; font-size:.875rem; font-weight:650; line-height:1.45; text-align:center; cursor:pointer; transition:background var(--duration, 180ms) var(--ease, cubic-bezier(.16, 1, .3, 1)), border-color var(--duration, 180ms) var(--ease, cubic-bezier(.16, 1, .3, 1)); }.ds-btn-danger:focus-visible { outline:3px solid var(--accent, #7852a5); outline-offset:4px; } .ds-btn-danger:disabled { opacity:.55; cursor:not-allowed; }.ds-btn-danger { background:var(--error, #9d3d4d); color:var(--surface, #ffffff); } .ds-btn-danger:hover:not(:disabled) { background:#852f3e; }.ds-icon { width:20px; height:20px; display:inline-block; vertical-align:middle; flex:0 0 auto; }@media (prefers-reduced-motion:reduce) { .ds-btn-danger { transition:none; } }"
+    },
+    {
+      "name": "危险入口按钮",
+      "kind": "button",
+      "refersTo": "button-danger-outline",
+      "description": "打开既有危险操作确认流程的描边入口。",
+      "html": "<button type=\"button\" class=\"ds-btn-danger-outline\">删除岗位</button>",
+      "css": ".ds-btn-danger-outline { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:11px 18px; border:1px solid transparent; border-radius:var(--radius-control, 10px); font-family:ui-rounded, \"SF Pro Rounded\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif; font-size:.875rem; font-weight:650; line-height:1.45; text-align:center; cursor:pointer; transition:background var(--duration, 180ms) var(--ease, cubic-bezier(.16, 1, .3, 1)), border-color var(--duration, 180ms) var(--ease, cubic-bezier(.16, 1, .3, 1)); }.ds-btn-danger-outline:focus-visible { outline:3px solid var(--accent, #7852a5); outline-offset:4px; } .ds-btn-danger-outline:disabled { opacity:.55; cursor:not-allowed; }.ds-btn-danger-outline { background:var(--surface, #ffffff); color:var(--error, #9d3d4d); border-color:#d5aeb7; } .ds-btn-danger-outline:hover:not(:disabled) { background:#fbecef; }.ds-icon { width:20px; height:20px; display:inline-block; vertical-align:middle; flex:0 0 auto; }@media (prefers-reduced-motion:reduce) { .ds-btn-danger-outline { transition:none; } }"
+    },
+    {
+      "name": "文字操作按钮",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "重新加载、退出和刷新等轻量操作，保留可辨识下划线。",
+      "html": "<button type=\"button\" class=\"ds-btn-text\">重新加载</button>",
+      "css": ".ds-btn-text { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:8px 4px; border:0; background:none; color:var(--accent-deep, #5e3d87); font-family:ui-rounded, \"SF Pro Rounded\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif; font-size:.8125rem; cursor:pointer; text-decoration:underline; text-underline-offset:4px; } .ds-btn-text:hover:not(:disabled) { color:var(--primary, #b23c70); } .ds-btn-text:focus-visible { outline:3px solid var(--accent, #7852a5); outline-offset:4px; } .ds-btn-text:disabled { opacity:.55; cursor:not-allowed; }"
+    },
+    {
+      "name": "有标签输入框",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "输入始终有可见标签；错误、帮助与禁用状态继承现有语义。",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field-label\" for=\"ds-company\">公司名称</label><input class=\"ds-field-input\" id=\"ds-company\" name=\"companyName\" type=\"text\" placeholder=\"填写公司名称\" aria-describedby=\"ds-company-help\"><p class=\"ds-field-help\" id=\"ds-company-help\">请填写岗位所属公司。</p></div>",
+      "css": ".ds-field { font-family:ui-rounded, \"SF Pro Rounded\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif; color:var(--ink, #2e3457); } .ds-field-label { display:block; margin-bottom:8px; font-size:.875rem; font-weight:600; } .ds-field-input { box-sizing:border-box; min-width:0; width:100%; max-width:100%; min-height:46px; padding:10px 12px; border:1px solid var(--line-strong, #9b8da8); border-radius:var(--radius-control, 10px); background:var(--surface, #ffffff); color:var(--ink, #2e3457); font-family:ui-rounded, \"SF Pro Rounded\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif; font-size:16px; caret-color:var(--primary, #b23c70); transition:background var(--duration, 180ms) var(--ease, cubic-bezier(.16, 1, .3, 1)), border-color var(--duration, 180ms) var(--ease, cubic-bezier(.16, 1, .3, 1)); } .ds-field-input::placeholder { color:#756d82; opacity:1; } .ds-field-input:hover:not(:disabled), .ds-field-input:focus { border-color:var(--accent, #7852a5); } .ds-field-input:focus-visible { outline:3px solid var(--accent, #7852a5); outline-offset:4px; } .ds-field-input[aria-invalid=\"true\"] { border-color:var(--error, #9d3d4d); background:#fffafb; } .ds-field-input:disabled { background:#f3f0f5; color:var(--muted, #68647b); opacity:1; } .ds-field-help { margin:8px 0 0; color:var(--muted, #68647b); font-size:.8125rem; line-height:1.75; } @media (prefers-reduced-motion:reduce) { .ds-field-input { transition:none; } }"
+    },
+    {
+      "name": "详情栏目导航",
+      "kind": "nav",
+      "refersTo": "nav-tab",
+      "description": "展示三栏目外观及选中/聚焦状态；应用保留既有 tab 键盘行为与面板关系。",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\" aria-label=\"岗位操作栏目\"><button type=\"button\" class=\"ds-tab\" role=\"tab\" aria-selected=\"false\" tabindex=\"-1\"><svg class=\"ds-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0\"></path><path d=\"M8 10h8M8 14h5\"></path></svg>面试轮次</button><button type=\"button\" class=\"ds-tab\" role=\"tab\" aria-selected=\"true\" tabindex=\"0\"><svg class=\"ds-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 5h16M4 12h16M4 19h16\"></path><path d=\"M8 3v4M16 10v4M10 17v4\"></path></svg>投递状态</button><button type=\"button\" class=\"ds-tab\" role=\"tab\" aria-selected=\"false\" tabindex=\"-1\"><svg class=\"ds-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 7h16M4 17h16\"></path><path d=\"M9 4v6M15 14v6\"></path></svg>岗位管理</button></div>",
+      "css": ".ds-tabs { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:4px; padding:5px; border:1px solid var(--line, #e2dce9); border-radius:12px; background:var(--surface, #ffffff); } .ds-tab { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-width:0; min-height:72px; padding:9px 5px; border:0; border-radius:8px; color:var(--muted, #68647b); background:transparent; font-family:ui-rounded, \"SF Pro Rounded\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif; font-size:.8125rem; line-height:1.6; cursor:pointer; } .ds-tab[aria-selected=\"true\"] { color:var(--accent-deep, #5e3d87); background:var(--lavender, #eee5f8); } .ds-tab:hover:not(:disabled) { background:var(--lavender-soft, #f6f1fb); } .ds-tab[aria-selected=\"true\"]:hover { background:var(--lavender, #eee5f8); } .ds-tab:focus-visible { outline:3px solid var(--accent, #7852a5); outline-offset:4px; } .ds-tab:disabled { opacity:.55; cursor:not-allowed; }.ds-icon { width:20px; height:20px; display:inline-block; vertical-align:middle; flex:0 0 auto; }"
+    },
+    {
+      "name": "投递状态胶囊",
+      "kind": "chip",
+      "refersTo": "status-chip",
+      "description": "七种状态的文字与圆点；这是信息标签，不增加交互状态。",
+      "html": "<div class=\"ds-chips\"><span class=\"ds-chip\" data-status=\"TO_APPLY\"><span class=\"ds-chip-dot\" style=\"background:#899254\" aria-hidden=\"true\"></span><span>待投递</span></span><span class=\"ds-chip\" data-status=\"APPLIED\"><span class=\"ds-chip-dot\" style=\"background:#5289a8\" aria-hidden=\"true\"></span><span>已投递</span></span><span class=\"ds-chip\" data-status=\"WRITTEN_TEST\"><span class=\"ds-chip-dot\" style=\"background:#9c7838\" aria-hidden=\"true\"></span><span>笔试中</span></span><span class=\"ds-chip\" data-status=\"INTERVIEWING\"><span class=\"ds-chip-dot\" style=\"background:#866bb0\" aria-hidden=\"true\"></span><span>面试中</span></span><span class=\"ds-chip\" data-status=\"OFFER\"><span class=\"ds-chip-dot\" style=\"background:#387c54\" aria-hidden=\"true\"></span><span>已获 Offer</span></span><span class=\"ds-chip\" data-status=\"REJECTED\"><span class=\"ds-chip-dot\" style=\"background:#b56054\" aria-hidden=\"true\"></span><span>未通过</span></span><span class=\"ds-chip\" data-status=\"WITHDRAWN\"><span class=\"ds-chip-dot\" style=\"background:#7c8386\" aria-hidden=\"true\"></span><span>已放弃</span></span></div>",
+      "css": ".ds-chips { display:flex; flex-wrap:wrap; gap:8px; font-family:ui-rounded, \"SF Pro Rounded\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif; } .ds-chip { display:inline-flex; align-items:center; gap:7px; padding:5px 10px; border-radius:999px; background:var(--butter, #fff6d9); color:#746028; font-size:.75rem; line-height:1.5; white-space:nowrap; } .ds-chip-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }.ds-chip[data-status=\"APPLIED\"] { background:#e9f2fc; color:#335f91; }.ds-chip[data-status=\"WRITTEN_TEST\"] { background:#fff0db; color:#7b5426; }.ds-chip[data-status=\"INTERVIEWING\"] { background:#eee6f8; color:#65418b; }.ds-chip[data-status=\"OFFER\"] { background:#e5f3ea; color:var(--success, #30694e); }.ds-chip[data-status=\"REJECTED\"] { background:#fbecef; color:var(--error, #9d3d4d); }.ds-chip[data-status=\"WITHDRAWN\"] { background:#efedf2; color:#625e6b; }"
+    },
+    {
+      "name": "岗位记录卡",
+      "kind": "card",
+      "refersTo": "job-card",
+      "description": "整块链接承载公司、岗位、元数据和文字状态；示例仅使用虚构记录。",
+      "html": "<a class=\"ds-job-card\" href=\"#job-example\"><p class=\"ds-card-company\"><svg class=\"ds-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 7h16v13H4z\"></path><path d=\"M9 7V4h6v3M4 12c5 3 11 3 16 0M10 13v3h4v-3\"></path></svg>星河科技（虚构）</p><h3 class=\"ds-card-title\">Java 后端开发工程师</h3><p class=\"ds-card-meta\"><span>杭州</span><span>18–25K · 14薪</span></p><span class=\"ds-card-hint\">查看岗位详情<svg class=\"ds-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5 12h14m-6-6 6 6-6 6\"></path></svg></span><span class=\"ds-card-status\"><span class=\"ds-card-dot\" aria-hidden=\"true\"></span><span>面试中</span></span></a>",
+      "css": ".ds-job-card { position:relative; display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:start; gap:12px; padding:24px; border:1px solid var(--line, #e2dce9); border-radius:var(--radius-panel, 16px); background:var(--card-tint, var(--lavender-soft, #f6f1fb)); color:var(--ink, #2e3457); font-family:ui-rounded, \"SF Pro Rounded\", -apple-system, BlinkMacSystemFont, \"PingFang SC\", \"Microsoft YaHei\", sans-serif; text-decoration:none; transition:background var(--duration, 180ms) var(--ease, cubic-bezier(.16, 1, .3, 1)), border-color var(--duration, 180ms) var(--ease, cubic-bezier(.16, 1, .3, 1)); } .ds-job-card:nth-child(4n + 2) { --card-tint:var(--blush, #fcecf2); } .ds-job-card:nth-child(4n + 3) { --card-tint:var(--mint, #edf7f2); } .ds-job-card:nth-child(4n + 4) { --card-tint:var(--sky, #edf4fb); } .ds-job-card:hover, .ds-job-card:focus-visible { border-color:var(--accent, #7852a5); background:var(--lavender, #eee5f8); } .ds-job-card:focus-visible { outline:3px solid var(--accent, #7852a5); outline-offset:4px; } .ds-card-company { grid-row:1; grid-column:1; align-self:center; display:flex; align-items:center; gap:8px; margin:0; min-width:0; overflow-wrap:anywhere; color:var(--muted, #68647b); font-size:.875rem; line-height:1.6; } .ds-card-company .ds-icon { width:17px; height:17px; color:var(--accent, #7852a5); } .ds-card-title { grid-row:2; grid-column:1 / -1; margin:0; min-width:0; overflow-wrap:anywhere; font-size:1.1875rem; font-weight:700; line-height:1.5; letter-spacing:-.015em; } .ds-card-meta { grid-row:3; grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:8px; margin:0; color:var(--muted, #68647b); font-size:.875rem; line-height:1.7; } .ds-card-meta > span { min-width:0; overflow-wrap:anywhere; } .ds-card-meta > span + span::before { content:\"·\"; margin-right:8px; } .ds-card-hint { grid-row:4; grid-column:1 / -1; display:inline-flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px; padding-top:12px; border-top:1px solid var(--line, #e2dce9); color:var(--accent-deep, #5e3d87); font-size:.8125rem; } .ds-card-hint .ds-icon { width:17px; height:17px; } .ds-card-status { grid-row:1; grid-column:2; justify-self:end; display:inline-flex; align-items:center; gap:7px; padding:5px 10px; border-radius:999px; background:#eee6f8; color:#65418b; font-size:.75rem; line-height:1.5; white-space:nowrap; } .ds-card-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; background:#866bb0; }.ds-icon { width:20px; height:20px; display:inline-block; vertical-align:middle; flex:0 0 auto; } @media (max-width:700px) { .ds-job-card { padding:20px; } } @media (max-width:380px) { .ds-job-card { padding:16px; } } @media (prefers-reduced-motion:reduce) { .ds-job-card { transition:none; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "柔彩记录空间",
+    "overview": "用户选定的“角色目录”方向落在奶白底、浅紫导航、柔和彩色卡面和亲近的文件夹角色上。界面保留熟悉的搜索、表单、状态文字和显式保存路径；个性围绕整理记录的任务展开。\n\n正常内容页面保持紧凑且可扫读，角色出现在品牌、登录和初始空状态。页面标题以自托管中文字体形成识别度，岗位数据、说明和控件以平台字体保持清晰。本文记录完成后的实现；前置方向和页面叙事见 `.impeccable/surfaces/frontend-src-app-vue.md`，产品边界见 `PRODUCT.md`。",
+    "keyCharacteristics": [
+      "奶白背景、浅紫框架与粉色主操作。",
+      "薄边框、圆润容器、平面柔彩分区。",
+      "标题有字形个性，业务内容保持清楚的阅读层级。",
+      "状态文字、键盘焦点与显式保存始终可辨。",
+      "原创淡紫文件夹角色作为克制的签名。"
+    ],
+    "rules": [
+      {
+        "name": "The Text Carries Status Rule",
+        "body": "状态含义由可读文字承载；圆点与底色补充识别，岗位卡的柔彩循环仅作装饰。",
+        "section": "colors"
+      },
+      {
+        "name": "The Titles and Records Rule",
+        "body": "自托管字体用于品牌与 h1/h2；h3、岗位数据、正文、标签和表单保留平台字体，不把标题字形扩散到信息密集区。",
+        "section": "typography"
+      },
+      {
+        "name": "The Tonal Layers Rule",
+        "body": "容器依靠色面与边线分层；交互反馈改变底色和边框，不给普通卡片增加浮起效果。",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** 延续奶白底、柔彩色面和清晰薄边框，用粉色标识主操作。",
+      "**Do** 让岗位标题、状态文字与当前任务先被读到，角色仅陪伴品牌、登录和初始空状态。",
+      "**Do** 保留键盘焦点、可见标签、帮助与错误文字，以及减少动态效果支持。",
+      "**Do** 让长内容折行，按既有断点堆叠，保护品牌和退出入口。",
+      "**Do** 清楚区分识别草稿、最终保存、危险确认及结果未知状态，沿用原有操作含义。"
+    ],
+    "donts": [
+      "**Don't** 把循环卡面颜色当作投递状态，或仅用圆点传达结果。",
+      "**Don't** 给正常任务区增加重复角色、入场动画、阴影浮起或占据操作空间的装饰。",
+      "**Don't** 将标题字体用于数据与表单，合成不存在的标题粗体，或引入外部字体请求。",
+      "**Don't** 为统一高度裁切公司名、岗位名、错误说明或面试记录。",
+      "**Don't** 用颜色变化伪装保存成功、绕过确认，或改变已有 API 与业务能力。"
+    ]
+  }
+}
