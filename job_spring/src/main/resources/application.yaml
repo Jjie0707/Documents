@@ -12,6 +12,9 @@ server:
         same-site: lax
 
 spring:
+  profiles:
+    # Maven Profiles 勾选 mac 并编译后，此处变为 mac；无需手填启动参数。
+    active: '@profile.name@'
   data:
     redis:
       host: ${REDIS_HOST:127.0.0.1}
@@ -63,3 +66,12 @@ vision:
     trusted-proxies: []
     # 至少 32 字节的随机密钥；为空时仅额度不可用，不影响手动岗位功能。
     hmac-secret: ${VISION_QUOTA_HMAC_SECRET:}
+
+---
+# mac 生效时必须找到外置文件，避免工作目录错误时误用原数据源。
+spring:
+  config:
+    activate:
+      on-profile: mac
+    import:
+      - file:./config/application-mac.yaml

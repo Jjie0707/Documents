@@ -1,4 +1,6 @@
 <script setup>
+import LoadingState from '../components/LoadingState.vue'
+import AppIcon from '../components/AppIcon.vue'
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { put, request } from '../api.js'
@@ -112,18 +114,18 @@ watch(() => route.params.id, loadJob, { immediate: true })
 </script>
 
 <template>
-  <section aria-labelledby="edit-heading">
+  <section class="job-form-page" aria-labelledby="edit-heading">
     <button type="button" class="back-link form-back" :disabled="busy" @click="cancel">
-      <span aria-hidden="true">←</span> 返回岗位详情
+      <AppIcon name="arrow-left" /> 返回岗位详情
     </button>
     <div class="page-heading">
       <div>
-        <p class="eyebrow">我的求职记录</p>
+
         <h1 id="edit-heading">编辑岗位</h1>
         <p class="page-description">修改基本信息，保存后返回岗位详情。</p>
       </div>
     </div>
-    <p v-if="loading" class="loading-state" role="status">正在加载岗位…</p>
+    <LoadingState v-if="loading" label="正在加载岗位…" />
     <div v-else-if="loadError" class="empty-placeholder" role="alert">
       <h2>无法编辑岗位</h2>
       <p>{{ loadError }}</p>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>岗位投递记录 · 石墨夜色</title>
+<style>
+:root{color-scheme:dark;--bg:#11171f;--panel:#1a232f;--line:#344253;--ink:#e9eef5;--muted:#b0bece;--blue:#80b6f5;--hover:#26364b}
+*{box-sizing:border-box}body{margin:0;width:1440px;height:900px;overflow:hidden;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;letter-spacing:0}button,input,select{font:inherit}button,a,input,select{outline-offset:4px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--blue)}button{cursor:pointer}a{color:inherit;text-decoration:none}::selection{background:#446b99;color:#fff}input{caret-color:var(--blue)}
+.app{width:1440px;height:900px;display:grid;grid-template-columns:244px 1fr}.sidebar{padding:38px 22px 27px;border-right:1px solid var(--line);display:flex;flex-direction:column;background:#151d27}.brand{padding:0 12px 36px}.brand-name{font-size:22px;line-height:1.3;font-weight:700;letter-spacing:-.025em}.brand-en{font-size:14px;letter-spacing:.08em;margin-top:9px;color:var(--muted)}.nav{display:grid;gap:10px}.nav a{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:8px;font-weight:600;color:var(--muted)}.nav a.active{background:#26374d;color:#b5d5ff}.nav a:hover{background:var(--hover)}svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}.sidebar-bottom{margin-top:auto;border-top:1px solid var(--line);padding:23px 12px 0;display:flex;gap:12px;align-items:center}.avatar{width:38px;height:38px;display:grid;place-items:center;border-radius:50%;background:#35445a;color:#d8e6f8;font-weight:650}.account{font-size:16px}.account span{display:block;font-size:14px;color:var(--muted);margin-top:2px}
+.main{padding:43px 48px 26px;display:flex;flex-direction:column;min-width:0}.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:33px}h1{font-size:32px;line-height:1.3;letter-spacing:-.025em;margin:0 0 10px;font-weight:680}.subtitle{color:var(--muted);margin:0;font-size:16px}.primary{display:flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:7px;background:var(--blue);color:#12263e;font-weight:650;padding:13px 20px;min-height:49px}.primary:hover{background:#a3ccfc}.filters{display:grid;grid-template-columns:minmax(330px,1fr) 228px auto;gap:18px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:23px 24px;margin-bottom:29px}.field label{display:block;font-size:14px;font-weight:600;margin-bottom:9px;color:#cfdae7}.input-wrap{position:relative}.input-wrap svg{position:absolute;left:14px;top:14px;color:var(--muted)}input,select{height:48px;width:100%;border:1px solid #485a6f;border-radius:6px;background:#111b27;color:var(--ink);padding:0 14px}input{padding-left:43px}input::placeholder{color:#a5b5c8}select{appearance:auto;padding-right:13px}.filter-actions{display:flex;gap:10px}.filter-actions button{height:48px;padding:0 19px;border-radius:6px;font-weight:600}.search{border:1px solid #80b6f5;background:#223c59;color:#b7d9ff}.reset{border:1px solid #485a6f;background:transparent;color:#d1dce9}.reset:hover,.search:hover{background:var(--hover)}
+.list-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:17px}.list-heading h2{font-size:19px;font-weight:650;margin:0}.list-heading span{font-size:14px;color:var(--muted)}.table-wrap{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}table{border-collapse:collapse;width:100%;table-layout:fixed}thead{background:#202d3c}th{text-align:left;height:52px;font-size:14px;font-weight:600;color:#b6c6d8}td{height:88px;border-top:1px solid var(--line);vertical-align:middle}th:first-child,td:first-child{padding-left:24px}th:last-child,td:last-child{padding-right:24px;text-align:right}th:nth-child(1){width:42%}th:nth-child(2){width:9%}th:nth-child(3){width:19%}th:nth-child(4){width:17%}th:nth-child(5){width:13%}tr:hover td{background:#202d3b}.job{font-size:17px;font-weight:600;letter-spacing:-.01em;color:#edf3fc}.company{display:block;margin-top:6px;color:var(--muted);font-size:14px}.city,.salary{font-size:16px;color:#d8e2ef}.status{display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border-radius:5px;font-size:14px;font-weight:600;white-space:nowrap}.status i{display:block;width:5px;height:5px;border-radius:50%;background:currentColor}.interview{color:#a4c9fb;background:#2a405e}.applied{color:#c4b8ef;background:#38314c}.waiting{color:#c2cbd6;background:#303c4a}.offer{color:#9dd8b9;background:#264637}.details{display:inline-flex;align-items:center;gap:3px;color:#a9ceff;font-size:14px;font-weight:600}.details svg{height:16px;width:16px}.pagination{display:flex;justify-content:space-between;align-items:center;padding-top:21px;color:var(--muted);font-size:14px}.pages{display:flex;align-items:center;gap:8px}.page{display:grid;place-items:center;width:34px;height:34px;border-radius:5px;border:1px solid #3b4b5e;background:transparent;color:var(--muted)}.page.current{background:#2a4464;border-color:#80b6f5;color:#cae1ff;font-size:14px}.page:disabled{color:#718196;cursor:default}.page svg{width:16px;height:16px}.pages-label{margin-right:8px}.preview{margin-top:auto;padding-top:23px;display:flex;justify-content:center;font-size:14px;color:#a5b5c8;letter-spacing:.02em}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+<div class="brand"><div class="brand-name">岗位投递记录</div><div class="brand-en">JOB TRACKER</div></div>
+<nav class="nav" aria-label="主导航">
+<a href="#jobs" class="active" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4m8-4v4M4 10h16m-12 4h8m-8 3h5"/></svg>岗位列表</a>
+<a href="#add"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 8v8m-4-4h8"/></svg>添加岗位</a>
+</nav>
+<div class="sidebar-bottom"><div class="avatar">演</div><div class="account">演示账号<span>个人空间</span></div></div>
+</aside>
+<main class="main" id="jobs">
+<header class="header"><div><h1>岗位投递</h1><p class="subtitle">整理每一次投递，接着推进下一步。</p></div><button class="primary" id="add"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14m-7-7h14"/></svg>添加岗位</button></header>
+<form class="filters" action="#jobs">
+<div class="field"><label for="keyword">搜索岗位</label><div class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5"/></svg><input id="keyword" type="search" placeholder="搜索公司、岗位或城市"></div></div>
+<div class="field"><label for="status">投递状态</label><select id="status"><option>全部状态</option><option>待投递</option><option>已投递</option><option>面试中</option><option>已获Offer</option></select></div>
+<div class="filter-actions"><button class="search" type="submit">搜索</button><button class="reset" type="reset">重置</button></div>
+</form>
+<div class="list-heading"><h2>全部岗位</h2><span>共 4 条记录</span></div>
+<div class="table-wrap"><table aria-label="岗位投递列表">
+<thead><tr><th>岗位 / 公司</th><th>城市</th><th>薪资</th><th>投递状态</th><th>操作</th></tr></thead>
+<tbody>
+<tr><td><a class="job" href="#job-1">Java 后端开发工程师</a><span class="company">星河科技（虚构）</span></td><td class="city">杭州</td><td class="salary">18–25K·14薪</td><td><span class="status interview"><i></i>面试中</span></td><td><a class="details" href="#job-1">查看详情<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></td></tr>
+<tr><td><a class="job" href="#job-2">服务端研发工程师</a><span class="company">青屿数字（虚构）</span></td><td class="city">上海</td><td class="salary">20–30K·13薪</td><td><span class="status applied"><i></i>已投递</span></td><td><a class="details" href="#job-2">查看详情<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></td></tr>
+<tr><td><a class="job" href="#job-3">Java 开发实习生</a><span class="company">远山云端（虚构）</span></td><td class="city">北京</td><td class="salary">250–350元每天</td><td><span class="status waiting"><i></i>待投递</span></td><td><a class="details" href="#job-3">查看详情<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></td></tr>
+<tr><td><a class="job" href="#job-4">平台研发工程师</a><span class="company">微光信息（虚构）</span></td><td class="city">深圳</td><td class="salary">薪资面议</td><td><span class="status offer"><i></i>已获Offer</span></td><td><a class="details" href="#job-4">查看详情<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></td></tr>
+</tbody></table></div>
+<div class="pagination"><span>显示第 1–4 条，共 4 条</span><div class="pages"><span class="pages-label">10 条 / 页</span><button class="page" disabled aria-label="上一页"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button><button class="page current" aria-current="page">1</button><button class="page" disabled aria-label="下一页"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button></div></div>
+<footer class="preview">风格预览 · 虚构数据 · 未连接后端</footer>
+</main>
+</div>
+</body>
+</html>

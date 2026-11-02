@@ -1,4 +1,6 @@
 <script setup>
+import LoadingState from '../components/LoadingState.vue'
+import AppIcon from '../components/AppIcon.vue'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { patch, remove, request } from '../api.js'
@@ -28,9 +30,9 @@ const roundBusy = ref(false)
 const selectedPanel = ref('interview')
 const sidebarElement = ref(null)
 const panels = [
-  { id: 'interview', number: '01', label: '面试轮次与回顾' },
-  { id: 'status', number: '02', label: '投递状态' },
-  { id: 'manage', number: '03', label: '岗位管理' },
+  { id: 'interview', icon: 'chat', label: '面试轮次与回顾' },
+  { id: 'status', icon: 'progress', label: '投递状态' },
+  { id: 'manage', icon: 'settings', label: '岗位管理' },
 ]
 const initialRoundId = computed(() => {
   const value = route.query.roundId
@@ -207,13 +209,13 @@ watch(() => route.params.id, () => { selectedPanel.value = 'interview'; loadJob(
 
 <template>
   <section aria-labelledby="detail-heading">
-    <RouterLink to="/" class="back-link"><span aria-hidden="true">←</span> 返回岗位列表</RouterLink>
-    <p v-if="loading" class="loading-state" role="status">正在加载岗位…</p>
+    <RouterLink to="/" class="back-link"><AppIcon name="arrow-left" /> 返回岗位列表</RouterLink>
+    <LoadingState v-if="loading" label="正在加载岗位…" />
     <div v-else-if="error" class="empty-placeholder" role="alert"><h1 id="detail-heading">无法查看岗位</h1>
       <p>{{ error }}</p><button class="text-button" @click="loadJob">重新加载</button></div>
     <template v-else-if="job">
-      <div class="page-heading"><div><p class="eyebrow">{{ job.companyName }}</p>
-        <h1 id="detail-heading">{{ job.jobTitle }}</h1><p class="page-description">岗位信息与面试记录入口</p></div></div>
+      <div class="page-heading"><div>
+        <h1 id="detail-heading">{{ job.jobTitle }}</h1><p class="page-description">{{ job.companyName }} · 岗位信息与面试记录</p></div></div>
       <div class="detail-layout">
         <article class="info-panel"><div class="panel-topline"><h2>岗位信息</h2>
           <button v-if="actionsLocked" type="button" class="secondary-button" disabled>编辑基本信息</button>
@@ -238,7 +240,7 @@ watch(() => route.params.id, () => { selectedPanel.value = 'interview'; loadJob(
                     :aria-selected="selectedPanel === panel.id" :aria-controls="`sidebar-panel-${panel.id}`"
                     :tabindex="selectedPanel === panel.id ? 0 : -1" :disabled="actionsLocked && selectedPanel !== panel.id"
                     @click="selectPanel(panel.id)">
-              <span class="sidebar-tab-number">{{ panel.number }}</span><span>{{ panel.label }}</span>
+              <AppIcon :name="panel.icon" /><span>{{ panel.label }}</span>
             </button>
           </div>
           <InterviewRoundsPanel v-show="selectedPanel === 'interview'" id="sidebar-panel-interview" role="tabpanel"
@@ -246,7 +248,7 @@ watch(() => route.params.id, () => { selectedPanel.value = 'interview'; loadJob(
                                 :initial-round-id="initialRoundId"
                                 @busy="roundBusy = $event" @missing="missingInterviewJob" />
           <section v-show="selectedPanel === 'status'" id="sidebar-panel-status" role="tabpanel"
-                   class="action-panel" aria-labelledby="sidebar-tab-status"><span class="section-number">02 / 进度</span>
+                   class="action-panel" aria-labelledby="sidebar-tab-status">
             <h2 id="status-heading">投递状态</h2>
             <p class="status-current">当前状态：<strong>{{ jobStatus(job.status).label }}</strong></p>
             <form class="status-form" :aria-busy="savingStatus" @submit.prevent="saveStatus">
@@ -267,7 +269,7 @@ watch(() => route.params.id, () => { selectedPanel.value = 'interview'; loadJob(
           </section>
           <section v-show="selectedPanel === 'manage'" id="sidebar-panel-manage" role="tabpanel"
                    class="action-panel delete-panel" aria-labelledby="sidebar-tab-manage" :aria-busy="deleting || checkingDelete">
-            <span class="section-number">03 / 管理</span>
+
             <h2 id="delete-heading">删除岗位</h2>
             <p>删除岗位会一并清除其全部面试轮次、问题、回答要点和复盘，无法恢复。</p>
             <div v-if="confirmingDelete" class="delete-confirmation" role="group"

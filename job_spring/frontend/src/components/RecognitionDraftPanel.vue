@@ -17,9 +17,10 @@ defineProps({ draft: { type: Object, required: true } })
 </template>
 
 <style scoped>
-.recognition-draft { margin-top: 24px; border-top: 1px solid #d9e2d9; padding-top: 20px; }
+.recognition-draft { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 24px; }
 .recognition-draft p { margin-top: 10px; }
-dl { margin-top: 16px; }
-dt { font-weight: 600; margin-top: 14px; }
-dd { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+dl { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px 16px; margin: 20px 0 0; font-size: .875rem; line-height: 1.8; }
+dt { font-weight: 600; color: var(--muted); }
+dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 500px) { dl { grid-template-columns: minmax(0, 1fr); gap: 6px; } dt:not(:first-child) { margin-top: 12px; } }
 </style>

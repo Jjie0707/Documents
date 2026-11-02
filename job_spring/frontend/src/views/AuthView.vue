@@ -3,6 +3,8 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { post } from '../api.js'
 import { login } from '../auth.js'
+import RecordCompanion from '../components/RecordCompanion.vue'
+import AppIcon from '../components/AppIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -45,12 +47,12 @@ async function submit() {
 
 <template>
   <section class="auth-layout" aria-labelledby="auth-heading">
-    <div class="auth-intro"><p class="eyebrow">我的求职记录</p>
+    <div class="auth-intro"><RecordCompanion />
       <h1>把岗位和面试，<br />记录在一起。</h1>
       <p class="page-description">登录后查看自己的投递记录，<br />为后续的面试复盘留下线索。</p>
-      <div class="auth-intro-note"><span aria-hidden="true">↗</span> 手机和电脑，使用同一个账号。</div>
+      <div class="auth-intro-note"><AppIcon name="note" /> 手机和电脑，使用同一个账号。</div>
     </div>
-    <div class="auth-panel"><span class="section-number">{{ registering ? '创建账号' : '欢迎回来' }}</span>
+    <div class="auth-panel">
       <h2 id="auth-heading">{{ registering ? '注册' : '登录' }}</h2>
       <p class="muted">{{ registering ? '创建一个属于你的记录空间。' : '继续查看你的岗位投递记录。' }}</p>
       <form class="auth-form" @submit.prevent="submit"><fieldset :disabled="busy">
@@ -62,7 +64,8 @@ async function submit() {
         <label for="password">密码</label>
         <input id="password" v-model="password" type="password" name="password" required
                :autocomplete="registering ? 'new-password' : 'current-password'"
-               :aria-invalid="Boolean(fields.password)" :aria-describedby="registering ? 'password-help password-error' : undefined" />
+               :aria-invalid="Boolean(fields.password)"
+               :aria-describedby="[registering ? 'password-help' : '', fields.password ? 'password-error' : ''].filter(Boolean).join(' ') || undefined" />
         <p v-if="registering" id="password-help" class="muted input-help">至少8个字符，最多72个 UTF-8 字节；常用汉字通常占3字节。</p>
         <p v-if="fields.password" id="password-error" class="field-error">{{ fields.password }}</p>
         <p v-if="message" class="form-message error" role="alert">{{ message }}</p>

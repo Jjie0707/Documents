@@ -29,6 +29,8 @@
     <properties>
         <java.version>17</java.version>
         <mybatis-plus.version>3.5.17</mybatis-plus.version>
+        <!-- 未选择环境时保持原默认配置；由 Maven 替换 application.yaml 的 @profile.name@。 -->
+        <profile.name>default</profile.name>
     </properties>
     <dependencies>
         <dependency>
@@ -125,5 +127,15 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Spring Boot 父 POM 已为 application*.yaml 开启 @...@ 资源过滤。 -->
+        <profile>
+            <id>mac</id>
+            <properties>
+                <profile.name>mac</profile.name>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>

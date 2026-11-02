@@ -36,6 +36,7 @@ build/
 /config/application-local.yaml
 /config/vision-quota-local.yaml
 /config/vision-model-local.yaml
+/config/database-mac-local.yaml
 /docs/http/http-client.private.env.json
 
 ### Frontend ###

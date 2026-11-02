@@ -1,4 +1,5 @@
 <script setup>
+import AppIcon from '../components/AppIcon.vue'
 import { nextTick, onBeforeUnmount, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ApiError, post } from '../api.js'
@@ -118,13 +119,13 @@ function cancel() {
 </script>
 
 <template>
-  <section aria-labelledby="create-heading">
+  <section class="job-form-page" aria-labelledby="create-heading">
     <button type="button" class="back-link form-back" :disabled="busy" @click="cancel">
-      <span aria-hidden="true">←</span> 返回岗位列表
+      <AppIcon name="arrow-left" /> 返回岗位列表
     </button>
     <div class="page-heading">
       <div>
-        <p class="eyebrow">我的求职记录</p>
+
         <h1 id="create-heading">添加岗位</h1>
         <p class="page-description">记下岗位信息，公司名和岗位名必填，其余可以留空。</p>
       </div>
@@ -184,7 +185,7 @@ function cancel() {
 </template>
 
 <style scoped>
-.prefill-confirmation { max-width: 840px; margin-bottom: 28px; }
+.prefill-confirmation { max-width: 928px; margin-bottom: 28px; }
 .prefill-confirmation p { margin-top: 12px; overflow-wrap: anywhere; }
 .prefill-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
 </style>

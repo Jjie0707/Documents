@@ -247,7 +247,6 @@ watch(() => [props.jobId, props.initialRoundId], () => loadRounds(1, props.initi
 
 <template>
   <section ref="panelElement" class="action-panel interview-panel" aria-labelledby="interview-heading">
-    <span class="section-number">01 / 面试</span>
     <h2 id="interview-heading">面试轮次</h2>
     <p>记录每轮面试的时间、结果与整体复盘。</p>
     <p v-if="success" class="form-message success" role="status">{{ success }}</p>
@@ -278,10 +277,12 @@ watch(() => [props.jobId, props.initialRoundId], () => loadRounds(1, props.initi
             <RouterLink v-else :to="{ name: 'interview-review', params: { id: String(jobId), roundId: String(round.id) } }"
                         class="secondary-button round-review-link">面试回顾</RouterLink>
           </div>
+          <div class="round-item-actions">
           <button type="button" class="secondary-button"
                   :disabled="locked || saving || editing || uncertain || deleteLocked" @click="openEdit(round)">编辑本轮</button>
           <button type="button" class="danger-button danger-outline round-delete-button" data-round-delete
                   :disabled="locked || saving || editing || uncertain || deleteLocked" @click="askToDelete(round)">删除本轮</button>
+          </div>
         </li>
       </ol>
       <nav v-if="total" class="interview-pagination" aria-label="面试轮次分页">

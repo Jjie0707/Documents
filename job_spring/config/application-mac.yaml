@@ -1,0 +1,21 @@
+# 外置 Mac 配置；仅在显式选择 mac profile 时使用，不随 JAR 打包。
+# Maven 勾选 mac 并编译后由基础配置导入；IDEA 工作目录保持项目根目录。
+spring:
+  config:
+    activate:
+      on-profile: mac
+    import:
+      - optional:file:./config/database-mac-local.yaml
+  datasource:
+    # 13306 是 Mac SSH 监听端口，目标为 Linux MySQL 的正式 job_tracker 库。
+    # 数字时区不依赖服务器的命名时区表；%2B 是 URL 编码的 +。
+    url: jdbc:mysql://127.0.0.1:13306/job_tracker?characterEncoding=UTF-8&connectionTimeZone=%2B08:00&forceConnectionTimeZoneToSession=true
+    username: job_tracker_mac
+    # 新密码优先取专用环境变量，否则取独立私有文件；不回退到原 DB_PASSWORD。
+    password: ${JOB_TRACKER_MAC_DB_PASSWORD:${job-tracker.mac.database-password}}
+  sql:
+    init:
+      mode: never
+
+# Redis、模型 Key、HMAC、额度、代理和上传配置继续由既有配置加载。
+# 本任务未部署 Linux Redis，也不迁移或清空当前额度。

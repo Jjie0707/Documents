@@ -1,0 +1,212 @@
+[
+  {
+    "name": "desktop",
+    "documentHeight": 1170,
+    "documentWidth": 1425,
+    "footerBottom": 1170.328125,
+    "height": 900,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 1440
+  },
+  {
+    "name": "desktop-detail",
+    "documentHeight": 1189,
+    "documentWidth": 1425,
+    "footerBottom": 1188.984375,
+    "height": 900,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 1440
+  },
+  {
+    "name": "desktop-review",
+    "documentHeight": 1433,
+    "documentWidth": 1425,
+    "footerBottom": 1433.296875,
+    "height": 900,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 1440
+  },
+  {
+    "name": "desktop-edit",
+    "documentHeight": 1756,
+    "documentWidth": 1425,
+    "footerBottom": 1756.046875,
+    "height": 900,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 1440
+  },
+  {
+    "name": "desktop-create",
+    "documentHeight": 2388,
+    "documentWidth": 1425,
+    "footerBottom": 2388.21875,
+    "height": 900,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 1440
+  },
+  {
+    "name": "desktop-auth",
+    "documentHeight": 900,
+    "documentWidth": 1440,
+    "footerBottom": 900,
+    "height": 900,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 1440
+  },
+  {
+    "name": "mobile-auth",
+    "documentHeight": 862,
+    "documentWidth": 360,
+    "footerBottom": 862.171875,
+    "height": 812,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 375
+  },
+  {
+    "name": "mobile-register",
+    "documentHeight": 916,
+    "documentWidth": 360,
+    "footerBottom": 915.671875,
+    "height": 812,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 375
+  },
+  {
+    "name": "mobile-save-uncertain",
+    "documentHeight": 3133,
+    "documentWidth": 360,
+    "footerBottom": 3132.8125,
+    "height": 812,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 375
+  },
+  {
+    "name": "mobile-quota-error",
+    "documentHeight": 2959,
+    "documentWidth": 360,
+    "footerBottom": 2958.875,
+    "height": 812,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 375
+  },
+  {
+    "name": "mobile-field-error",
+    "documentHeight": 3022,
+    "documentWidth": 360,
+    "footerBottom": 3022.46875,
+    "height": 812,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 375
+  },
+  {
+    "name": "mobile",
+    "documentHeight": 1699,
+    "documentWidth": 360,
+    "footerBottom": 1698.578125,
+    "height": 812,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 375
+  },
+  {
+    "name": "mobile-detail",
+    "documentHeight": 1926,
+    "documentWidth": 360,
+    "footerBottom": 1926.28125,
+    "height": 812,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 375
+  },
+  {
+    "name": "mobile-review",
+    "documentHeight": 1689,
+    "documentWidth": 360,
+    "footerBottom": 1689.296875,
+    "height": 812,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 375
+  },
+  {
+    "name": "tablet-detail",
+    "documentHeight": 1934,
+    "documentWidth": 753,
+    "footerBottom": 1934.28125,
+    "height": 1024,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 768
+  },
+  {
+    "name": "tablet-list",
+    "documentHeight": 1170,
+    "documentWidth": 753,
+    "footerBottom": 1170.328125,
+    "height": 1024,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 768
+  },
+  {
+    "name": "user-1280",
+    "documentHeight": 1170,
+    "documentWidth": 1265,
+    "footerBottom": 1170.328125,
+    "height": 720,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 1280
+  },
+  {
+    "name": "mobile-320",
+    "documentHeight": 1772,
+    "documentWidth": 305,
+    "footerBottom": 1771.828125,
+    "height": 760,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 320
+  },
+  {
+    "name": "mobile-long",
+    "documentHeight": 4256,
+    "documentWidth": 360,
+    "footerBottom": 4256.296875,
+    "height": 812,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 375
+  },
+  {
+    "name": "mobile-empty",
+    "documentHeight": 1131,
+    "documentWidth": 360,
+    "footerBottom": 1131.46875,
+    "height": 812,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 375
+  },
+  {
+    "name": "mobile-error",
+    "documentHeight": 1083,
+    "documentWidth": 360,
+    "footerBottom": 1082.65625,
+    "height": 812,
+    "mainCount": 1,
+    "scrollTop": 0,
+    "width": 375
+  }
+]

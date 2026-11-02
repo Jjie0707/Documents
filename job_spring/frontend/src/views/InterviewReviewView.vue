@@ -1,4 +1,6 @@
 <script setup>
+import LoadingState from '../components/LoadingState.vue'
+import AppIcon from '../components/AppIcon.vue'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import InterviewQuestionsPanel from '../components/InterviewQuestionsPanel.vue'
@@ -51,24 +53,24 @@ watch(() => [route.params.id, route.params.roundId], loadReview, { immediate: tr
 </script>
 
 <template>
-  <main class="interview-review-page" aria-labelledby="review-heading">
-    <button v-if="questionBusy" type="button" class="back-link form-back" disabled>返回岗位详情</button>
-    <RouterLink v-else :to="returnTo" class="back-link">返回岗位详情</RouterLink>
-    <p v-if="loading" class="loading-state" role="status">正在加载面试回顾…</p>
+  <section class="interview-review-page" aria-labelledby="review-heading">
+    <button v-if="questionBusy" type="button" class="back-link form-back" disabled><AppIcon name="arrow-left" />返回岗位详情</button>
+    <RouterLink v-else :to="returnTo" class="back-link"><AppIcon name="arrow-left" />返回岗位详情</RouterLink>
+    <LoadingState v-if="loading" label="正在加载面试回顾…" />
     <div v-else-if="error" class="empty-placeholder" role="alert">
       <h1 id="review-heading">无法查看面试回顾</h1>
       <p>{{ error }}</p><button type="button" class="text-button" @click="loadReview">重新加载面试回顾</button>
     </div>
     <template v-else-if="job && round">
       <div class="page-heading"><div>
-        <p class="eyebrow">{{ job.companyName }}</p>
+
         <h1 id="review-heading">面试回顾</h1>
-        <p class="page-description">{{ job.jobTitle }} · 第 {{ round.roundNo }} 轮<span v-if="round.roundType"> · {{ round.roundType }}</span></p>
+        <p class="page-description">{{ job.companyName }} · {{ job.jobTitle }} · 第 {{ round.roundNo }} 轮<span v-if="round.roundType"> · {{ round.roundType }}</span></p>
       </div></div>
       <div class="workspace-panel interview-review-panel">
         <InterviewQuestionsPanel :key="`${job.id}-${round.id}`" :round-id="round.id"
                                  @busy="questionBusy = $event" @missing="missingRound" />
       </div>
     </template>
-  </main>
+  </section>
 </template>

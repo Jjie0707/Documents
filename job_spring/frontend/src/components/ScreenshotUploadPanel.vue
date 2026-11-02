@@ -1,4 +1,5 @@
 <script setup>
+import AppIcon from './AppIcon.vue'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ApiError, postMultipart, extractScreenshot } from '../api.js'
@@ -163,10 +164,11 @@ onBeforeUnmount(() => {
            :tabindex="disabled ? -1 : 0" :aria-disabled="disabled" :aria-busy="checking || recognizing"
            @dragenter="dragEnter" @dragover="dragOver" @dragleave="dragDepth = Math.max(0, dragDepth - 1)"
            @drop="dropFile" @paste="pasteImage">
-    <h2 id="screenshot-heading">招聘截图（可选）</h2>
-    <p class="muted screenshot-help">选择一张PNG或JPEG截图，最多5 MiB。单边不超过10000像素，总像素不超过1200万。</p>
+    <h2 id="screenshot-heading"><AppIcon name="image" />招聘截图（可选）</h2>
     <p class="muted screenshot-help">当前支持预览和图片检查，点击“识别岗位”获取草稿；你也可以继续在下方手动填写岗位。</p>
     <VisionQuotaPanel :key="quotaRevision" :disabled="disabled || recognizing" />
+    <div class="screenshot-select-area">
+    <AppIcon name="image" />
     <p id="screenshot-input-help" class="muted screenshot-help">可将一张图片文件拖到此区域；点击区域空白处后，按Ctrl+V或⌘V粘贴截图。也可使用下方按钮选图。</p>
     <p v-if="dragDepth > 0" class="screenshot-drop-hint" role="status">松开以导入这张截图</p>
     <div class="screenshot-actions screenshot-choose">
@@ -177,12 +179,17 @@ onBeforeUnmount(() => {
         拍照选图
       </button>
     </div>
+    </div>
     <input id="job-screenshot" ref="fileInput" hidden type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" :disabled="disabled || recognizing"
            aria-describedby="screenshot-privacy" @change="selectFile" />
     <input id="job-camera" ref="cameraInput" hidden type="file" accept="image/*" capture="environment" :disabled="disabled || recognizing"
            aria-describedby="screenshot-mobile-help screenshot-privacy" @change="selectFile" />
+    <details class="screenshot-guidance">
+    <summary>查看图片限制与手机选图说明</summary>
+    <p class="muted screenshot-help">选择一张PNG或JPEG截图，最多5 MiB。单边不超过10000像素，总像素不超过1200万。</p>
     <p id="screenshot-mobile-help" class="muted screenshot-help">手机可从系统相册或文件中选图。HEIC/HEIF照片请先导出为JPEG或PNG；长截图过大时可裁去无关内容，保留清晰正文。</p>
     <p v-if="cameraAvailable" class="muted screenshot-help">拍照选图由系统决定是否打开相机；取消、拒绝或无法拍照时，可继续使用“{{ file ? '替换截图' : '选择截图' }}”。</p>
+    </details>
     <p id="screenshot-privacy" class="muted screenshot-help">“检查图片”仅上传到本站且不扣次数；“识别岗位”会将图片发送至智谱视觉模型，并消耗识别额度。请先裁去个人隐私；图片不在本站长期保存。</p>
     <template v-if="file">
       <p class="screenshot-name">{{ file.name }} · {{ (file.size / 1024).toFixed(1) }} KiB</p>
@@ -220,13 +227,21 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.screenshot-panel { max-width: 840px; margin-bottom: 28px; }
-.screenshot-panel.is-dragging { border-color: var(--accent); background: #edf5ed; box-shadow: 0 0 0 3px #d9e8dd; }
+.screenshot-panel { max-width: 928px; margin: 0 auto 24px; }
+.screenshot-panel h2 { display: flex; align-items: center; gap: 10px; }
+.screenshot-panel h2 .app-icon { color: var(--accent); }
+.screenshot-panel.is-dragging { border-color: var(--accent); background: var(--lavender-soft); }
+.screenshot-select-area { padding: 22px; margin-top: 18px; border: 1px dashed var(--line-strong); border-radius: 12px; background: var(--lavender-soft); text-align: center; }
+.screenshot-select-area > .app-icon { width: 28px; height: 28px; color: var(--accent); }
+.screenshot-select-area .screenshot-help { max-width: 60ch; margin-inline: auto; }
+.screenshot-select-area .screenshot-actions { justify-content: center; }
+.screenshot-guidance { margin-top: 14px; }
+.screenshot-guidance summary { width: fit-content; padding-block: 10px; min-height: 44px; cursor: pointer; font-size: .875rem; color: var(--accent-deep); }
 .screenshot-drop-hint { margin-top: 14px; color: var(--accent); font-weight: 600; }
 .screenshot-help { margin-top: 12px; }
 .screenshot-choose { margin-top: 20px; }
-.screenshot-name { margin-top: 18px; font-size: .84rem; overflow-wrap: anywhere; }
-.screenshot-preview-frame { margin-top: 16px; background: #f4f7f1; }
+.screenshot-name { margin-top: 18px; font-size: .875rem; overflow-wrap: anywhere; }
+.screenshot-preview-frame { margin-top: 16px; background: var(--lavender-soft); border-radius: 10px; }
 .screenshot-preview { display: block; width: 100%; max-height: 320px; object-fit: contain; image-orientation: from-image; }
 .screenshot-preview-frame.is-expanded { max-height: 70vh; overflow: auto; overscroll-behavior: contain; }
 .screenshot-preview-frame.is-expanded .screenshot-preview { height: auto; max-height: none; }

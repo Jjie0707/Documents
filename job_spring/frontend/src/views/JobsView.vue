@@ -4,6 +4,9 @@ import { RouterLink, useRouter } from 'vue-router'
 import { request } from '../api.js'
 import { clearUser } from '../auth.js'
 import { jobStatus, jobStatuses } from '../job-status.js'
+import AppIcon from '../components/AppIcon.vue'
+import RecordCompanion from '../components/RecordCompanion.vue'
+import LoadingState from '../components/LoadingState.vue'
 
 const jobs = ref([])
 const loading = ref(true)
@@ -126,16 +129,16 @@ onMounted(loadJobs)
 </script>
 
 <template>
-  <section aria-labelledby="jobs-heading">
+  <section class="jobs-page" aria-labelledby="jobs-heading">
     <div class="page-heading">
       <div>
-        <p class="eyebrow">我的求职记录</p>
         <h1 id="jobs-heading">岗位投递</h1>
         <p class="page-description">查看属于你的岗位记录与投递进度。</p>
       </div>
+      <RouterLink class="primary-button" :to="{ name: 'job-create' }"><AppIcon name="plus" />添加岗位</RouterLink>
     </div>
 
-    <div class="workspace-panel">
+    <div class="jobs-workspace">
       <div class="panel-topline">
         <h2>岗位记录</h2>
         <span v-if="!loading && !error" class="muted" role="status">共 {{ total }} 条 · 本页 {{ jobs.length }} 条</span>
@@ -145,11 +148,12 @@ onMounted(loadJobs)
         <div class="job-search-controls">
           <div class="job-search-field">
             <label for="job-search-keyword">搜索岗位</label>
+            <div class="search-input-wrap"><AppIcon name="search" />
             <input id="job-search-keyword" ref="searchInput" v-model="keyword" type="search" name="keyword"
                    placeholder="公司名、岗位名或城市" enterkeyhint="search" autocomplete="off"
                    :aria-invalid="Boolean(keywordError)"
                    :aria-describedby="`job-search-help${keywordError ? ' job-search-error' : ''}`"
-                   @input="keywordError = ''" />
+                   @input="keywordError = ''" /></div>
           </div>
           <div class="job-status-filter">
             <label for="job-filter-status">投递状态</label>
@@ -183,7 +187,7 @@ onMounted(loadJobs)
         <span class="muted">切换条数后回到第 1 页</span>
       </div>
 
-      <p v-if="loading" class="loading-state" role="status">{{ submittedKeyword || submittedStatus ? '正在查询岗位…' : '正在加载岗位…' }}</p>
+      <LoadingState v-if="loading" :label="submittedKeyword || submittedStatus ? '正在查询岗位…' : '正在加载岗位…'" />
       <div v-else-if="error" class="empty-placeholder" role="alert">
         <h3>岗位暂时无法加载</h3><p>{{ error }}</p>
         <p v-if="submittedKeyword || submittedStatus" class="search-result-label">当前查询：{{ describeQuery(submittedKeyword, submittedStatus) }}</p>
@@ -192,18 +196,20 @@ onMounted(loadJobs)
       </div>
       <template v-else>
       <p v-if="hasAppliedFilters" class="muted search-result-label">{{ describeQuery(appliedKeyword, appliedStatus) }}</p>
+      <div class="job-list">
       <RouterLink v-for="job in jobs" :key="job.id" :to="`/jobs/${job.id}`" class="job-card">
         <div class="job-card-content">
-          <p class="company-name">{{ job.companyName }}</p>
+          <p class="company-name"><AppIcon name="briefcase" />{{ job.companyName }}</p>
           <h3>{{ job.jobTitle }}</h3>
-          <p class="job-meta">{{ job.city || '城市未填写' }} <span aria-hidden="true">·</span> {{ job.salary || '薪资未填写' }}</p>
-          <span class="card-hint">查看岗位详情 <span aria-hidden="true">↗</span></span>
+          <p class="job-meta"><span>{{ job.city || '城市未填写' }}</span><span>{{ job.salary || '薪资未填写' }}</span></p>
+          <span class="card-hint">查看岗位详情 <AppIcon name="arrow-right" /></span>
         </div>
-        <div class="job-status">
+        <div class="job-status" :data-status="job.status">
           <span class="status-dot" :style="{ background: jobStatus(job.status).color }" aria-hidden="true"></span>
           <span>{{ jobStatus(job.status).label }}</span>
         </div>
       </RouterLink>
+      </div>
 
       <div v-if="jobs.length === 0 && hasAppliedFilters" class="empty-placeholder">
         <h3>没有匹配的岗位</h3>
@@ -211,9 +217,9 @@ onMounted(loadJobs)
         <button type="button" class="text-button" @click="clearSearch">查看全部岗位</button>
       </div>
       <div v-else-if="jobs.length === 0" class="empty-placeholder">
-        <span class="empty-icon" aria-hidden="true">＋</span>
+        <RecordCompanion />
         <h3>还没有岗位记录</h3>
-        <p>点击下方“添加岗位”，记下第一条求职记录。</p>
+        <p>点击上方“添加岗位”，记下第一条求职记录。</p>
       </div>
       </template>
 
@@ -227,9 +233,6 @@ onMounted(loadJobs)
 
       <div class="panel-bottomline">
         <p class="muted">记下感兴趣的岗位，逐步整理求职进度。</p>
-        <RouterLink class="primary-button" :to="{ name: 'job-create' }">
-          <span aria-hidden="true">＋</span> 添加岗位
-        </RouterLink>
       </div>
     </div>
   </section>

@@ -42,6 +42,7 @@ onBeforeUnmount(() => { active = false })
 <template>
   <div class="quota-panel" aria-label="每日识别额度" :aria-busy="loading">
     <strong>每日识别额度</strong>
+    <button type="button" class="text-button" :disabled="disabled || loading" @click="refresh">刷新额度</button>
     <div role="status" aria-live="polite">
       <p v-if="loading">正在查询额度…</p>
       <p v-else-if="error">额度查询失败：{{ error }} 可继续检查图片或手动填写。</p>
@@ -55,11 +56,12 @@ onBeforeUnmount(() => { active = false })
         <p class="muted">重置时间：{{ resetTime(quota.resetAt) }}（北京时间）。刷新和检查图片都不扣次数。</p>
       </template>
     </div>
-    <button type="button" class="secondary-button" :disabled="disabled || loading" @click="refresh">刷新额度</button>
   </div>
 </template>
 
 <style scoped>
-.quota-panel { margin-block: 1rem; padding: 1rem; border: 1px solid var(--border, #d9e2d9); border-radius: 8px; }
-.quota-panel p { margin-block: .6rem; overflow-wrap: anywhere; }
+.quota-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; margin-block: 18px; padding: 12px 16px; border-radius: 12px; background: var(--mint); font-size: .875rem; }
+.quota-panel > div { grid-column: 1 / -1; }
+.quota-panel p { margin-block: 4px; overflow-wrap: anywhere; line-height: 1.8; }
+.quota-panel .text-button { color: var(--success); }
 </style>
