@@ -1,5 +1,19 @@
 # 岗位投递与面试记录工具：开发方案
 
+2026-11-03 用户验收 Linux `5175` HTTP 连通性及两端独立启停。Linux Java 已按用户操作停止，Nginx 仍可提供首页。Mac 可独立启动，并在恢复 MySQL 转发后登录；用户随后要求关闭 Mac 转发，下次可在同一 SSH 会话建立 `13306` 和 `16379`。本轮任务结束。阶段六待完成 Windows 配置和部署、HTTPS、README、虚构演示数据及部署整体验收。详见 [5175 站点部署记录](stage6-nginx-preview.md#5175-站点连通性)。
+
+2026-11-03 用户确认 Linux 当日额度键数为 0。切换前复查 Mac 本机当日键数为 0、Linux 当日全站键不存在。Mac `mac` profile 已配置通过 `16379` 使用 Linux Redis，MySQL 继续经 `13306` 访问 Linux 正式库。Java 17 回环探针健康 UP/UP、匿名岗位接口 401、只读额度查询已用 0、剩余 30。探针已退出，待用户从 IDEA 启动 Mac 后端并验收页面。详见 [共享 Redis 部署记录](stage6-redis-preflight.md)。
+
+2026-11-03 Nginx 私有预览已通过 Linux 回环验收，前端 26 项测试及生产构建通过。用户确认 Nginx 1.28.3 原生配置校验、回环 18080、首页及深链接、JS 和字体、缺失资源 404、反代健康 UP/UP 和匿名 401。下一步通过 SSH 进行 Mac 浏览器页面验收。阿里云公开网站备案条件与 HTTPS 另行确认。详见 [Nginx 与前端入口准备](stage6-nginx-preview.md)。
+
+2026-11-03 Linux Java 常驻服务已实际验收。job-tracker.service 为 active、enabled，监听 127.0.0.1:8082，健康 UP/UP、匿名 401，重启次数 0，当前内存约 222 MiB、上限 448 MiB。首次部署保持模型关闭。下一步核对 Nginx 现有站点并准备入口、验证和回退方案。详见 [Linux Java 常驻服务](stage6-linux-datasource.md)。
+
+2026-11-03 Linux Java 试运行已验收。用户验证部署包摘要、Java 17、正式 MySQL JDBC TLS 和 UTC+8、Redis ACL PONG、实际 JAR 健康 UP/UP 及匿名 401。临时服务已停止，保留 /opt/job-tracker 和专用系统账号。下一步部署 systemd 常驻服务至回环 8082，再准备 Nginx；共享额度切换另行验收。详见 [Linux Java 运行配置及试运行](stage6-linux-datasource.md)。
+
+2026-11-03 Linux Java 运行配置与专用账号已准备。Maven linux profile 和外置 YAML 已完成，首次启动关闭模型调用。Java 17 隔离后端 715 项、Linux JAR 构建和配置加载验证通过。服务器 MySQL TLS 预检通过，用户已创建 Linux 专用账号、授予正式四表增删改查权限并在服务器保存私有 YAML。下一步准备部署 JAR、服务运行目录并验证真实 JDBC 和 Redis 连接。详见 [Linux Java 运行配置](stage6-linux-datasource.md)。
+
+2026-11-03 Linux Redis 8.0.5 已安装、配置并通过初次启动验收。服务 active，仅监听 127.0.0.1:6379，匿名 NOAUTH、应用账号 PONG，32 MiB、noeviction 和 AOF always 生效。额度 Lua、Lettuce 和 AOF 重启恢复已在本机隔离 Redis 验证。下一步准备 Linux Java 运行配置，Mac/Windows 的 Redis 转发和正式额度切换分别安排。详见 [Redis 部署记录](stage6-redis-preflight.md)。
+
 2026-11-02 前端视觉更新：用户在打包部署前调整优先级，明确保留全部后端接口并替换整套页面风格，在 Impeccable 选择页选定“角色目录”。已实现全站柔彩视觉、原创文件夹角色与响应式布局，26 项前端测试及生产构建通过；隔离网页检查仅用虚构内存接口，不连接正式数据库、Redis 或真实模型。独立审阅提出的三项修正已全部复核解决，DESIGN.md 与设计侧车完成；用户尚未页面验收，未部署。详见[视觉更新说明](frontend-visual-refresh.md)。临时预览已关闭，用户原有服务保留。此任务优先于下方建议的 Redis 核对；页面验收后再推进阶段六。后端未改，本轮未重跑 715 项或 JAR；Linux 正式库、私有配置与原有工作区改动保留。
 
 2026-11-02 Mac 接入验收完成：用户明确确认列表保留、正常新增/访问/识别。Linux 正式库已有验收新写入，成为当前业务来源，旧 Mac 库及试恢复库仅保留，不能直接回切或覆盖新库；旧 4/28/10/14 是迁移快照，不再作为当前固定数量。用户要求关闭本轮实例，助手已仅关闭自己启动的前端和后端，确认 5173/8082 无监听，SSH 13306 保留，未停启 MySQL/Redis、改数据或清理额度。Maven mac 资源过滤配置和私有密码保留，后续用户可勾选 mac、重新编译并用原 Java Run；Windows/Linux profile 和共享 Redis 尚未完成。详见[Mac 接入验收与实例关闭](stage6-mac-datasource.md)。当前待用户确认下一小任务，建议先做 Linux Redis 部署准备只读核对。本次仅同步记录和脚本适用范围注释，未重跑测试/构建。此前本版本 715 项及 JAR 通过，用户真实验收单独记录。以下为历史进度。

@@ -1,0 +1,29 @@
+# Linux 运行目录下的外置配置。初次部署通过本机 Nginx 访问回环端口。
+server:
+  address: 127.0.0.1
+
+spring:
+  config:
+    activate:
+      on-profile: linux
+    import:
+      - file:./config/credentials-linux-local.yaml
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/job_tracker?characterEncoding=UTF-8&connectionTimeZone=%2B08:00&forceConnectionTimeZoneToSession=true&sslMode=REQUIRED
+    username: job_tracker_linux
+    password: ${job-tracker.linux.database-password}
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+      username: job_tracker_app
+      password: ${job-tracker.linux.redis-password}
+  sql:
+    init:
+      mode: never
+
+vision:
+  model:
+    # 共享额度统一切换并验收后，再在 Linux 单独开启模型。
+    enabled: false

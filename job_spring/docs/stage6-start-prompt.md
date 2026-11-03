@@ -1,5 +1,15 @@
 # 新对话提示词：阶段六部署和交付
 
+2026-11-03 Nginx 私有预览已通过 Linux 服务器验收。Nginx 1.28.3 临时单元监听 127.0.0.1:18080，前端首页、深链接和资源检查通过，反代健康 UP/UP，匿名岗位接口 401。预览最多运行 30 分钟，下一步用单独的 SSH 本地转发在 Mac 浏览器验收。公开入口备案和 HTTPS 另行确认。详见 [Nginx 与前端入口准备](stage6-nginx-preview.md)。
+
+2026-11-03 最新进度。Linux Java 常驻服务已实际验收，job-tracker.service 为 active 和 enabled，仅监听 127.0.0.1:8082，健康 UP/UP、匿名 401、重启次数 0。实测当前内存约 222 MiB，上限 448 MiB，首次部署模型关闭。下一小任务是只读核对 Nginx 现有站点并准备前端静态文件、同源 API、访问入口和回退方案。公开入口变更由用户确认后执行。详见 [Linux Java 常驻服务](stage6-linux-datasource.md)。
+
+2026-11-03 Linux Java 试运行已实际通过。部署包摘要、OpenJDK 17.0.20.1、正式 MySQL JDBC TLS/UTC+8、Redis ACL PONG、实际 JAR 健康 UP/UP 及匿名 401 均由用户在服务器验证。临时服务已停止，/opt/job-tracker 和专用系统账号可用于下一步 systemd 常驻部署。Nginx 和共享额度切换仍分别准备与验收。详见 [Linux Java 运行配置及试运行](stage6-linux-datasource.md)。
+
+2026-11-03 Linux Java 配置与专用账号已准备。新增 Maven linux profile 和外置 YAML，Java 17 隔离后端 715 项与 JAR 构建通过。用户已核对回环 MySQL TLS、创建 job_tracker_linux@127.0.0.1，正式四表各获 SELECT、INSERT、UPDATE、DELETE，私有 YAML 保存在服务器。下一小任务为准备 Linux 部署 JAR、运行目录并验证真实 JDBC 和 Redis 连接，首次启动保持模型关闭。详见 [Linux Java 运行配置](stage6-linux-datasource.md)。
+
+2026-11-03 最新进度。Linux Redis 8.0.5 已安装、配置并启动验收，仅监听 127.0.0.1:6379。匿名连接返回 NOAUTH，应用 ACL 账号返回 PONG，32 MiB、noeviction 和 AOF always 已生效。真实服务器验收为只读检查，Java/Lua 与 AOF 重启恢复已在本机隔离实例验证。下一小任务建议准备 Linux Java 专用数据库账号和外置配置。Mac/Windows 的 Redis 转发及额度切换另行安排，Linux 正式 MySQL 继续作为业务数据来源。详见 [Redis 部署记录](stage6-redis-preflight.md)。下方为历史检查点。
+
 2026-11-02 验收和关闭最新更新：用户已确认列表保留，新增、访问和识别正常；Linux 正式库已有新写入，旧 Mac 库只作保留副本，不可直接回切或覆盖 Linux。按用户要求，助手已关闭自己启动的前后端，5173/8082 无监听，后台 SSH 13306 保留，数据库/Redis 未停启、额度未清理。Maven mac 配置保留，用户可勾选后编译再用原 Java Run；Windows/Linux profile 尚未完成。下一步须先询问并等待用户确认一个未完成小任务，建议 Linux Redis 环境及现有额度保全方案的只读核对。见[Mac 接入记录](stage6-mac-datasource.md)；不重复请求密钥、不重做迁移、不按旧快照恢复新增前状态，也不自行安装或切入口。
 
 2026-11-02 正式库验证更新：用户已确认暂停所有 Mac 源库写入，保持原后端不启动，MySQL/Redis/SSH 继续运行。最终备份、传输及正式 job_tracker 创建/导入完成，用户实际运行校验脚本成功：两端结构、数量、内容摘要一致，完整性异常均为 0，无 SQL 警告，四表数量 4/28/10/14。数据复制和只读校验已完成，但 job_tracker_mac 仍只有临时库 SELECT，正式库业务权限、三端 YAML 和 Mac 项目切换尚未执行。继续时优先读取[正式迁移记录](stage6-final-migration.md)和总计划顶部，先核对冻结是否仍持续及当前步骤，不自行恢复写入或切换连接，也不重新要求用户重复此前全部核对。

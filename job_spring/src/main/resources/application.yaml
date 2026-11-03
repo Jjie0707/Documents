@@ -13,7 +13,7 @@ server:
 
 spring:
   profiles:
-    # Maven Profiles 勾选 mac 并编译后，此处变为 mac；无需手填启动参数。
+    # Maven Profiles 勾选对应环境并编译后，此处替换为环境名。
     active: '@profile.name@'
   data:
     redis:
@@ -75,3 +75,11 @@ spring:
       on-profile: mac
     import:
       - file:./config/application-mac.yaml
+
+---
+spring:
+  config:
+    activate:
+      on-profile: linux
+    import:
+      - file:./config/application-linux.yaml

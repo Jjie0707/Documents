@@ -136,6 +136,12 @@
                 <profile.name>mac</profile.name>
             </properties>
         </profile>
+        <profile>
+            <id>linux</id>
+            <properties>
+                <profile.name>linux</profile.name>
+            </properties>
+        </profile>
     </profiles>
 
 </project>

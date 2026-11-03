@@ -37,6 +37,8 @@ build/
 /config/vision-quota-local.yaml
 /config/vision-model-local.yaml
 /config/database-mac-local.yaml
+/config/redis-mac-local.yaml
+/config/credentials-linux-local.yaml
 /docs/http/http-client.private.env.json
 
 ### Frontend ###

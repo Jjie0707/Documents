@@ -6,6 +6,7 @@ spring:
       on-profile: mac
     import:
       - optional:file:./config/database-mac-local.yaml
+      - optional:file:./config/redis-mac-local.yaml
   datasource:
     # 13306 是 Mac SSH 监听端口，目标为 Linux MySQL 的正式 job_tracker 库。
     # 数字时区不依赖服务器的命名时区表；%2B 是 URL 编码的 +。
@@ -17,5 +18,4 @@ spring:
     init:
       mode: never
 
-# Redis、模型 Key、HMAC、额度、代理和上传配置继续由既有配置加载。
-# 本任务未部署 Linux Redis，也不迁移或清空当前额度。
+# redis-mac-local.yaml 存在时才覆盖 Redis 连接参数。缺失时使用基础配置和原有本机覆盖。
