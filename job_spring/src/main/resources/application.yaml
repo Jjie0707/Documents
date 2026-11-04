@@ -7,6 +7,7 @@ server:
     # 为略超 6 MiB 的拒绝请求保留有限的丢弃空间，使客户端能收到 413。
     max-swallow-size: 8MB
   servlet:
+
     session:
       cookie:
         http-only: true
