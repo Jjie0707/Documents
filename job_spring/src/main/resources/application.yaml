@@ -1,4 +1,5 @@
 server:
+#  main
   # 保持原始连接来源，由额度 Service 按显式可信代理配置解析 IP。
   forward-headers-strategy: none
   port: 8082
