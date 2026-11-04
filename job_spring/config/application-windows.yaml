@@ -1,0 +1,29 @@
+# Windows 初次部署仅监听本机。两个数据端口都由 Windows 的 SSH 转发提供。
+server:
+  address: 127.0.0.1
+
+spring:
+  config:
+    activate:
+      on-profile: windows
+    import:
+      - file:./config/credentials-windows-local.yaml
+  datasource:
+    url: jdbc:mysql://127.0.0.1:13306/job_tracker?characterEncoding=UTF-8&connectionTimeZone=%2B08:00&forceConnectionTimeZoneToSession=true&sslMode=REQUIRED
+    username: job_tracker_windows
+    password: ${job-tracker.windows.database-password}
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      database: 0
+      username: job_tracker_app
+      password: ${job-tracker.windows.redis-password}
+  sql:
+    init:
+      mode: never
+
+vision:
+  model:
+    # 完成 Windows 连接验收后，再安排模型和共享额度的启用。
+    enabled: false

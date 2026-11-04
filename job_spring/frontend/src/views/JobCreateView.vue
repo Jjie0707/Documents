@@ -131,7 +131,17 @@ function cancel() {
       </div>
     </div>
 
-    <ScreenshotUploadPanel ref="screenshotPanel" :disabled="busy || Boolean(pendingDraft)" @apply-draft="requestPrefill" />
+    <details class="screenshot-collapse">
+      <summary>
+        <AppIcon name="image" />
+        <span class="screenshot-summary-text">
+          <strong>从招聘截图自动填写</strong>
+          <small>上传或粘贴截图，识别后确认填入；也可以跳过，直接填写下方表单</small>
+        </span>
+        <AppIcon name="arrow-right" class="screenshot-summary-chevron" />
+      </summary>
+      <ScreenshotUploadPanel ref="screenshotPanel" :disabled="busy || Boolean(pendingDraft)" @apply-draft="requestPrefill" />
+    </details>
     <div v-if="pendingDraft" ref="confirmationElement" class="workspace-panel prefill-confirmation" role="group"
          aria-labelledby="prefill-confirm-heading" @keydown.esc.prevent="cancelPrefill">
       <h2 id="prefill-confirm-heading">部分字段已有不同内容</h2>
@@ -188,4 +198,49 @@ function cancel() {
 .prefill-confirmation { max-width: 928px; margin-bottom: 28px; }
 .prefill-confirmation p { margin-top: 12px; overflow-wrap: anywhere; }
 .prefill-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+
+/* 截图识别默认收起，让必填表单留在首屏；展开后沿用组件原有交互。 */
+.screenshot-collapse {
+  max-width: 920px;
+  margin-bottom: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.screenshot-collapse > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--radius-panel);
+}
+
+.screenshot-collapse > summary::-webkit-details-marker { display: none; }
+.screenshot-collapse > summary:hover { background: var(--bg-soft); }
+.screenshot-collapse > summary > .app-icon:first-child { color: var(--muted); }
+
+.screenshot-summary-text { flex: 1; min-width: 0; }
+.screenshot-summary-text strong { display: block; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.screenshot-summary-text small { display: block; margin-top: 3px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+.screenshot-summary-chevron {
+  color: var(--subtle);
+  transition: transform var(--duration) var(--ease);
+}
+
+.screenshot-collapse[open] > summary {
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+}
+
+.screenshot-collapse[open] .screenshot-summary-chevron { transform: rotate(90deg); }
+
+.screenshot-collapse :deep(.screenshot-panel) {
+  max-width: none;
+  margin: 0;
+  padding: 20px;
+}
 </style>

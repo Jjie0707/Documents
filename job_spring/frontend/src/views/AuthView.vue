@@ -3,7 +3,6 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { post } from '../api.js'
 import { login } from '../auth.js'
-import RecordCompanion from '../components/RecordCompanion.vue'
 import AppIcon from '../components/AppIcon.vue'
 
 const route = useRoute()
@@ -47,13 +46,9 @@ async function submit() {
 
 <template>
   <section class="auth-layout" aria-labelledby="auth-heading">
-    <div class="auth-intro"><RecordCompanion />
-      <h1>把岗位和面试，<br />记录在一起。</h1>
-      <p class="page-description">登录后查看自己的投递记录，<br />为后续的面试复盘留下线索。</p>
-      <div class="auth-intro-note"><AppIcon name="note" /> 手机和电脑，使用同一个账号。</div>
-    </div>
     <div class="auth-panel">
-      <h2 id="auth-heading">{{ registering ? '注册' : '登录' }}</h2>
+      <span class="auth-mark" aria-hidden="true"><AppIcon name="briefcase" /></span>
+      <h2 id="auth-heading">{{ registering ? '创建账号' : '登录' }}</h2>
       <p class="muted">{{ registering ? '创建一个属于你的记录空间。' : '继续查看你的岗位投递记录。' }}</p>
       <form class="auth-form" @submit.prevent="submit"><fieldset :disabled="busy">
         <label for="username">用户名</label>

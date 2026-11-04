@@ -1,74 +1,62 @@
 ---
 name: "岗位投递记录 / JOB TRACKER"
-description: "以柔彩、清晰表单和文件夹角色陪伴持续整理的记录空间。"
+description: "以左侧栏、表格行和克制蓝色主操作构成的求职记录工作台。"
 colors:
-  ink: "#2e3457"
-  muted: "#68647b"
+  ink: "#24314a"
+  muted-strong: "#475467"
+  muted: "#667085"
+  subtle: "#98a2b3"
   surface: "#ffffff"
-  ground: "#fbf8f2"
-  line: "#e2dce9"
-  line-strong: "#9b8da8"
-  accent: "#7852a5"
-  accent-deep: "#5e3d87"
-  primary: "#b23c70"
-  primary-hover: "#95305d"
-  lavender: "#eee5f8"
-  lavender-soft: "#f6f1fb"
-  blush: "#fcecf2"
-  mint: "#edf7f2"
-  sky: "#edf4fb"
-  butter: "#fff6d9"
-  error: "#9d3d4d"
-  success: "#30694e"
-  status-waiting-text: "#746028"
+  bg-soft: "#f8fafc"
+  sidebar: "#f2f4f7"
+  line: "#e6eaf0"
+  line-strong: "#d8dee8"
+  primary: "#2563eb"
+  primary-hover: "#1d4ed8"
+  primary-soft: "#edf3ff"
+  primary-text: "#1e54c8"
+  success: "#28764b"
+  success-soft: "#e8f6ee"
+  error: "#b42318"
+  error-soft: "#fef3f2"
+  warning: "#926214"
+  warning-soft: "#fff5e4"
 typography:
   display:
-    fontFamily: '"LXGW Marker Gothic", ui-rounded, "PingFang SC", "Microsoft YaHei", sans-serif'
-    fontSize: "2rem"
-    fontWeight: 400
-    lineHeight: 1.35
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif'
+    fontSize: "30px"
+    fontWeight: 700
+    lineHeight: 1.3
     letterSpacing: "-0.025em"
   headline:
-    fontFamily: '"LXGW Marker Gothic", ui-rounded, "PingFang SC", "Microsoft YaHei", sans-serif'
-    fontSize: "1.125rem"
-    fontWeight: 400
-    lineHeight: 1.5
-  brand:
-    fontFamily: '"LXGW Marker Gothic", ui-rounded, "PingFang SC", "Microsoft YaHei", sans-serif'
-    fontSize: "1rem"
-    fontWeight: 400
-    letterSpacing: "-0.02em"
-  title:
-    fontFamily: 'ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif'
-    fontSize: "1rem"
-    fontWeight: 700
-    lineHeight: 1.6
-  card-title:
-    fontFamily: 'ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif'
-    fontSize: "1.1875rem"
-    fontWeight: 700
-    lineHeight: 1.5
-    letterSpacing: "-0.015em"
-  body:
-    fontFamily: 'ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif'
-    fontSize: "0.9375rem"
-    lineHeight: 1.9
-  muted:
-    fontSize: "0.875rem"
-    lineHeight: 1.75
-  label:
-    fontSize: "0.875rem"
-    fontWeight: 600
-  button:
-    fontSize: "0.875rem"
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif'
+    fontSize: "18px"
     fontWeight: 650
     lineHeight: 1.45
+  title:
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif'
+    fontSize: "16px"
+    fontWeight: 600
+    lineHeight: 1.5
+  body:
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif'
+    fontSize: "15px"
+    lineHeight: 1.6
+  muted:
+    fontSize: "14px"
+    lineHeight: 1.65
+  label:
+    fontSize: "14px"
+    fontWeight: 550
+  button:
+    fontSize: "14px"
+    fontWeight: 550
+    lineHeight: 1.4
 rounded:
-  control: "10px"
-  panel: "16px"
-  inset: "12px"
-  tab: "8px"
-  pill: "999px"
+  control: "8px"
+  input: "7px"
+  panel: "12px"
+  pill: "6px"
 spacing:
   xs: "4px"
   sm: "8px"
@@ -77,194 +65,210 @@ spacing:
   xl: "20px"
   panel: "24px"
   roomy: "28px"
-  wide: "32px"
+  wide: "48px"
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.surface}"
     typography: "{typography.button}"
     rounded: "{rounded.control}"
-    padding: "11px 18px"
+    height: "44px"
   button-primary-hover:
     backgroundColor: "{colors.primary-hover}"
   button-secondary:
-    backgroundColor: "{colors.lavender-soft}"
-    textColor: "{colors.accent-deep}"
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.muted-strong}"
     typography: "{typography.button}"
     rounded: "{rounded.control}"
-    padding: "11px 18px"
+    height: "44px"
   button-danger:
     backgroundColor: "{colors.error}"
     textColor: "{colors.surface}"
-    typography: "{typography.button}"
     rounded: "{rounded.control}"
-    padding: "11px 18px"
+    height: "44px"
   button-danger-outline:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.error}"
-    typography: "{typography.button}"
     rounded: "{rounded.control}"
-    padding: "11px 18px"
-  button-text:
-    textColor: "{colors.accent-deep}"
-    padding: "8px 4px"
+    height: "44px"
   input:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
+    rounded: "{rounded.input}"
+    height: "44px"
+  nav-item:
+    textColor: "{colors.muted-strong}"
     rounded: "{rounded.control}"
-    padding: "10px 12px"
-  nav-tab:
-    textColor: "{colors.muted}"
-    rounded: "{rounded.tab}"
-    padding: "9px 5px"
-  nav-tab-selected:
-    backgroundColor: "{colors.lavender}"
-    textColor: "{colors.accent-deep}"
+    height: "46px"
+  nav-item-active:
+    backgroundColor: "{colors.primary-soft}"
+    textColor: "{colors.primary-text}"
   status-chip:
-    backgroundColor: "{colors.butter}"
-    textColor: "{colors.status-waiting-text}"
     rounded: "{rounded.pill}"
     padding: "5px 10px"
-  job-card:
-    backgroundColor: "{colors.lavender-soft}"
-    textColor: "{colors.ink}"
+  table-row:
+    backgroundColor: "{colors.surface}"
     rounded: "{rounded.panel}"
-    padding: "24px"
-  job-card-hover:
-    backgroundColor: "{colors.lavender}"
+    height: "84px"
+  table-row-hover:
+    backgroundColor: "#fbfcff"
 ---
 
 # Design System: 岗位投递记录 / JOB TRACKER
 
 ## Overview
 
-**Creative North Star: "柔彩记录空间"**
+**Creative North Star: "清晰的工作台"**
 
-用户选定的“角色目录”方向落在奶白底、浅紫导航、柔和彩色卡面和亲近的文件夹角色上。界面保留熟悉的搜索、表单、状态文字和显式保存路径；个性围绕整理记录的任务展开。
+2026-11-04 用户确认从"角色目录"（柔彩、圆角、文件夹角色）整体换向到"现代工具界面"：左侧固定栏、白色主区、表格行列表、单一蓝色主操作。目标是让"打开页面三秒内看清哪些岗位在推进"，视觉个性让位于信息密度和扫描效率。
 
-正常内容页面保持紧凑且可扫读，角色出现在品牌、登录和初始空状态。页面标题以自托管中文字体形成识别度，岗位数据、说明和控件以平台字体保持清晰。本文记录完成后的实现；前置方向和页面叙事见 `.impeccable/surfaces/frontend-src-app-vue.md`，产品边界见 `PRODUCT.md`。
+本次只改视觉层：接口、路由、校验、确认与结果不确定时的保护逻辑全部沿用，未新增任何业务能力。改动集中在 `frontend/src/style.css`、`frontend/src/styles/layout.css`、`App.vue`、`JobsView.vue`、`AuthView.vue`、`NotFoundView.vue`。
 
 **Key Characteristics:**
 
-- 奶白背景、浅紫框架与粉色主操作。
-- 薄边框、圆润容器、平面柔彩分区。
-- 标题有字形个性，业务内容保持清楚的阅读层级。
-- 状态文字、键盘焦点与显式保存始终可辨。
-- 原创淡紫文件夹角色作为克制的签名。
+- 浅灰侧栏 + 白色主区，两段式结构，无卡片阴影堆叠。
+- 岗位列表以表格行呈现，不是卡片墙。
+- 单一蓝色主操作；状态用低饱和胶囊色区分。
+- 公司以首字母方块标识，按行序四色循环，不承载状态含义。
+- 无插画、无入场动画，交互反馈只改背景色和边框色。
 
 ## Colors
 
-前置 tokens 保留主样式表的原始色值；下文描述用途。侧车中的八阶色带仅用于色彩预览，不是新增的生产色阶。
-
 ### Primary
 
-- **莓粉主操作**（`primary`、`primary-hover`）：添加、搜索、登录及保存等明确操作；配白字，悬停加深。
+- **工具蓝**（`primary`、`primary-hover`）：添加、搜索、登录、保存等唯一主操作；配白字，悬停加深。
+- **浅蓝底**（`primary-soft`、`primary-text`）：侧栏选中项、知识主题标签、聚焦光晕。
 
-### Secondary
+### Semantic
 
-- **墨紫交互**（`accent`、`accent-deep`）：图标、可操作文字、选中栏目、焦点轮廓与边框反馈。
-- **柔紫纸面**（`lavender`、`lavender-soft`）：导航、次要操作、选中态与默认岗位卡。
-
-### Tertiary
-
-- **浅粉、薄荷、天蓝**（`blush`、`mint`、`sky`）：岗位卡按顺序循环的装饰底色；薄荷也承载成功与额度区域。
-- **奶油黄**（`butter`）：默认“待投递”状态底色，搭配 `status-waiting-text`。
-- **结果提示**（`error`、`success`）：失败/危险操作与成功提示。状态胶囊另有已投递、笔试中、面试中、已获 Offer、未通过、已放弃的固定配色，精确映射沿用 `frontend/src/style.css` 与 `frontend/src/job-status.js`，不由岗位卡底色推断。
+- **成功绿**（`success`、`success-soft`）：保存成功、额度充足。
+- **错误红**（`error`、`error-soft`）：校验失败、危险操作、删除确认区。
+- **警示黄**（`warning`、`warning-soft`）：面试中状态、待处理提示。
 
 ### Neutral
 
-- **奶白底纸**（`ground`）与**白色面板**（`surface`）：页面与输入、搜索、详情容器分层。
-- **深靛蓝正文**（`ink`）与**灰紫说明**（`muted`）：正文、标签及次级信息。
-- **浅灰紫边线**（`line`）与**清晰灰紫边线**（`line-strong`）：分隔/容器，以及输入框/滚动条滑块。
+- **侧栏灰**（`sidebar`）：左侧固定导航底色。
+- **浅底**（`bg-soft`）：筛选区、表头、空状态、折叠内容块。
+- **正文墨蓝**（`ink`）与**次级灰**（`muted-strong`、`muted`、`subtle`）四级文字层次。
+- **边线**（`line`、`line-strong`）：分隔与容器；输入框用较深的一档。
 
-**The Text Carries Status Rule.** 状态含义由可读文字承载；圆点与底色补充识别，岗位卡的柔彩循环仅作装饰。
+### 状态色映射
+
+状态含义由可读文字承载，颜色只做辅助。七种状态固定映射，见 `frontend/src/style.css`：
+
+| 状态 | 底色 | 文字 |
+|---|---|---|
+| 待投递 | `#f0f2f5` | `#5c6879` |
+| 已投递 | `#edf3ff` | `#285ab4` |
+| 笔试中 | `#f1edfa` | `#6b4fa0` |
+| 面试中 | `#fff5e4` | `#926214` |
+| 已获 Offer | `#e8f6ee` | `#28764b` |
+| 未通过 | `#fef3f2` | `#b42318` |
+| 已放弃 | `#eef0f3` | `#667085` |
+
+公司首字母方块的四种底色（蓝、青、沙、紫）仅用于区分相邻行，不得用于表达状态。
 
 ## Typography
 
-**Display Font:** LXGW Marker Gothic / 霞鹜漫黑，后接圆润平台中文 sans 回退栈。仅加载实际存在的常规字重（400）；关闭字体合成。
+**字体栈：** `Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif`。
 
-**Body Font:** `ui-rounded`、SF Pro Rounded 与平台中西文 sans 栈。数据、岗位卡标题、表单与按钮使用此栈。
+不加载外部字体。原 `LXGW Marker Gothic` 手写体已停用（字体文件仍保留在 `frontend/public/fonts/`，不再被引用），因为马克笔字形与工具界面的信息密度冲突。
 
-标题的亲近字形与正文的清楚节奏形成分工。完整字体从官方 Google Fonts 仓库取得，转换后自托管于 `frontend/public/fonts/lxgw-marker-gothic.woff`，采用 `font-display: swap`；来源及 OFL 许可随字体保存，不请求外部字体服务。
-
-- **Display**：页面 h1 使用 `display`；窄屏缩至（1.625rem）。登录引导另用（2.25rem / 1.5），900px 以下（1.875rem），700px 以下（1.5rem）；登录面板标题（1.75rem）。
-- **Headline**：区块 h2 使用 `headline`，保持常规字重。
-- **Title**：内容 h3 使用 `title`；岗位卡采用 `card-title`，优先识别岗位名称。
-- **Body**：长描述使用 `body`，最大行长（72ch），保留换行并允许任意长词折行。页面简介为（0.9375rem / 1.8）。
-- **Label / helper**：主要标签使用 `label`；常见说明使用 `muted`，小提示（0.8125rem），状态标签（0.75rem）。输入文字（16px）避免手机输入时缩放。
-
-**The Titles and Records Rule.** 自托管字体用于品牌与 h1/h2；h3、岗位数据、正文、标签和表单保留平台字体，不把标题字形扩散到信息密集区。
+- **Display**：页面 h1 用 30px / 700 / -0.025em；900px 以下 26px，700px 以下 23px。
+- **Headline**：区块 h2 用 18px / 650。
+- **Title**：岗位名、面板标题用 16px / 600。
+- **Body**：正文 15px / 1.6；说明文字 14px / 1.65。
+- **Label**：表单标签 14px / 550，颜色用 `muted-strong` 而非纯黑。
+- **数字**：薪资用 `font-variant-numeric: tabular-nums`，保证表格列对齐。
 
 ## Layout
 
-外层居中容器上限（1220px，包含左右各 32px 内边距）；头部至少（88px）高。主内容上下留白（40px / 48px），列表双列、列间距（16px）。搜索在列表上方，状态胶囊固定在岗位卡内部右上，岗位名称、元数据与详情入口依次展开。卡内文本可以折行，不做固定高度裁切。
+- **骨架**：`grid-template-columns: 244px minmax(0, 1fr)`；侧栏 `position: sticky`、高 `100dvh`。
+- **主区**：`#main-content` 最大宽 1200px，内边距 40px / 48px；1080px 以下 32px。
+- **列表**：表格行，五列 `minmax(0,1fr) 96px 148px 124px 24px`，行高 84px，表头 46px。
+- **详情**：`1.4fr / minmax(340px, 1fr)`，960px 以下堆叠。
+- **表单**：最大宽 920px，双列，间距 20px。
+- **登录**：单卡片，最大宽 408px，垂直居中。
 
-新建、编辑和面试回顾内容上限（928px）；常规表单双列，间距（28px 24px）。详情以（1.35fr / minmax(360px, 1fr)）分为资料和操作两列。登录为引导区加最大（420px）的表单区，整体上限（1040px）。这些是按任务使用的布局，不要求所有页面复刻同一种构图。
+### 断点
 
-- **960px 以下**：详情顺序堆叠。
-- **900px 以下**：登录双列收紧，表单列上限（380px）。
-- **700px 以下**：外侧内边距（16px）；列表、搜索、主表单与登录单列，面板（20px）内边距，岗位卡间距（12px），主内容留白（28px / 36px）。登录角色收至（88px），在引导右侧。
-- **500px 以下**：识别草稿的标签/值从两列转为顺序单列。
-- **380px 以下**：外侧内边距（12px），面板和岗位卡内边距（16px）。
-
-常见内部节奏取自 `spacing`；大块面板使用（28px），操作/搜索/桌面卡多用（24px）。长账号在桌面最多（180px），手机（72px），最窄屏（56px）并省略，完整内容保留在 title；品牌与退出文字不换行，手机隐藏头像和账号副说明。所有网格内容列允许缩小，长公司名、岗位名和提示可折行。页面最低宽度为（280px）。
+- **1080px**：主区内边距收至 32px，表格列宽收紧。
+- **960px**：详情两栏堆叠。
+- **900px**：侧栏转为顶部横条（sticky），导航隐藏，列表从表格行转为两列卡片（岗位/状态一行，城市/薪资一行）。
+- **700px**：内边距 16px，表单单列，筛选区纵向堆叠。
+- **380px**：内边距 12px，账号名截断更早。
 
 ## Elevation & Depth
 
-界面没有投影、毛玻璃或悬浮位移；深度由奶白底、白面板、柔彩内层和细边框表达。角色图片内的轻微绘制明暗属于插画材质，不是界面阴影。
+界面基本无阴影。深度靠侧栏灰底与主区白底的分区、以及 1px 边线表达。
 
-**The Tonal Layers Rule.** 容器依靠色面与边线分层；交互反馈改变底色和边框，不给普通卡片增加浮起效果。
+例外两处：主按钮 `0 1px 2px rgba(37,99,235,.18)`，登录卡片 `0 1px 2px + 0 12px 32px -12px` 的轻浮起。侧栏栏目切换的选中项用 `0 1px 2px` 微阴影表达"白纸贴在灰底上"。
 
-按钮、输入和岗位卡的状态过渡为（180ms，`cubic-bezier(.16, 1, .3, 1)`），不做页面入场动画。骨架加载以（1.4s，ease-in-out）交替柔紫底色；减少动态效果时关闭动画与过渡。侧车保存这些 schema 外的运动和断点值。
+**The Flat Surface Rule.** 除上述三处，不给普通容器加阴影或悬浮位移；交互反馈只改背景和边框。
 
 ## Shapes
 
-主要容器使用 `panel` 圆角，输入与常规按钮使用 `control`；内部确认区、截图选择区、额度条和栏目轨道使用 `inset`，栏目按钮使用 `tab`。状态胶囊使用 `pill`。角色的柔和轮廓是签名，业务区域仍是边界清楚的矩形。
+- 按钮、导航项：8px。
+- 输入框、下拉：7px。
+- 面板、表格容器、筛选区：12px。
+- 状态胶囊：6px（不是全圆角，与表格的方正感一致）。
+- 首字母方块：10px。
+- 头像：圆形。
 
-边线通常（1px），输入框用更清楚的边线色；上传区域以虚线表达接收范围。头像与状态圆点为圆形。滚动条轨道沿用奶白底、滑块沿用清晰灰紫，悬停为墨紫；WebKit 滚动条（12px）宽、滑块（3px）轨道色内边线，同时提供标准 `scrollbar-color`。
+滚动条 10px，滑块 `#cfd6e2`，悬停加深。
 
 ## Components
 
-### Buttons
+### 按钮
 
-圆润、明确，常规按钮最小高度（44px），搜索操作与输入对齐为（46px）。主、次、危险按钮使用前置组件 tokens；次按钮带浅边线，悬停转柔紫并加深边线。主按钮按下进一步变深，次按钮按下转深柔紫。危险操作分为深红实心确认按钮与白底红字描边入口；文本按钮保留下划线与（44px）触控高度。
+最小高度 44px，横向内边距 18px。主按钮蓝底白字带极轻投影；次按钮白底 + `line-strong` 边线，悬停转浅灰底；危险按钮红底白字；危险描边按钮白底红字、边线 `#f0c9c4`。文本按钮无下划线，悬停才出现。
 
-禁用按钮透明度（0.55），使用不可操作光标，不触发专属 hover 反馈。所有可操作控件保留（3px）墨紫焦点轮廓与（4px）外偏移；跳至主要内容链接只在聚焦时显示。不要用 hover 替代键盘焦点。
+禁用统一 `opacity: .5`。所有控件保留 2px 蓝色焦点轮廓。
 
-### Inputs / Fields
+### 输入框
 
-白底、清晰细边框，最小高度（46px）；悬停/聚焦转墨紫边线。错误字段由 `aria-invalid` 指示，配红色边线、近白粉底和字段错误文字；禁用字段灰紫底、保留文字可读性。标签始终可见，帮助与错误通过描述关系关联；textarea 可垂直调整，主岗位表单最小高（144px），面试表单（120px）。紧凑的每页条数 select 是（38px）高的明确例外。
+白底、44px 高、7px 圆角、`line-strong` 边线；悬停边线转 `subtle`，聚焦转 `primary` 并带 2px 浅蓝光晕。错误态由 `aria-invalid` 驱动，边线转红、底色转 `#fffbfa`。
 
-### Navigation
+筛选区和问题搜索区使用 `bg-soft` 底色，让白底输入框在浅灰上有足够对比。
 
-浅紫品牌头部承载首页入口和账号。详情栏目采用白色圆角轨道上的三等分按钮，最小高（72px），图标在文字上方；选中项柔紫底与深紫字，hover 使用更浅柔紫，选中项 hover 保持选中色。保留实际 tab 的 ARIA 关系、方向键和焦点行为，不仅绘制外观。返回链接与分页继续使用清楚的文字和现有按钮。
+### 侧栏
 
-### Chips
+244px 固定栏，浅灰底，右侧 1px 边线。品牌区为蓝色圆角方块 + 图标 + 名称 + 英文副标。导航项 46px 高，选中态浅蓝底 + 深蓝字 + 图标变蓝。
 
-状态胶囊以小圆点加文字组成，不作为可点击按钮，也不加无意义 hover。所有七种状态都沿用既有文字映射；未知状态显示“未知状态”。知识主题是独立的浅紫小标签，不能和岗位状态混用。
+底部依次是连接状态（12px 小字）和账号区（头像 + 用户名 + 退出）。900px 以下整条转为顶部横条，导航隐藏，连接状态隐藏。
 
-### Cards / Containers
+### 表格行
 
-岗位卡是整块可聚焦链接，四种柔彩按顺序循环；hover 与键盘聚焦同时转为柔紫底、墨紫边框，并保留全局焦点轮廓。公司、岗位、城市/薪资、详情入口组成稳定层级。普通搜索、资料和操作面板为白底薄边框；错误、等待、成功和空结果各有准确文字，不靠插画表达结果。
+整行是链接。列：岗位/公司（首字母方块 + 岗位名 + 公司名）、城市、薪资、状态胶囊、右箭头。悬停整行转 `#fbfcff`，箭头右移 2px 并转蓝。
 
-### Folder Companion
+表头 `bg-soft` 底、13px 灰字，仅作视觉引导，`aria-hidden`。
 
-淡紫文件夹抱着薄荷便签是唯一签名插画；品牌小图（桌面 54px / 手机 44px）、登录（桌面 208px / 手机 88px）和初始空状态（112px）使用同一透明 PNG。它是装饰性陪伴，图片 alt 为空，必要信息由邻近文字提供，不在正常记录卡里重复。资产为 `frontend/src/assets/record-pal.png`，提示词见 `.impeccable/record-pal.prompt.txt`；发布 PNG 内已嵌入生成来源。
+### 状态胶囊
+
+`::before` 伪元素画 6px 圆点，颜色取 `currentColor`，文字与圆点同色。不可点击、不加 hover。
+
+### 空状态
+
+`bg-soft` 底 + 虚线边框 + 居中图标 + 标题 + 说明。不再使用插画角色。
+
+### 图标
+
+`AppIcon.vue` 内联 SVG，24×24 viewBox，`stroke-width: 1.7`，`stroke: currentColor`。新增 `list` 图标用于侧栏导航。
 
 ## Do's and Don'ts
 
 ### Do:
 
-- **Do** 延续奶白底、柔彩色面和清晰薄边框，用粉色标识主操作。
-- **Do** 让岗位标题、状态文字与当前任务先被读到，角色仅陪伴品牌、登录和初始空状态。
-- **Do** 保留键盘焦点、可见标签、帮助与错误文字，以及减少动态效果支持。
-- **Do** 让长内容折行，按既有断点堆叠，保护品牌和退出入口。
-- **Do** 清楚区分识别草稿、最终保存、危险确认及结果未知状态，沿用原有操作含义。
+- **Do** 保持侧栏灰 + 主区白的两段式结构，让内容区永远是视觉焦点。
+- **Do** 用表格行承载列表，信息按"岗位 → 公司 → 城市 → 薪资 → 状态"横向扫描。
+- **Do** 让蓝色只出现在主操作、选中态和聚焦上，其余用中性色。
+- **Do** 保留键盘焦点、可见标签、错误文字和 `prefers-reduced-motion` 支持。
+- **Do** 让长公司名、岗位名折行，不裁切。
 
 ### Don't:
 
-- **Don't** 把循环卡面颜色当作投递状态，或仅用圆点传达结果。
-- **Don't** 给正常任务区增加重复角色、入场动画、阴影浮起或占据操作空间的装饰。
-- **Don't** 将标题字体用于数据与表单，合成不存在的标题粗体，或引入外部字体请求。
-- **Don't** 为统一高度裁切公司名、岗位名、错误说明或面试记录。
-- **Don't** 用颜色变化伪装保存成功、绕过确认，或改变已有 API 与业务能力。
+- **Don't** 用首字母方块的颜色表达投递状态。
+- **Don't** 给表格行加阴影、放大或入场动画。
+- **Don't** 引入外部字体请求，或把显示字体用于表格数据。
+- **Don't** 为统一高度裁切公司名、岗位名或错误说明。
+- **Don't** 用颜色变化伪装保存成功，或改变已有接口与业务能力。

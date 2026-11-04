@@ -5,7 +5,6 @@ import { request } from '../api.js'
 import { clearUser } from '../auth.js'
 import { jobStatus, jobStatuses } from '../job-status.js'
 import AppIcon from '../components/AppIcon.vue'
-import RecordCompanion from '../components/RecordCompanion.vue'
 import LoadingState from '../components/LoadingState.vue'
 
 const jobs = ref([])
@@ -125,6 +124,16 @@ function describeQuery(value, selectedStatus) {
   return [value ? `“${value}”的搜索结果` : '', selectedStatus ? `投递状态：${jobStatus(selectedStatus).label}` : '']
     .filter(Boolean).join(' · ')
 }
+
+// 公司首字方块按行序循环四种底色，只为区分相邻记录，不承载状态含义。
+const symbolTints = ['', 'teal', 'sand', 'purple']
+function symbolTint(index) {
+  return symbolTints[index % symbolTints.length]
+}
+function companyInitial(name) {
+  return (name || '?').trim().slice(0, 1).toUpperCase()
+}
+
 onMounted(loadJobs)
 </script>
 
@@ -172,10 +181,10 @@ onMounted(loadJobs)
                     @click="clearSearch">重置条件</button>
           </div>
         </div>
-        <p id="job-search-help" class="muted input-help">关键词最多 100 个字符；选择状态后点击搜索，两个条件同时生效。</p>
         <p v-if="keywordError" id="job-search-error" class="field-error" role="alert">{{ keywordError }}</p>
         <p v-if="statusError" id="job-filter-status-error" class="field-error" role="alert">{{ statusError }}</p>
       </form>
+      <p id="job-search-help" class="muted job-search-help">关键词最多 100 个字符；选择状态后点击搜索，两个条件同时生效。</p>
 
       <div class="job-page-size">
         <label for="job-page-size">每页条数</label>
@@ -197,17 +206,25 @@ onMounted(loadJobs)
       <template v-else>
       <p v-if="hasAppliedFilters" class="muted search-result-label">{{ describeQuery(appliedKeyword, appliedStatus) }}</p>
       <div class="job-list">
-      <RouterLink v-for="job in jobs" :key="job.id" :to="`/jobs/${job.id}`" class="job-card">
-        <div class="job-card-content">
-          <p class="company-name"><AppIcon name="briefcase" />{{ job.companyName }}</p>
-          <h3>{{ job.jobTitle }}</h3>
-          <p class="job-meta"><span>{{ job.city || '城市未填写' }}</span><span>{{ job.salary || '薪资未填写' }}</span></p>
-          <span class="card-hint">查看岗位详情 <AppIcon name="arrow-right" /></span>
+      <div class="job-list-head" aria-hidden="true">
+        <span>岗位 / 公司</span>
+        <span>城市</span>
+        <span>薪资</span>
+        <span>投递状态</span>
+        <span></span>
+      </div>
+      <RouterLink v-for="(job, index) in jobs" :key="job.id" :to="`/jobs/${job.id}`" class="job-card">
+        <div class="job-card-main">
+          <span class="company-symbol" :class="symbolTint(index)" aria-hidden="true">{{ companyInitial(job.companyName) }}</span>
+          <div class="job-card-text">
+            <h3>{{ job.jobTitle }}</h3>
+            <p class="company-name">{{ job.companyName }}</p>
+          </div>
         </div>
-        <div class="job-status" :data-status="job.status">
-          <span class="status-dot" :style="{ background: jobStatus(job.status).color }" aria-hidden="true"></span>
-          <span>{{ jobStatus(job.status).label }}</span>
-        </div>
+        <span class="job-city">{{ job.city || '城市未填写' }}</span>
+        <span class="job-salary">{{ job.salary || '薪资未填写' }}</span>
+        <span class="job-status" :data-status="job.status">{{ jobStatus(job.status).label }}</span>
+        <span class="card-arrow" aria-hidden="true"><AppIcon name="arrow-right" /></span>
       </RouterLink>
       </div>
 
@@ -217,7 +234,7 @@ onMounted(loadJobs)
         <button type="button" class="text-button" @click="clearSearch">查看全部岗位</button>
       </div>
       <div v-else-if="jobs.length === 0" class="empty-placeholder">
-        <RecordCompanion />
+        <AppIcon name="briefcase" />
         <h3>还没有岗位记录</h3>
         <p>点击上方“添加岗位”，记下第一条求职记录。</p>
       </div>

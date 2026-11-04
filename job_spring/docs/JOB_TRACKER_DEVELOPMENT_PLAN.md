@@ -1,5 +1,7 @@
 # 岗位投递与面试记录工具：开发方案
 
+2026-11-04 Windows 的 Maven profile 和外置配置已准备。Windows Java 通过本地 `13306`、`16379` 转发使用 Linux MySQL 与 Redis，初次部署关闭模型。Java 17 隔离后端 715 项、Windows JAR 构建及必需配置文件加载验证通过。下一步在 Windows 实机验证 SSH，随后准备专用 MySQL 账号和私有配置。详见 [Windows 后端配置](stage6-windows-datasource.md)。
+
 2026-11-03 用户验收 Linux `5175` HTTP 连通性及两端独立启停。Linux Java 已按用户操作停止，Nginx 仍可提供首页。Mac 可独立启动，并在恢复 MySQL 转发后登录；用户随后要求关闭 Mac 转发，下次可在同一 SSH 会话建立 `13306` 和 `16379`。本轮任务结束。阶段六待完成 Windows 配置和部署、HTTPS、README、虚构演示数据及部署整体验收。详见 [5175 站点部署记录](stage6-nginx-preview.md#5175-站点连通性)。
 
 2026-11-03 用户确认 Linux 当日额度键数为 0。切换前复查 Mac 本机当日键数为 0、Linux 当日全站键不存在。Mac `mac` profile 已配置通过 `16379` 使用 Linux Redis，MySQL 继续经 `13306` 访问 Linux 正式库。Java 17 回环探针健康 UP/UP、匿名岗位接口 401、只读额度查询已用 0、剩余 30。探针已退出，待用户从 IDEA 启动 Mac 后端并验收页面。详见 [共享 Redis 部署记录](stage6-redis-preflight.md)。

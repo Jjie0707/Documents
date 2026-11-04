@@ -2,6 +2,7 @@
 defineProps({ name: { type: String, default: 'note' } })
 const paths = {
   plus: ['M12 5v14M5 12h14'],
+  list: ['M8 6h12M8 12h12M8 18h12', 'M4 6h.01M4 12h.01M4 18h.01'],
   search: ['M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13', 'm16 16 4 4'],
   'arrow-left': ['M19 12H5m6-6-6 6 6 6'],
   'arrow-right': ['M5 12h14m-6-6 6 6-6 6'],

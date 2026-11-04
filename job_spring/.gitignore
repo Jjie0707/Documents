@@ -39,6 +39,7 @@ build/
 /config/database-mac-local.yaml
 /config/redis-mac-local.yaml
 /config/credentials-linux-local.yaml
+/config/credentials-windows-local.yaml
 /docs/http/http-client.private.env.json
 
 ### Frontend ###

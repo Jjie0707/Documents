@@ -84,3 +84,11 @@ spring:
       on-profile: linux
     import:
       - file:./config/application-linux.yaml
+
+---
+spring:
+  config:
+    activate:
+      on-profile: windows
+    import:
+      - file:./config/application-windows.yaml
