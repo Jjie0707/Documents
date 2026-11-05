@@ -13,7 +13,8 @@ ExecStart=/usr/bin/env -i PATH=/usr/bin:/bin LANG=C.UTF-8 \
     /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xms64m -Xmx192m \
     -XX:ActiveProcessorCount=2 -Djava.net.preferIPv4Stack=true \
     -jar /opt/job-tracker/job-tracker.jar \
-    --server.address=127.0.0.1 --server.port=8082 --vision.model.enabled=false
+    --server.address=127.0.0.1 --server.port=8082 \
+    --vision.quota.trusted-proxies=127.0.0.1/32
 Restart=on-failure
 RestartSec=5s
 TimeoutStopSec=45s

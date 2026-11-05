@@ -22,8 +22,3 @@ spring:
   sql:
     init:
       mode: never
-
-vision:
-  model:
-    # 共享额度统一切换并验收后，再在 Linux 单独开启模型。
-    enabled: false

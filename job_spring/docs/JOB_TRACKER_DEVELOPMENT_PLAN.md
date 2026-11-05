@@ -1,6 +1,16 @@
 # 岗位投递与面试记录工具：开发方案
 
-2026-11-04 Windows 的 Maven profile 和外置配置已准备。Windows Java 通过本地 `13306`、`16379` 转发使用 Linux MySQL 与 Redis，初次部署关闭模型。Java 17 隔离后端 715 项、Windows JAR 构建及必需配置文件加载验证通过。下一步在 Windows 实机验证 SSH，随后准备专用 MySQL 账号和私有配置。详见 [Windows 后端配置](stage6-windows-datasource.md)。
+2026-11-05 阶段六当前部署范围验收完成。用户确认手机移动网络可访问 Windows 域名并完成图片识别、Windows 图片识别通过、此前露出的 Tunnel Token 已轮换。手机经域名识别偏慢已记录，分段耗时待测。详见 [部署验收记录](stage6-acceptance.md)。
+
+2026-11-04 阶段六部署整体验收已复查 Windows HTTPS 和 Linux HTTP 的首页、健康与匿名权限，并核对 Git 和 Linux 发布包的私有配置边界。待用户确认手机移动网络登录和列表、Windows 图片识别结果及已暴露 Tunnel Token 的轮换状态。详见 [部署验收记录](stage6-acceptance.md)。
+
+2026-11-04 阶段六虚构演示数据已准备。隔离 MySQL、Redis 和 Java HTTP 验证通过，覆盖重复导入、注册登录、岗位和面试记录读取及账号隔离。用户选择跳过网页演示，样例保留供按需使用。详见 [演示数据说明](stage6-demo-data.md)。
+
+2026-11-04 阶段六 README 已整理三端访问、SSH、启停、私有配置、验证和回退。Windows 域名已验证 HTTPS 首页和 API，当前使用 Vite 开发前端。README 待用户验收，后续安排虚构演示数据和部署整体验收。详见 [项目 README](../README.md)。
+
+2026-11-04 Linux 新版前端和 Java 已切换至 `f5e9b01` 发布包。真实服务器通过 `5175` 首页、深链接、静态资源、健康 UP/UP、匿名 401 检查。用户确认 Linux 图片识别正常，后端由 systemd 独立于 FinalShell 管理。详见 [Linux 发布记录](stage6-linux-datasource.md#新版前端与图片识别发布)。
+
+2026-11-04 Windows Java 已通过本地 `13306`、`16379` 转发接入 Linux MySQL 与 Redis。实机健康 UP/UP、网页登录、岗位列表及只读额度查询均已通过。已准备 Windows 图片识别的私有启用方式，Java 17 隔离后端 715 项、Windows JAR 构建与模型配置探针通过，待 Windows 实机识别和域名入口验收。详见 [Windows 后端配置](stage6-windows-datasource.md)。
 
 2026-11-03 用户验收 Linux `5175` HTTP 连通性及两端独立启停。Linux Java 已按用户操作停止，Nginx 仍可提供首页。Mac 可独立启动，并在恢复 MySQL 转发后登录；用户随后要求关闭 Mac 转发，下次可在同一 SSH 会话建立 `13306` 和 `16379`。本轮任务结束。阶段六待完成 Windows 配置和部署、HTTPS、README、虚构演示数据及部署整体验收。详见 [5175 站点部署记录](stage6-nginx-preview.md#5175-站点连通性)。
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Create the Linux application's MySQL account and stage its private YAML."""
+"""Create a deployment's MySQL application account on Linux and stage its private YAML."""
 
+import argparse
 import json
 import os
 from pathlib import Path
@@ -10,11 +11,9 @@ import subprocess
 import sys
 
 
-ACCOUNT = "'job_tracker_linux'@'127.0.0.1'"
 TABLES = ("users", "job_applications", "interview_rounds", "interview_questions")
+PRIVATE_ROOT = Path("/root")
 REDIS_PASSWORD = Path("/root/job-tracker-redis-private/app.password")
-PRIVATE = Path("/root/job-tracker-linux-private")
-CREDENTIALS = PRIVATE / "credentials-linux-local.yaml"
 
 
 def mysql_admin(sql: str) -> str:
@@ -36,19 +35,27 @@ def mysql_admin(sql: str) -> str:
     ).stdout
 
 
-def credentials_yaml(database_password: str, redis_password: str) -> str:
+def credentials_yaml(target: str, database_password: str, redis_password: str) -> str:
     return (
         "job-tracker:\n"
-        "  linux:\n"
+        f"  {target}:\n"
         f"    database-password: {json.dumps(database_password)}\n"
         f"    redis-password: {json.dumps(redis_password)}\n"
     )
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--target", choices=("linux", "windows"), default="linux")
+    target = parser.parse_args().target
     if sys.platform != "linux" or os.geteuid() != 0 or not sys.stdin.isatty():
         print("请在 Linux 的交互式 root SSH 终端运行。", file=sys.stderr)
         return 1
+
+    username = f"job_tracker_{target}"
+    account = f"'{username}'@'127.0.0.1'"
+    private_dir = PRIVATE_ROOT / f"job-tracker-{target}-private"
+    credentials = private_dir / f"credentials-{target}-local.yaml"
 
     try:
         redis_file = REDIS_PASSWORD.lstat()
@@ -58,7 +65,7 @@ def main() -> int:
         if not re.fullmatch(r"[0-9a-f]{64}", redis_password):
             raise ValueError("Redis 应用凭据格式与已部署的账号不符。")
         os.umask(0o077)
-        PRIVATE.mkdir(mode=0o700)
+        private_dir.mkdir(mode=0o700)
     except (ValueError, OSError):
         print("私有目录或 Redis 凭据检查未通过，MySQL 账号步骤尚未执行。", file=sys.stderr)
         return 1
@@ -67,23 +74,23 @@ def main() -> int:
         print("第一次输入 MySQL root 密码，创建暂时锁定的应用账号。", flush=True)
         generated = mysql_admin(
             "SET SESSION generated_random_password_length = 40;\n"
-            f"CREATE USER {ACCOUNT} IDENTIFIED WITH caching_sha2_password BY RANDOM PASSWORD "
+            f"CREATE USER {account} IDENTIFIED WITH caching_sha2_password BY RANDOM PASSWORD "
             "REQUIRE SSL ACCOUNT LOCK;\n"
         ).rstrip("\n").split("\t")
-        if len(generated) != 4 or generated[:2] != ["job_tracker_linux", "127.0.0.1"] or len(generated[2]) != 40:
+        if len(generated) != 4 or generated[:2] != [username, "127.0.0.1"] or len(generated[2]) != 40:
             raise ValueError("MySQL 随机密码结果格式异常。")
-        with CREDENTIALS.open("x", encoding="utf-8") as output:
-            output.write(credentials_yaml(generated[2], redis_password))
+        with credentials.open("x", encoding="utf-8") as output:
+            output.write(credentials_yaml(target, generated[2], redis_password))
             output.flush()
             os.fsync(output.fileno())
         del generated, redis_password
 
         print("第二次输入 MySQL root 密码，授予正式四表权限并解锁。", flush=True)
         grants = "\n".join(
-            f"GRANT SELECT, INSERT, UPDATE, DELETE ON job_tracker.{table} TO {ACCOUNT};"
+            f"GRANT SELECT, INSERT, UPDATE, DELETE ON job_tracker.{table} TO {account};"
             for table in TABLES
         )
-        results = mysql_admin(f"{grants}\nALTER USER {ACCOUNT} ACCOUNT UNLOCK;\nSHOW GRANTS FOR {ACCOUNT};\n")
+        results = mysql_admin(f"{grants}\nALTER USER {account} ACCOUNT UNLOCK;\nSHOW GRANTS FOR {account};\n")
         for line in results.splitlines():
             if line.startswith("GRANT "):
                 print(line)
@@ -91,7 +98,7 @@ def main() -> int:
         print("账号准备未完成。私有目录已保留，请先核对账号和授权状态再续跑。", file=sys.stderr)
         return 1
 
-    print(f"Linux 应用账号已创建，私有 YAML 已保存到 {CREDENTIALS}。")
+    print(f"{target} 应用账号已创建，私有 YAML 已保存到 {credentials}。")
     return 0
 
 
