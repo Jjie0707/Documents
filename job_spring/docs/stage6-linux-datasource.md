@@ -58,3 +58,26 @@ Maven 用 `pom.xml` 中的 `profile.name` 替换 `application.yaml` 的 `@profil
 本地检查覆盖脚本语法和单元参数。用户在 Linux 运行安装脚本后回传 `enabled`、`ActiveState=active`、`NRestarts=0`，监听 `127.0.0.1:8082`，健康为 `UP/UP`，匿名岗位接口为 HTTP 401。实测 `MemoryCurrent=232775680` 字节，约 222 MiB，峰值为 232976384 字节，服务上限 448 MiB。开机链接已创建，实际开机复验留到维护窗口。
 
 下一步核对 Nginx 现有站点，准备静态前端目录、`/api/` 回环反代、访问入口和回退方案供用户确认。Linux 正式库和额度配置按既有边界继续使用。
+
+## 新版前端与图片识别发布
+
+从 `frontend` 分支 `f5e9b01` 的源码构建 Linux JAR 和前端 `dist`。发布包包含 JAR、前端文件、两份非私有运行配置和 SHA-256 清单。Linux 外置 YAML 和 systemd 单元移除初次部署的模型关闭覆盖。未放置私有模型文件时，Spring 仍默认关闭模型。
+
+发布包位于 `target/linux-delivery/job-tracker-linux-release-f5e9b01.tar.gz`，SHA-256 为 `5a5c6f4b06dfb1324c18924dd143b2d7b34ddeacda354a57bbca6e17337c9fc9`。Java 17 隔离后端测试 715 项、Linux JAR 构建、前端测试 26 项和生产构建均通过。配置探针使用虚构 Key，验证模型开关、30/300 共享额度和可信代理判断。已核对前端入口引用、字体、包内摘要和私有文件排除。用户交互上传后确认摘要通过，并批准切换。
+
+### 切换步骤
+
+1. 在 Linux 暂存目录验证发布包和内部清单。核对 `job-tracker.service` 的有效启动参数、启动前状态和 `5175` 站点。确认 Java 仍只监听 `127.0.0.1:8082`，Nginx 使用 `job-tracker.locations.conf` 将 `/api/` 发给它，并用 `$remote_addr` 覆写 `X-Forwarded-For`。新版单元只信任 Nginx 连接所用的 `127.0.0.1/32`。直连入口和域名另行处理。
+2. 将 Mac 已验收的私有模型与额度 YAML 通过 SSH 暂存到 Linux 的 root 私有目录。切换时以 `root:job-tracker`、权限 `640` 放入 `/opt/job-tracker/config/`。同一 Redis、HMAC、北京时间窗口和 `30/300` 上限继续生效。Linux 经 Nginx 按真实客户端 IP 选额度键。
+3. 保留原 `/opt/job-tracker/job-tracker.jar`、`/opt/job-tracker/config/application-linux.yaml`、已存在的私有配置、`/etc/systemd/system/job-tracker.service` 和 `/opt/job-tracker-nginx-preview/frontend`。停止 Linux Java 后替换上述程序和配置，静态文件仍使用 `5175` 站点的原目录。通过 `systemd-analyze verify` 和 `nginx -t` 后重新加载 systemd 并启动 Java。
+4. 核对 `5175` 首页、静态资源、深链接、`/api/health` 和匿名岗位请求。用户确认额度页面可读后，用一张虚构招聘截图验收识别草稿和单次扣额。HTTP 连通性、登录后的网页验收和真实模型调用分别记录。
+
+将 [发布脚本](../scripts/upgrade-linux-release.sh) 与两份私有 YAML 暂存至 `/root/job-tracker-linux-private/`，在 Linux 的交互式 root SSH 终端执行 `bash /root/job-tracker-linux-private/upgrade-linux-release.sh`。发布脚本在切换后校验首页、深链接、JS、CSS、字体、健康和匿名权限。配置或健康检查失败时，自动恢复原 JAR、配置、单元、前端及 Java 的原运行状态。成功后也可用脚本输出的 `--rollback` 命令恢复。回退继续使用共享 Redis 中已有的额度计数。
+
+脚本通过 Bash 语法检查，并在隔离临时目录模拟验证成功切换、手动回退和 HTTP 检查失败后的自动回退。
+
+2026-11-04 用户在 Linux 首次执行时，旧 Java 因之前手动停止产生的退出码 143 被 systemd 记为 `failed`，发布在替换文件前中止。用户核对 systemd 日志后清除失败状态并重跑。服务器回传新版已启动，`5175` 首页、深链接、静态资源、健康 UP/UP 和匿名 401 全部通过。用户随后确认 Linux 图片识别正常。旧版文件位于脚本输出的备份目录。
+
+### 日常启动与关闭
+
+在 Linux root 终端用 `systemctl start job-tracker` 启动，用 `systemctl stop job-tracker` 停止。Java 由 systemd 管理，关闭 FinalShell 后继续运行。启动后可用 `curl -fsS http://127.0.0.1:5175/api/health` 验证。停止后可用 `ss -Hltn 'sport = :8082'` 确认 Java 端口已释放，Nginx 仍能返回静态页面。若停止时显示退出码 143，核对已无 Java 监听后可用 `systemctl reset-failed job-tracker` 清除失败标记。
