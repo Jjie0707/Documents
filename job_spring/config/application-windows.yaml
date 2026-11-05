@@ -22,8 +22,3 @@ spring:
   sql:
     init:
       mode: never
-
-vision:
-  model:
-    # 完成 Windows 连接验收后，再安排模型和共享额度的启用。
-    enabled: false
