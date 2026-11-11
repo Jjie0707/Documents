@@ -1,0 +1,48 @@
+plugins {
+    id 'application'
+}
+
+group = 'shanhai'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+def gdxVersion = '1.14.2'
+dependencies {
+    implementation "com.badlogicgames.gdx:gdx:${gdxVersion}"
+    implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:${gdxVersion}"
+    implementation "com.badlogicgames.gdx:gdx-freetype:${gdxVersion}"
+    runtimeOnly "com.badlogicgames.gdx:gdx-platform:${gdxVersion}:natives-desktop"
+    runtimeOnly "com.badlogicgames.gdx:gdx-freetype-platform:${gdxVersion}:natives-desktop"
+}
+
+application {
+    mainClass = 'shanhai.DesktopLauncher'
+    if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('mac')) {
+        applicationDefaultJvmArgs = ['-XstartOnFirstThread']
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+sourceSets.main.resources.srcDirs = ['assets']
+
+tasks.named('processResources') {
+    inputs.files(sourceSets.main.allJava)
+    doLast {
+        def glyphs = sourceSets.main.allJava.files.collect { it.getText('UTF-8') }
+                .join('').findAll(/[\u3000-\u303f\u3400-\u9fff\uff00-\uffef·—–×]/)
+                .unique().join('')
+        new File(destinationDir, 'fonts/glyphs.txt').setText(glyphs, 'UTF-8')
+    }
+}
