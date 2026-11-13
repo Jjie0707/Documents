@@ -14,6 +14,10 @@ final class Wilds {
     static final float ALTAR_RANGE = 58;
     static final float BUILD_RANGE = 145;
     static final float WARD_RANGE = 106;
+    static final float SNARE_RANGE = 54;
+    static final float SNARE_RECHARGE = 5f;
+    static final float SNARE_FLASH = 0.42f;
+    static final float COUNTER_TIME = 2f;
     static final float DEN_RANGE = 61;
     static final float SEAL_RANGE = 123;
     static final float SEAL_COOLDOWN = 12f;
@@ -31,6 +35,8 @@ final class Wilds {
     static final float SLASH_WINDUP = 0.055f;
     private static final float INPUT_BUFFER = 0.15f;
     private static final float ATTACK_RANGE = 69;
+    private static final float PERFECT_DODGE_WINDOW = 0.12f;
+    private static final float SNARE_SLOW_TIME = 2.3f;
 
     enum Resource {
         WOOD("灵木", 2, 25), STONE("山石", 2, 25), BERRY("朱果", 2, 32), JADE("青玉", 1, 37);
@@ -47,7 +53,7 @@ final class Wilds {
     }
 
     enum Structure {
-        FIRE("篝火", 4, 2, 0, 3), WARD("镇灵灯", 2, 4, 1, 4);
+        FIRE("篝火", 4, 2, 0, 3), WARD("镇灵灯", 2, 4, 1, 4), SNARE("绊灵桩", 3, 2, 0, 4);
 
         final String name;
         final int wood;
@@ -172,6 +178,7 @@ final class Wilds {
         float targetY;
         float hitFlash;
         float strikeFlash;
+        float snared;
         Strike strike = Strike.LUNGE;
         boolean attacksShrine;
         int attacks;
@@ -290,6 +297,11 @@ final class Wilds {
     float dodgeTime;
     float dodgeX;
     float dodgeY;
+    private float dodgeStartX;
+    private float dodgeStartY;
+    private float perfectDodgeWindow;
+    float counterTime;
+    boolean counterSlash;
     float invulnerable;
     float hurtFlash;
     float messageTime;
@@ -350,6 +362,10 @@ final class Wilds {
         return 23 + (level - 1) * 7 + (tempered ? 15 : 0);
     }
 
+    int counterBonus() {
+        return Math.round(power() * 0.50f);
+    }
+
     int nextLevelXp() {
         return 31 + (level - 1) * 29;
     }
@@ -407,7 +423,11 @@ final class Wilds {
         bag[Resource.JADE.ordinal()] -= kind.jade;
         buildings.add(new Building(kind, buildX, buildY));
         cues.add(Cue.BUILD);
-        tell(kind == Structure.FIRE ? "篝火已点燃  ·  靠近可疗伤、烤熟朱果" : "镇灵灯已立起  ·  自动攻击附近异兽");
+        tell(switch (kind) {
+            case FIRE -> "篝火已点燃  ·  靠近可疗伤、烤熟朱果";
+            case WARD -> "镇灵灯已立起  ·  自动攻击附近异兽";
+            case SNARE -> "绊灵桩已设好  ·  山彘经过时会被减速";
+        });
     }
 
     boolean canBuildAt(float buildX, float buildY) {
@@ -598,6 +618,7 @@ final class Wilds {
         boolean finisher = combo == 3;
         attackCooldown = finisher ? 0.43f : 0.25f;
         slash = SLASH_TIME;
+        counterSlash = false;
         float aimX = dx;
         float aimY = dy;
         if (mouseAttack && !within(x, y, attackX, attackY, 4)) {
@@ -622,6 +643,11 @@ final class Wilds {
         float aimX = (float) Math.cos(angle);
         float aimY = (float) Math.sin(angle);
         boolean finisher = combo == 3;
+        int damage = finisher ? Math.round(power() * 1.60f) : power();
+        boolean counter = counterTime > 0;
+        if (counter) {
+            damage += counterBonus();
+        }
         cues.add(Cue.SWING);
         for (Enemy enemy : enemies) {
             float range = ATTACK_RANGE + (finisher ? 15 : 0) + (enemy.boss() ? 14 : 0);
@@ -629,9 +655,13 @@ final class Wilds {
                 float dot = (enemy.x - x) * aimX + (enemy.y - y) * aimY;
                 float distance = (float) Math.hypot(enemy.x - x, enemy.y - y);
                 if (distance < 13 || dot >= (finisher ? -0.34f : 0.20f) * distance) {
-                    strike(enemy, finisher ? Math.round(power() * 1.60f) : power(), finisher ? 24 : 9);
+                    strike(enemy, damage, finisher ? 24 : 9);
+                    counterSlash = counter;
                 }
             }
+        }
+        if (counterSlash) {
+            counterTime = 0;
         }
         removeDefeated();
     }
@@ -659,6 +689,9 @@ final class Wilds {
         dodgeX = length > 0 ? moveX / length : dx;
         dodgeY = length > 0 ? moveY / length : dy;
         dodgeTime = DODGE_DURATION;
+        perfectDodgeWindow = invulnerable <= 0 ? PERFECT_DODGE_WINDOW : 0;
+        dodgeStartX = x;
+        dodgeStartY = y;
         dodgeCooldown = DODGE_COOLDOWN;
         invulnerable = Math.max(invulnerable, 0.26f);
         attackCooldown = Math.min(attackCooldown, 0.13f);
@@ -677,6 +710,7 @@ final class Wilds {
         attackCooldown = down(attackCooldown, dt);
         slash = down(slash, dt);
         dodgeCooldown = down(dodgeCooldown, dt);
+        counterTime = down(counterTime, dt);
         invulnerable = down(invulnerable, dt);
         hurtFlash = down(hurtFlash, dt);
         shrineFlash = down(shrineFlash, dt);
@@ -713,6 +747,7 @@ final class Wilds {
             }
         }
         updateBolts(dt);
+        perfectDodgeWindow = down(perfectDodgeWindow, dt);
         if (boss != null && boss.health > 0 && boss.enraged() && !reinforcements) {
             reinforcements = true;
             enemies.add(new Enemy(Creature.CROW, 805, 292, 1));
@@ -833,7 +868,11 @@ final class Wilds {
     private void updateBuildings(float dt) {
         for (Building building : buildings) {
             building.pulse = down(building.pulse, dt);
-            if (building.kind != Structure.WARD || building.pulse > 0) {
+            if (building.kind == Structure.FIRE || building.pulse > 0) {
+                continue;
+            }
+            if (building.kind == Structure.SNARE) {
+                triggerSnare(building);
                 continue;
             }
             for (Enemy enemy : enemies) {
@@ -845,11 +884,27 @@ final class Wilds {
         }
     }
 
+    private void triggerSnare(Building building) {
+        boolean caught = false;
+        for (Enemy enemy : enemies) {
+            if (enemy.kind == Creature.BOAR && enemy.health > 0 && enemy.snared <= 0
+                    && within(building.x, building.y, enemy.x, enemy.y, SNARE_RANGE)) {
+                enemy.snared = SNARE_SLOW_TIME;
+                caught = true;
+            }
+        }
+        if (caught) {
+            building.pulse = SNARE_RECHARGE;
+            cues.add(Cue.BUILD);
+        }
+    }
+
     private void updateEnemy(Enemy enemy, float dt) {
         enemy.moving = false;
         enemy.cooldown = down(enemy.cooldown, dt);
         enemy.hitFlash = down(enemy.hitFlash, dt);
         enemy.strikeFlash = down(enemy.strikeFlash, dt);
+        enemy.snared = down(enemy.snared, dt);
 
         if (enemy.leapTime > 0) {
             float part = Math.min(1, dt / enemy.leapTime);
@@ -914,6 +969,9 @@ final class Wilds {
         };
         if (distance > stop) {
             float speed = enemy.kind.speed * (enemy.enraged() || enemy.den != null ? 1.21f : 1);
+            if (enemy.snared > 0) {
+                speed *= 0.45f;
+            }
             float step = Math.min(distance - stop, speed * dt);
             enemy.x += step * offsetX / distance;
             enemy.y += step * offsetY / distance;
@@ -972,7 +1030,11 @@ final class Wilds {
                 }
             }
             case LUNGE, POUNCE -> {
-                if (within(x, y, enemy.targetX, enemy.targetY, enemy.dangerRadius())) {
+                float radius = enemy.dangerRadius();
+                boolean hit = within(x, y, enemy.targetX, enemy.targetY, radius);
+                if (perfectDodgeWindow > 0 && (hit || within(dodgeStartX, dodgeStartY, enemy.targetX, enemy.targetY, radius))) {
+                    rewardDodge();
+                } else if (hit) {
                     hurtPlayer(enemy.kind.damage + (enemy.enraged() ? 7 : 0) + (enemy.den != null ? 7 : 0));
                 }
                 if (enemy.attacksShrine) {
@@ -999,7 +1061,12 @@ final class Wilds {
             if (bolt.life <= 0 || bolt.x < 32 || bolt.y < 40 || bolt.x > WIDTH - 32 || bolt.y > HEIGHT - 38) {
                 return true;
             }
-            if (invulnerable <= 0 && within(x, y, bolt.x, bolt.y, bolt.foxFire ? 19 : 15)) {
+            float radius = bolt.foxFire ? 19 : 15;
+            boolean hit = within(x, y, bolt.x, bolt.y, radius);
+            if (perfectDodgeWindow > 0 && (hit || within(dodgeStartX, dodgeStartY, bolt.x, bolt.y, radius))) {
+                rewardDodge();
+            }
+            if (hit && invulnerable <= 0) {
                 hurtPlayer(bolt.damage);
                 return true;
             }
@@ -1009,6 +1076,13 @@ final class Wilds {
             }
             return false;
         });
+    }
+
+    private void rewardDodge() {
+        perfectDodgeWindow = 0;
+        counterTime = COUNTER_TIME;
+        feedback.add(new Feedback("完美闪避", x, y + 62, false));
+        cues.add(Cue.LEVEL);
     }
 
     private void hurtShrine(int damage) {

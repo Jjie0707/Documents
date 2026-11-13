@@ -24,7 +24,7 @@ Windows 使用 `gradlew.bat run`。如果已经构建桌面发行版，macOS 和
 | 鼠标左键 / Space | 左键向鼠标方向挥刀，空格自动瞄准附近异兽。按住可连续挥刀，第三刀更重 |
 | 鼠标右键 / Shift | 向移动方向翻滚，静止时向上一次移动的方向翻滚 |
 | Q | 吃朱果。篝火旁会烤熟再吃，恢复更多饱食和气血 |
-| 1 / 2 | 选择篝火 / 镇灵灯，左键在附近空地放置。也可点击右侧建造卡片 |
+| 1 / 2 / 3 | 选择篝火 / 镇灵灯 / 绊灵桩，左键在附近空地放置。也可点击右侧建造卡片 |
 | R | 在篝火旁消耗 2 山石和 2 青玉淬刃，提升刀法威力 |
 | F | 白天探查兽巢。祭坛旁可在第二夜花 2 山石修复，或在破晓后用 3 青玉召唤九尾 |
 | C / Tab | 施放当前灵印 / 切换灵印 |
@@ -32,7 +32,11 @@ Windows 使用 `gradlew.bat run`。如果已经构建桌面发行版，macOS 和
 
 篝火消耗 4 灵木和 2 山石。镇灵灯消耗 2 灵木、4 山石和 1 青玉，会自动攻击附近异兽。可把青玉用在营地防御或淬刃，同时留出祭坛的供物。打怪也会提升气血上限和刀法威力。
 
+绊灵桩消耗 3 灵木和 2 山石，最多可放四座。山彘进入浅绿圈时，移动速度降低约 55%，持续约 2.3 秒。绊灵桩 5 秒后可再次触发。把它放在镇灵灯的攻击范围内，能让山彘在灯下停留更久。
+
 红圈表示扑击或撞击的落点，亮线表示飞羽或狐火的方向。九尾扑击落地或施放狐火后会短暂露出破绽，趁那时近身连斩。它气血接近一半时会召来三足乌，随后更频繁地扇射狐火。
+
+在攻击即将命中时翻滚，可触发完美闪避。接下来 2 秒内，首次命中的挥刀额外造成刀法威力一半的伤害。顶部的金色计时条会提示反击还剩多久。
 
 ## 源码与素材
 
@@ -71,5 +75,9 @@ Windows 使用 `gradlew.bat run`。如果已经构建桌面发行版，macOS 和
 **兽巢与灵印** · `assets/art/den-relics.png`
 
 > Stylized-concept for a Shan Hai Jing isometric 2D game. TRUE TRANSPARENCY. Exactly four separate top-down three-quarter game sprites in a 2x2 grid, each centered in its cell with ample clear transparent padding on all sides. TOP LEFT: low stone burrow with an arched dark opening beneath ochre moss and two worn curved tusks, earthy amber. TOP RIGHT: dark crooked wind-twisted branch holding a raven's nest perched on a flat rock, soft violet hanging feathers. BOTTOM LEFT: round amber-brown jade talisman incised with a simple motif of three mountain peaks. BOTTOM RIGHT: round lavender jade talisman incised with a curved gust motif. Symbols only, no characters or text. Traditional ink-brush outlines and mineral-pigment painting, calm muted earth tones, bold readable silhouettes at small scale. Single cohesive style, carefully controlled game art, no ground, no backdrop, no cast shadows, no borders, no letters or words. Square canvas.
+
+**绊灵桩** · `assets/art/snare.png`
+
+> Single game sprite asset for the 2D top-down Chinese ink wash game Shan Hai Nightwatch. One compact ancient Chinese magical snare made of three short bamboo stakes lashed to a dark irregular shale base, with a few suspended jade-green knotted threads forming a low triangular tripwire across them. A small muted celadon stone inset at the middle. Clearly reads as a short broad ground trap, not a tall totem, not a campfire. Three quarter overhead orthographic, showing top and front, eye high looking down toward the upper center, with no visible horizon. Ground contact at center bottom of silhouette. Classic Chinese brush linework and mineral pigment shading in dark forest jade, pine charcoal, neutral gray stone, desaturated warm amber bamboo, soft paper highlights. Strong readable silhouette at 60 pixels, no excessive detail. Single full cutout centered with generous margins, real transparency, no floor, no background, no floating particles, no cast shadow, no writing or UI.
 
 </details>

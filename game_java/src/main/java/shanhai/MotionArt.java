@@ -102,9 +102,13 @@ final class MotionArt {
             return frames[action + (enemy.strikeFlash > 0.14f ? 2 : 3)];
         }
         if (crow) {
-            return frames[8 + (int) (elapsed * 11f + enemy.x * 0.008f) % 4];
+            return frames[8 + (int) (crowWingPhase(enemy, elapsed) * (2 / Math.PI)) % 4];
         }
         return enemy.moving ? frames[(int) (enemy.gait / 10f) % 4] : frames[7];
+    }
+
+    static float crowWingPhase(Wilds.Enemy enemy, float elapsed) {
+        return (elapsed * 2.75f + enemy.x * 0.002f) * (float) (2 * Math.PI);
     }
 
     private Frame fox(Wilds.Enemy enemy, float elapsed) {

@@ -46,6 +46,7 @@ final class Nightwatch extends ApplicationAdapter {
     private static final Color RED = Color.valueOf("e58a70");
     private static final Color FOX_FIRE = Color.valueOf("e77e92");
     private static final Color FEATHER = Color.valueOf("cbb1f2");
+    private static final Color SNARE_INK = Color.valueOf("76b7aa");
     private static final Color MIST = Color.valueOf("a7c6b9");
     private static final Color RUST = Color.valueOf("a84c39");
     private static final Color WHITE = Color.WHITE;
@@ -57,7 +58,8 @@ final class Nightwatch extends ApplicationAdapter {
         JADE(753, 426, 236, 259), FIRE(1115, 411, 281, 279), WARD(93, 729, 196, 320),
         ALTAR(364, 735, 337, 296), LOGS(1094, 793, 316, 231),
         DEN_STONE(true, 11, 119, 612, 467), DEN_WIND(true, 634, 55, 609, 554),
-        SEAL_STONE(true, 63, 664, 502, 552), SEAL_WIND(true, 674, 664, 510, 554);
+        SEAL_STONE(true, 63, 664, 502, 552), SEAL_WIND(true, 674, 664, 510, 554),
+        SNARE(0, 0, 320, 256);
 
         final boolean relic;
         final int x;
@@ -96,8 +98,9 @@ final class Nightwatch extends ApplicationAdapter {
     private static final Button START = new Button(77, 228, 252, 57);
     private static final Button PAUSE = new Button(1186, 711, 70, 39);
     private static final Button SOUND = new Button(1105, 711, 71, 39);
-    private static final Button FIRE_CARD = new Button(SIDE_X + 15, 300, SIDE_W - 30, 53);
-    private static final Button WARD_CARD = new Button(SIDE_X + 15, 239, SIDE_W - 30, 53);
+    private static final Button FIRE_CARD = new Button(SIDE_X + 15, 307, SIDE_W - 30, 46);
+    private static final Button WARD_CARD = new Button(SIDE_X + 15, 255, SIDE_W - 30, 46);
+    private static final Button SNARE_CARD = new Button(SIDE_X + 15, 203, SIDE_W - 30, 46);
     private static final Button PRIMARY = new Button(440, 265, 400, 52);
     private static final Button HOME = new Button(440, 207, 400, 42);
 
@@ -118,6 +121,7 @@ final class Nightwatch extends ApplicationAdapter {
     private Texture valley;
     private Texture atlas;
     private Texture relics;
+    private Texture snare;
     private Texture wandererMotion;
     private Texture foxMotion;
     private Texture beastsMotion;
@@ -145,12 +149,14 @@ final class Nightwatch extends ApplicationAdapter {
         valley = texture("art/valley.png");
         atlas = texture("art/atlas.png");
         relics = texture("art/den-relics.png");
+        snare = texture("art/snare.png");
         wandererMotion = texture("art/wanderer-motion.png");
         foxMotion = texture("art/fox-motion.png");
         beastsMotion = texture("art/beasts-motion.png");
         motion = new MotionArt(wandererMotion, foxMotion, beastsMotion);
         for (Icon icon : Icon.values()) {
-            icon.front = new TextureRegion(icon.relic ? relics : atlas, icon.x, icon.y, icon.w, icon.h);
+            Texture sheet = icon == Icon.SNARE ? snare : icon.relic ? relics : atlas;
+            icon.front = new TextureRegion(sheet, icon.x, icon.y, icon.w, icon.h);
             icon.reverse = new TextureRegion(icon.front);
             icon.reverse.flip(true, false);
         }
@@ -337,6 +343,9 @@ final class Nightwatch extends ApplicationAdapter {
         } else if (pressed(Keys.NUM_2) || click && WARD_CARD.contains(mouse)) {
             placing = Structure.WARD;
             placementUsesPointer = click;
+        } else if (pressed(Keys.NUM_3) || click && SNARE_CARD.contains(mouse)) {
+            placing = Structure.SNARE;
+            placementUsesPointer = click;
         } else if (placing != null && pointerMoved) {
             placementUsesPointer = true;
         }
@@ -446,6 +455,10 @@ final class Nightwatch extends ApplicationAdapter {
                 wilds.fullness / 100, GOLD);
         meter(646, 734, 128, "翻滚", wilds.dodgeCooldown > 0 ? "恢复中" : "可用",
                 1 - wilds.dodgeCooldown / Wilds.DODGE_COOLDOWN, JADE);
+        if (wilds.counterTime > 0) {
+            label(small, "反击  +" + wilds.counterBonus(), 646, 708, GOLD_LIGHT);
+            bar(723, 696, 51, 3, wilds.counterTime / Wilds.COUNTER_TIME, GOLD);
+        }
 
         label(body, wilds.phase.name, 815, 752, wilds.phase.night ? RED : PAPER);
         String remaining = wilds.phase == Wilds.Phase.DAWN
@@ -548,17 +561,35 @@ final class Nightwatch extends ApplicationAdapter {
                 image(glow, x - 137, y - 76, 274, 170, GOLD, 0.66f + dusk * 0.30f);
                 halo(x, y + 11, 62 + wave(12) * 7, GOLD_LIGHT, 0.54f);
                 circle(x, y - 5, 72, GOLD, 0.24f);
-            } else {
+            } else if (building.kind == Structure.WARD) {
                 halo(x, y + 10, 73, JADE, 0.62f);
                 if (building.pulse > 0.55f) {
                     float progress = (0.9f - building.pulse) / 0.35f;
                     circle(x, y, 15 + progress * (Wilds.WARD_RANGE - 15), JADE, (1 - progress) * 0.72f);
+                }
+            } else {
+                float ground = y - 7;
+                if (building.pulse <= 0) {
+                    circle(x, ground, Wilds.SNARE_RANGE, SNARE_INK, 0.32f);
+                    halo(x, ground + 15, 42, SNARE_INK, 0.52f);
+                } else if (building.pulse > Wilds.SNARE_RECHARGE - Wilds.SNARE_FLASH) {
+                    float progress = (Wilds.SNARE_RECHARGE - building.pulse) / Wilds.SNARE_FLASH;
+                    circle(x, ground, 18 + 40 * progress, JADE, (1 - progress) * 0.92f);
+                    halo(x, ground + 10, 65, JADE, (1 - progress) * 0.69f);
                 }
             }
         }
         var nearest = wilds.nearestNode();
         if (nearest != null) {
             circle(FIELD_X + nearest.x, FIELD_Y + nearest.y + 4, 24, GOLD, 0.82f);
+        }
+        for (var enemy : wilds.enemies) {
+            if (enemy.snared > 0) {
+                float ex = FIELD_X + enemy.x;
+                float ey = FIELD_Y + enemy.y;
+                image(ring, ex - 22, ey - 8, 44, 17, JADE, 0.87f);
+                halo(ex, ey + 1, 30, SNARE_INK, 0.62f);
+            }
         }
         halo(FIELD_X + wilds.x, FIELD_Y + wilds.y + 14, 67, GOLD, 0.34f + dusk * 0.51f);
 
@@ -619,12 +650,14 @@ final class Nightwatch extends ApplicationAdapter {
             actors.add(new Actor(icon, den.x, den.y, 103, 0, true, light, 1));
         }
         for (var building : wilds.buildings) {
-            Icon icon = building.kind == Structure.FIRE ? Icon.FIRE : Icon.WARD;
-            actors.add(new Actor(icon, building.x, building.y, 56, wave(8) * 1.4f, true, 1, 1));
+            float light = building.kind == Structure.SNARE && building.pulse > 0 ? normal * 0.72f : 1;
+            float lift = building.kind == Structure.FIRE ? wave(8) * 1.4f : 0;
+            actors.add(new Actor(structureIcon(building.kind), building.x, building.y, 56, lift, true, light, 1));
         }
         for (var enemy : wilds.enemies) {
             float size = enemy.boss() ? 128 : (enemy.den != null ? 89 : enemy.kind == Wilds.Creature.CROW ? 60 : 66);
-            float lift = enemy.kind == Wilds.Creature.CROW ? 11 + wave(10 + enemy.x * 0.003f) * 4 : 0;
+            float lift = enemy.kind == Wilds.Creature.CROW
+                    ? 17 + (float) Math.sin(MotionArt.crowWingPhase(enemy, wilds.elapsed)) * 5 : 0;
             if (enemy.leapTime > 0) {
                 lift = (float) Math.sin(Math.PI * enemy.leapTime / Wilds.POUNCE_TIME) * 25;
             }
@@ -633,26 +666,21 @@ final class Nightwatch extends ApplicationAdapter {
             actors.add(new Actor(null, pose, enemy.x, enemy.y, size, lift, enemy.facesRight, light, 1));
         }
         var player = motion.wanderer(wilds);
-        float bounce = 0;
-        circle(FIELD_X + wilds.x, FIELD_Y + wilds.y + 1, 18, GOLD_LIGHT, 0.73f);
-        if (wilds.dodgeTime > 0) {
-            bounce = (float) Math.sin(Math.PI * wilds.dodgeTime / Wilds.DODGE_DURATION) * 10;
-            float distance = Math.min(38, (Wilds.DODGE_DURATION - wilds.dodgeTime) * 420);
-            for (int i = 3; i >= 1; i--) {
-                float tail = distance * i / 3f;
-                player.draw(batch, FIELD_X + wilds.x - wilds.dodgeX * tail,
-                        FIELD_Y + wilds.y + bounce - wilds.dodgeY * tail,
-                        wilds.facesRight, 0.78f, 0.24f - i * 0.045f);
-            }
-        }
-        actors.add(new Actor(null, player, wilds.x, wilds.y, 70, bounce,
-                wilds.facesRight, wilds.hurtFlash > 0 ? 0.62f : 1, 1));
+        float bounce = wilds.dodgeTime > 0
+                ? (float) Math.sin(Math.PI * wilds.dodgeTime / Wilds.DODGE_DURATION) * 10 : 0;
+        circle(FIELD_X + wilds.x, FIELD_Y + wilds.y + 1, 18, GOLD_LIGHT, wilds.counterTime > 0 ? 0.98f : 0.65f);
+        var playerActor = new Actor(null, player, wilds.x, wilds.y, 70, bounce,
+                wilds.facesRight, wilds.hurtFlash > 0 ? 0.62f : 1, 1);
+        actors.add(playerActor);
         actors.sort(Comparator.comparingDouble(Actor::y).reversed());
+        for (Actor actor : actors) {
+            drawShadow(actor);
+        }
         for (Actor actor : actors) {
             float x = FIELD_X + actor.x;
             float y = FIELD_Y + actor.y;
-            if (actor.opacity > 0.5f) {
-                image(glow, x - actor.size * 0.41f + 6, y - 10, actor.size * 0.88f, 22, BLACK, 0.72f);
+            if (actor == playerActor && wilds.dodgeTime > 0) {
+                drawDodgeTrail(player, x, y + bounce);
             }
             if (actor.frame != null) {
                 actor.frame.draw(batch, x, y + actor.lift, actor.right, actor.brightness, actor.opacity);
@@ -660,6 +688,38 @@ final class Nightwatch extends ApplicationAdapter {
                 sprite(actor.icon, x, y - 3 + actor.lift, actor.size, actor.right, actor.brightness, actor.opacity);
             }
         }
+    }
+
+    private void drawDodgeTrail(MotionArt.Frame player, float x, float y) {
+        float distance = Math.min(38, (Wilds.DODGE_DURATION - wilds.dodgeTime) * 420);
+        for (int i = 3; i >= 1; i--) {
+            float tail = distance * i / 3f;
+            player.draw(batch, x - wilds.dodgeX * tail, y - wilds.dodgeY * tail,
+                    wilds.facesRight, 0.78f, 0.24f - i * 0.045f);
+        }
+    }
+
+    private void drawShadow(Actor actor) {
+        if (actor.opacity <= 0.5f) {
+            return;
+        }
+        float elevation = Math.max(0, actor.lift);
+        float x = FIELD_X + actor.x + 4 + elevation * 0.22f;
+        float y = FIELD_Y + actor.y - 3;
+        float width = actor.size * 0.80f + elevation * 0.95f;
+        float depth = 14 + actor.size * 0.10f + elevation * 0.32f;
+        image(glow, x - width / 2, y - depth / 2, width, depth, BLACK, 0.78f - elevation * 0.016f);
+        if (elevation < 6) {
+            image(glow, x - width * 0.24f, y - 6, width * 0.40f, 12, BLACK, 0.63f - elevation * 0.07f);
+        }
+    }
+
+    private static Icon structureIcon(Structure kind) {
+        return switch (kind) {
+            case FIRE -> Icon.FIRE;
+            case WARD -> Icon.WARD;
+            case SNARE -> Icon.SNARE;
+        };
     }
 
     private void drawSealEffects() {
@@ -693,9 +753,10 @@ final class Nightwatch extends ApplicationAdapter {
             boolean finish = wilds.combo == 3;
             float radius = (finish ? 72 : 58) + progress * 19;
             float angle = wilds.slashAngle + (progress - 0.5f) * (wilds.combo == 2 ? -39 : 39);
-            rotated(slashArc, x, y + 6, radius * 2, radius * 2, angle, finish ? JADE : GOLD_LIGHT,
+            Color slashColor = wilds.counterSlash ? GOLD : finish ? JADE : GOLD_LIGHT;
+            rotated(slashArc, x, y + 6, radius * 2, radius * 2, angle, slashColor,
                     (1 - progress) * 0.97f);
-            if (finish) {
+            if (finish || wilds.counterSlash) {
                 rotated(slashArc, x, y + 6, radius * 1.68f, radius * 1.68f, angle - 12,
                         PAPER, (1 - progress) * 0.62f);
             }
@@ -748,9 +809,14 @@ final class Nightwatch extends ApplicationAdapter {
         boolean funded = wilds.affordable(placing);
         boolean valid = room && funded && wilds.canBuildAt(px - FIELD_X, py - FIELD_Y);
         Color color = valid ? JADE : RED;
-        circle(px, py, placing == Structure.WARD ? Wilds.WARD_RANGE : 72, color, 0.44f);
+        float range = switch (placing) {
+            case FIRE -> 72;
+            case WARD -> Wilds.WARD_RANGE;
+            case SNARE -> Wilds.SNARE_RANGE;
+        };
+        circle(px, py, range, color, 0.44f);
         halo(px, py + 12, 44, color, 0.66f);
-        sprite(placing == Structure.FIRE ? Icon.FIRE : Icon.WARD, px, py - 1, 57, true, 1, 0.66f);
+        sprite(structureIcon(placing), px, py - 1, 57, true, 1, 0.66f);
         String hint = !room ? "已达建造上限" : !funded ? "材料不足"
                 : valid ? (pointer ? "左键放置" : "ENTER 放置") : "此处不可建造";
         tag(hint, Math.max(FIELD_X + 68, Math.min(FIELD_X + Wilds.WIDTH - 68, px)), py - 20, color);
@@ -879,13 +945,13 @@ final class Nightwatch extends ApplicationAdapter {
         } else if (wilds.phase == Wilds.Phase.DAWN) {
             objective("开启青丘祭坛", "前往东北方的青丘祭坛。", "备好三枚青玉，按 F 召唤九尾。");
         } else if (wilds.defending()) {
-            objective("守住青丘祭坛", "山彘近撞，三足乌会射飞羽。", "靠近祭坛按 F，消耗山石修复。");
+            objective("守住青丘祭坛", "用绊灵桩拖住来袭的山彘。", "靠近祭坛按 F，消耗山石修复。");
         } else if (wilds.phase == Wilds.Phase.SECOND_DAY) {
-            objective("在祭坛旁布防", "次夜异兽会围攻东北方祭坛。", "先立镇灵灯，再留些山石修复。");
+            objective("在祭坛旁布防", "次夜异兽会围攻东北方祭坛。", "布置镇灵灯和绊灵桩，留石修复。");
         } else if (wilds.structures(Structure.FIRE) == 0) {
             objective("在山野扎营", "按 E 采集灵木和山石。", "按 1 选篝火，左键选空地。");
         } else {
-            objective("度过第一夜", "靠近篝火回血，按 Q 烤朱果。", "挥刀连斩，蓄力时翻滚出红圈。");
+            objective("度过第一夜", "靠近篝火回血，按 Q 烤朱果。", "在攻击落下时翻滚，蓄力反击。");
         }
 
         label(body, "行囊", SIDE_X + 17, 491, PAPER);
@@ -897,16 +963,16 @@ final class Nightwatch extends ApplicationAdapter {
         label(body, "营地营造", SIDE_X + 17, 377, PAPER);
         recipe(FIRE_CARD, "1", Structure.FIRE, Icon.FIRE, "疗伤 · 烤朱果");
         recipe(WARD_CARD, "2", Structure.WARD, Icon.WARD, "范围攻击");
-        rule(226);
+        recipe(SNARE_CARD, "3", Structure.SNARE, Icon.SNARE, "减速山彘");
+        rule(192);
 
-        label(body, "修为 " + wilds.level + " 阶", SIDE_X + 17, 211, PAPER);
+        label(body, "修为 " + wilds.level + " 阶", SIDE_X + 17, 181, PAPER);
         right(small, wilds.level >= Wilds.MAX_LEVEL ? "已圆满" : wilds.experience + " / " + wilds.nextLevelXp(),
-                SIDE_X + SIDE_W - 17, 208, MUTE);
-        bar(SIDE_X + 17, 174, SIDE_W - 34, 5,
+                SIDE_X + SIDE_W - 17, 178, MUTE);
+        bar(SIDE_X + 17, 150, SIDE_W - 34, 4,
                 wilds.level >= Wilds.MAX_LEVEL ? 1 : (float) wilds.experience / wilds.nextLevelXp(), JADE);
-        label(small, "刀法威力  " + wilds.power(), SIDE_X + 17, 158, MUTE);
-        right(small, "击退异兽  " + wilds.kills, SIDE_X + SIDE_W - 17, 158, MUTE);
-        rule(129);
+        label(small, "刀法威力  " + wilds.power(), SIDE_X + 17, 139, MUTE);
+        right(small, "击退异兽  " + wilds.kills, SIDE_X + SIDE_W - 17, 139, MUTE);
         String forge = wilds.tempered ? "青玉刀已淬成  ·  威力 +15" : "R  篝火旁淬刃  ·  石 2  玉 2";
         label(small, forge, SIDE_X + 17, 116, wilds.tempered || wilds.nearFire ? JADE : MUTE);
     }
@@ -932,11 +998,11 @@ final class Nightwatch extends ApplicationAdapter {
         boolean ready = wilds.affordable(kind) && wilds.structures(kind) < kind.limit;
         rect(b.x, b.y, b.w, b.h, b.contains(mouse) ? BORDER : INK, 0.80f);
         frame(b.x, b.y, b.w, b.h, kind == placing ? GOLD : (ready ? JADE : BORDER), 0.86f);
-        keycap(key, b.x + 9, b.y + 16, 25);
-        sprite(icon, b.x + 55, b.y + 9, 35, true, 1, 1);
-        label(body, kind.name, b.x + 80, b.y + 44, PAPER);
-        label(small, kind.cost(), b.x + 81, b.y + 20, ready ? JADE : MUTE);
-        right(small, effect, b.x + b.w - 8, b.y + 41, MUTE);
+        keycap(key, b.x + 9, b.y + 10, 25);
+        sprite(icon, b.x + 55, b.y + 7, 32, true, 1, 1);
+        label(body, kind.name, b.x + 80, b.y + 39, PAPER);
+        label(small, kind.cost(), b.x + 81, b.y + 18, ready ? JADE : MUTE);
+        right(small, effect, b.x + b.w - 8, b.y + 35, MUTE);
     }
 
     private void drawControls() {
@@ -947,7 +1013,7 @@ final class Nightwatch extends ApplicationAdapter {
         control("右键 / SHIFT", "翻滚", 345, 111);
         control("E", "采集", 518, 28);
         control("Q", "进食", 612, 28);
-        control("1 / 2", "建造", 704, 52);
+        control("1 / 2 / 3", "建造", 692, 69);
         control("R", "淬刃", 820, 27);
         control("F", "互动", 916, 27);
         control("ESC", "暂停", 1012, 44);
@@ -1093,7 +1159,7 @@ final class Nightwatch extends ApplicationAdapter {
         for (var font : new BitmapFont[]{small, body, medium, large, headline}) {
             font.dispose();
         }
-        for (var texture : new Texture[]{title, valley, atlas, relics, wandererMotion, foxMotion, beastsMotion,
+        for (var texture : new Texture[]{title, valley, atlas, relics, snare, wandererMotion, foxMotion, beastsMotion,
                 pixel, glow, ring, shade, vignette, slashArc}) {
             texture.dispose();
         }
